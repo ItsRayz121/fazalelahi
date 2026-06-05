@@ -383,6 +383,46 @@
     return res.data ? res.data.session : null;
   };
 
+  /* =====================================================================
+     MEDIA UPLOADS (Supabase Storage `media` bucket)
+     Direct-to-storage upload via XHR so we get a real progress bar
+     (the supabase-js client does not expose upload progress).
+     Returns { ok, url } on success — `url` is the public file URL.
+     ===================================================================== */
+  Store.uploadMedia = function (file, onProgress) {
+    return new Promise(function (resolve) {
+      if (!cloudEnabled) return resolve({ ok: false, msg: 'Cloud disabled — uploads need Supabase.' });
+      sb.auth.getSession().then(function (r) {
+        var token = r && r.data && r.data.session ? r.data.session.access_token : null;
+        if (!token) return resolve({ ok: false, msg: 'Not signed in — log in again to upload.' });
+        var safe = String(file.name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60);
+        var rand = Math.random().toString(36).slice(2, 8);
+        var path = Date.now() + '_' + rand + '_' + safe;
+        var base = SUPABASE_URL + '/storage/v1/object/media/' + path;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', base, true);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        xhr.setRequestHeader('x-upsert', 'true');
+        if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100));
+        };
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({ ok: true, url: SUPABASE_URL + '/storage/v1/object/public/media/' + path });
+          } else {
+            var m = 'Upload failed (' + xhr.status + ')';
+            try { m = JSON.parse(xhr.responseText).message || m; } catch (e) {}
+            resolve({ ok: false, msg: m });
+          }
+        };
+        xhr.onerror = function () { resolve({ ok: false, msg: 'Network error during upload.' }); };
+        xhr.send(file);
+      });
+    });
+  };
+
   /* ---------- Helpers shared by both pages ---------- */
   const Util = {
     // Strip HTML tags from user input before persisting.
@@ -400,6 +440,43 @@
       return Array.from(new Uint8Array(buf)).map(function (b) {
         return b.toString(16).padStart(2, '0');
       }).join('');
+    },
+
+    /* ---------- Media link helpers (shared by admin + public site) ---------- */
+    // Pull a Google Drive file id out of a share/view link.
+    driveId: function (url) {
+      var s = String(url || '');
+      var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : null;
+    },
+    // Pull an 11-char YouTube id from a full URL (or accept a raw id).
+    youtubeId: function (url) {
+      var s = String(url || '').trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+      var m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      return m ? m[1] : null;
+    },
+    // Normalise an image value the browser can load directly (handles Drive links).
+    imageUrl: function (url) {
+      var s = String(url || '').trim();
+      if (s.indexOf('drive.google') > -1) {
+        var id = Util.driveId(s);
+        if (id) return 'https://drive.google.com/uc?export=view&id=' + id;
+      }
+      return s;
+    },
+    // Decide how to render a "video" value: { type:'iframe'|'video'|'none', src }.
+    videoEmbed: function (url) {
+      var s = String(url || '').trim();
+      if (!s || s.indexOf('[') === 0) return { type: 'none', src: '' };
+      var yt = Util.youtubeId(s);
+      if (yt) return { type: 'iframe', src: 'https://www.youtube.com/embed/' + yt };
+      if (s.indexOf('drive.google') > -1) {
+        var id = Util.driveId(s);
+        if (id) return { type: 'iframe', src: 'https://drive.google.com/file/d/' + id + '/preview' };
+      }
+      if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(s)) return { type: 'video', src: s };
+      return { type: 'iframe', src: s };
     }
   };
 

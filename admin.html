@@ -80,6 +80,18 @@ textarea{min-height:90px;resize:vertical}
 .hidden{display:none!important}
 .hamburger{display:none}
 .field-help{font-size:11px;color:var(--muted);margin-top:3px}
+/* ---- MEDIA UPLOAD FIELD ---- */
+.media-field{margin-bottom:8px}
+.media-tools{display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap}
+.media-up{margin:0;cursor:pointer}
+.media-status{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.media-bar{height:8px;background:var(--void);border:1px solid var(--border);border-radius:6px;margin-top:8px;overflow:hidden;display:none}
+.media-bar.show{display:block}
+.media-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--emerald));transition:width .15s}
+.media-prev{margin-top:8px}
+.media-prev:empty{margin:0}
+.media-prev img{max-height:74px;border-radius:8px;border:1px solid var(--border);display:block}
+.media-prev video{max-height:140px;max-width:100%;border-radius:8px;border:1px solid var(--border);display:block;background:#000}
 @media (max-width:820px){
   #app{grid-template-columns:1fr}
   #sidebar{position:fixed;left:0;top:0;width:250px;z-index:90;transform:translateX(-100%);transition:.3s}
@@ -307,10 +319,10 @@ textarea{min-height:90px;resize:vertical}
     c.innerHTML = '<div class="card">' +
       f('Name','pf_name',p.name) + f('Hero Tagline','pf_tagline',p.tagline) +
       f('Sub-tagline','pf_sub',p.subTagline) + ta('Mission / Hero Body','pf_mission',p.mission) +
-      f('Profile Photo URL','pf_photo',p.photo) +
+      mf('Profile Photo','pf_photo',p.photo,'image') +
       '<div class="grid2">' + f('Email','pf_email',p.email) + f('Phone / WhatsApp','pf_phone',p.phone) + '</div>' +
       '<div class="grid2">' + f('Location','pf_loc',p.location) + f('Availability','pf_avail',p.availability) + '</div>' +
-      f('LinkedIn URL','pf_li',p.linkedin) + f('CV Download URL','pf_cv',p.cvUrl) +
+      f('LinkedIn URL','pf_li',p.linkedin) + mf('CV / Resume (link or upload PDF)','pf_cv',p.cvUrl,'any') +
       '<h3 style="margin-top:18px">Hero Stats (8)</h3>' + statFields +
       ta('Bio Paragraph 1','pf_bio1',p.bio1) + ta('Bio Paragraph 2','pf_bio2',p.bio2) + ta('Bio Paragraph 3','pf_bio3',p.bio3) +
       ta('Expertise Tags (comma-separated)','pf_exp',p.expertise.join(', ')) +
@@ -451,7 +463,7 @@ textarea{min-height:90px;resize:vertical}
       '<div><label>My Role</label><select id="ev_role">' + roles.map(function (x) { return '<option' + (x === e.role ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div></div>' +
       '<div class="grid2"><div><label>Mode</label><select id="ev_mode"><option' + (e.mode === 'Virtual' ? ' selected' : '') + '>Virtual</option><option' + (e.mode === 'In-Person' ? ' selected' : '') + '>In-Person</option></select></div>' +
       f('Date','ev_date',e.date) + '</div>' +
-      f('Location','ev_loc',e.location) + f('Banner / Image URL','ev_img',e.image) + f('External URL','ev_url',e.url) +
+      f('Location','ev_loc',e.location) + mf('Event Banner / Image','ev_img',e.image,'image') + f('External URL','ev_url',e.url) +
       '<label><input type="checkbox" id="ev_mile" ' + (e.milestone ? 'checked' : '') + ' style="width:auto"> 🏆 Milestone (gold banner treatment)</label>' +
       modalActions('saveEv'));
     document.getElementById('saveEv').addEventListener('click', function () {
@@ -476,7 +488,7 @@ textarea{min-height:90px;resize:vertical}
     modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Project</h3>' +
       f('Name','p_name',x.name) + '<div class="grid2">' + f('Category','p_cat',x.category) + f('Status','p_status',x.status) + '</div>' +
       f('My Role','p_role',x.role) + '<div class="grid2">' + f('Start','p_start',x.start) + f('End','p_end',x.end) + '</div>' +
-      ta('Description','p_desc',x.desc) + f('Logo URL','p_logo',x.logo) + f('External URL','p_url',x.url) + modalActions('saveProj'));
+      ta('Description','p_desc',x.desc) + mf('Logo / Image','p_logo',x.logo,'image') + f('External URL','p_url',x.url) + modalActions('saveProj'));
     document.getElementById('saveProj').addEventListener('click', function () {
       var arr = Store.get('fazal_projects');
       var obj = { name: san(val('p_name')), category: san(val('p_cat')), status: san(val('p_status')), role: san(val('p_role')),
@@ -499,7 +511,7 @@ textarea{min-height:90px;resize:vertical}
       k.markets.map(function (m, i) { return '<span class="tag">' + esc(m.flag) + ' ' + esc(m.name) + ' <a href="#" data-delm="' + i + '" style="color:var(--red)">×</a></span>'; }).join('') + '</div>';
     document.getElementById('saveKolText').addEventListener('click', function () { k.intro = san(val('k_intro')); k.syndicates = san(val('k_synd')); save('fazal_kol_network', k, 'Saved ✓'); });
     document.getElementById('addPartner').addEventListener('click', function () {
-      modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') + f('Avatar URL','kp_av','') + modalActions('saveKP'));
+      modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') + mf('Avatar / Photo','kp_av','','image') + modalActions('saveKP'));
       document.getElementById('saveKP').addEventListener('click', function () {
         k.partners.push({ name: san(val('kp_name')), platform: san(val('kp_plat')), url: san(val('kp_url')), avatar: san(val('kp_av')) });
         save('fazal_kol_network', k, 'Added ✓'); closeModal(); renderKOL(document.getElementById('content'));
@@ -569,7 +581,7 @@ textarea{min-height:90px;resize:vertical}
   }
   function affForm(a, i) {
     modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Affiliate</h3>' +
-      f('Name','a_name',a.name) + f('Logo URL','a_logo',a.logo) + f('Brand Color (hex)','a_color',a.color) +
+      f('Name','a_name',a.name) + mf('Logo','a_logo',a.logo,'image') + f('Brand Color (hex)','a_color',a.color) +
       ta('Description','a_desc',a.desc) + f('Offer Text','a_offer',a.offer) + f('Affiliate URL','a_url',a.url) + f('CTA Text','a_cta',a.cta) +
       '<label><input type="checkbox" id="a_vis" ' + (a.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
       modalActions('saveAff'));
@@ -592,7 +604,7 @@ textarea{min-height:90px;resize:vertical}
   }
   function testForm(t, i) {
     modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Testimonial</h3>' +
-      ta('Quote','t_quote',t.quote) + f('Name','t_name',t.name) + f('Company / Role','t_title',t.title) + f('Avatar URL','t_av',t.avatar) +
+      ta('Quote','t_quote',t.quote) + f('Name','t_name',t.name) + f('Company / Role','t_title',t.title) + mf('Avatar / Photo','t_av',t.avatar,'image') +
       modalActions('saveTest'));
     document.getElementById('saveTest').addEventListener('click', function () {
       var arr = Store.get('fazal_testimonials');
@@ -609,8 +621,8 @@ textarea{min-height:90px;resize:vertical}
       return '<div class="card"><h3>Channel ' + (i + 1) + '</h3>' + f('Name','ct_name' + i,ch.name) + f('URL','ct_url' + i,ch.url) +
         ta('Description','ct_desc' + i,ch.desc) + f('Subscribers','ct_subs' + i,ch.subs) + '</div>';
     }).join('') +
-      '<div class="card"><h3>Featured Videos (YouTube IDs)</h3><p class="field-help">Just the ID from the URL ?v=XXXX</p>' +
-      ct.videos.map(function (v, i) { return f('Video ' + (i + 1) + ' ID','ct_vid' + i,v); }).join('') + '</div>' +
+      '<div class="card"><h3>Featured Videos</h3><p class="field-help">Paste a YouTube or Google Drive link (or the full URL), or upload a video file from your device. The progress bar shows while it uploads.</p>' +
+      ct.videos.map(function (v, i) { return mf('Video ' + (i + 1) + ' (link or upload)','ct_vid' + i,v,'video'); }).join('') + '</div>' +
       '<div class="card">' + ta('Content Pillars (comma-separated)','ct_pillars',ct.pillars.join(', ')) +
       ta('Hashtags (comma-separated)','ct_hash',ct.hashtags.join(', ')) +
       f('Frequency / Section Sub','ct_freq',ct.frequency) +
@@ -691,7 +703,7 @@ textarea{min-height:90px;resize:vertical}
     c.innerHTML = '<div class="card">' +
       f('Site Title','st_title',s.title) + ta('Meta Description','st_desc',s.description) +
       f('Hero Headline Override','st_hh',s.heroHeadline || '') + f('Hero Sub Override','st_hs',s.heroSub || '') +
-      f('Footer Tagline','st_foot',s.footerTagline) + f('Site URL','st_url',s.siteUrl) + f('OG Image URL','st_og',s.ogImage) +
+      f('Footer Tagline','st_foot',s.footerTagline) + f('Site URL','st_url',s.siteUrl) + mf('OG / Social Share Image','st_og',s.ogImage,'image') +
       '<label><input type="checkbox" id="st_maint" ' + (s.maintenance ? 'checked' : '') + ' style="width:auto"> 🚧 Maintenance Mode (public site → Coming Soon)</label>' +
       '<label><input type="checkbox" id="st_disc" ' + (s.showDisclaimer !== false ? 'checked' : '') + ' style="width:auto"> Show "Not financial advice" disclaimer</label>' +
       ta('Custom CSS (injected into public site)','st_css',Store.get('fazal_customcss')) +
@@ -768,6 +780,66 @@ textarea{min-height:90px;resize:vertical}
   /* ============ FORM HELPERS ============ */
   function f(label, id, value) { return '<label>' + label + '</label><input id="' + id + '" value="' + esc(value || '') + '">'; }
   function ta(label, id, value) { return '<label>' + label + '</label><textarea id="' + id + '">' + esc(value || '') + '</textarea>'; }
+
+  /* Media field: paste a link (Google Drive / YouTube / any URL) OR upload
+     from device. kind = 'image' | 'video' | 'any'. Upload shows a progress bar. */
+  function previewHTML(value, kind) {
+    if (!value) return '';
+    if (kind === 'video') {
+      var em = Util.videoEmbed(value);
+      if (em.type === 'video') return '<video src="' + esc(em.src) + '" controls preload="metadata"></video>';
+      if (em.type === 'iframe') return '<a href="' + esc(value) + '" target="_blank" rel="noopener">▶ Open current video</a>';
+      return '';
+    }
+    return '<img src="' + esc(Util.imageUrl(value)) + '" alt="" onerror="this.style.display=\'none\'">';
+  }
+  function mf(label, id, value, kind) {
+    kind = kind || 'image';
+    var accept = kind === 'video' ? 'video/*' : (kind === 'any' ? '*/*' : 'image/*');
+    var ph = kind === 'video' ? 'Paste YouTube / Google Drive / video link — or upload'
+           : kind === 'any'   ? 'Paste a file link — or upload from device'
+           : 'Paste image link (or Google Drive) — or upload';
+    return '<label>' + label + '</label>' +
+      '<div class="media-field" data-kind="' + kind + '">' +
+        '<input id="' + id + '" value="' + esc(value || '') + '" placeholder="' + ph + '">' +
+        '<div class="media-tools">' +
+          '<label class="btn btn-ghost btn-sm media-up">⬆ Upload from device' +
+            '<input type="file" accept="' + accept + '" data-target="' + id + '" hidden></label>' +
+          '<span class="media-status" data-status="' + id + '"></span>' +
+        '</div>' +
+        '<div class="media-bar" data-bar="' + id + '"><i></i></div>' +
+        '<div class="media-prev" data-prev="' + id + '">' + previewHTML(value, kind) + '</div>' +
+      '</div>';
+  }
+  function mediaSet(sel, id) { return document.querySelector('[data-' + sel + '="' + id + '"]'); }
+  function mediaBar(id, pct) { var b = mediaSet('bar', id); if (b) { b.classList.add('show'); b.querySelector('i').style.width = pct + '%'; } }
+  function mediaStatus(id, msg) { var s = mediaSet('status', id); if (s) s.textContent = msg; }
+  function mediaPreview(id, value, kind) { var p = mediaSet('prev', id); if (p) p.innerHTML = previewHTML(value, kind); }
+
+  // Delegated: handle "Upload from device" for any media field, anywhere.
+  document.addEventListener('change', function (e) {
+    var inp = e.target;
+    if (!inp.matches || !inp.matches('input[type=file][data-target]')) return;
+    var id = inp.dataset.target, file = inp.files && inp.files[0];
+    if (!file) return;
+    var field = inp.closest('.media-field'), kind = field ? field.dataset.kind : 'image';
+    if (!CLOUD) { mediaStatus(id, '❌ Cloud required'); toast('❌ Uploads need Supabase (cloud mode)'); inp.value = ''; return; }
+    mediaStatus(id, 'Uploading… 0%'); mediaBar(id, 0);
+    Store.uploadMedia(file, function (pct) { mediaBar(id, pct); mediaStatus(id, 'Uploading… ' + pct + '%'); })
+      .then(function (res) {
+        if (res.ok) {
+          var t = document.getElementById(id); if (t) t.value = res.url;
+          mediaBar(id, 100); mediaStatus(id, '✓ Uploaded'); mediaPreview(id, res.url, kind); toast('Uploaded ✓');
+        } else { mediaBar(id, 0); mediaStatus(id, '❌ ' + res.msg); toast('❌ ' + res.msg); }
+        inp.value = '';
+      });
+  });
+  // Live preview when a link is typed/pasted into a media field's URL input.
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t.id || !t.parentElement || !t.parentElement.classList.contains('media-field')) return;
+    mediaPreview(t.id, t.value.trim(), t.parentElement.dataset.kind);
+  });
   function modalActions(saveId, saveLabel, cls) {
     return '<div class="modal-actions"><button class="btn btn-ghost" onclick="_closeModal()">Cancel</button>' +
       '<button class="btn ' + (cls || 'btn-gold') + '" id="' + saveId + '">' + (saveLabel || 'Save') + '</button></div>';

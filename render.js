@@ -4,7 +4,7 @@
    ===================================================================== */
 (async function () {
   'use strict';
-  var Store = FAZAL.Store, esc = FAZAL.Util.escape;
+  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape;
   await Store.bootstrap(); // load shared cloud content (or seed local defaults)
 
   /* ---------- Official SVG icons (brand-correct) ---------- */
@@ -56,8 +56,8 @@
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
-  document.getElementById('heroPhoto').src = p.photo;
-  document.getElementById('aboutPhoto').src = p.photo;
+  document.getElementById('heroPhoto').src = Util.imageUrl(p.photo);
+  document.getElementById('aboutPhoto').src = Util.imageUrl(p.photo);
   document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
   document.getElementById('bio1').textContent = p.bio1;
   document.getElementById('bio2').textContent = p.bio2;
@@ -115,14 +115,21 @@
       '<div class="metric">📺 ' + esc(c.subs) + ' subscribers</div>' +
       '<a class="btn btn-gold shimmer" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
   }).join('');
-  document.getElementById('videos').innerHTML = content.videos.map(function (id, i) {
-    var valid = id && id.indexOf('[') === -1;
-    return '<div class="video-card reveal"><div class="frame">' +
-      (valid ? '<iframe src="https://www.youtube.com/embed/' + esc(id) + '" title="Video ' + (i+1) +
-        '" allowfullscreen loading="lazy"></iframe>'
-        : 'Video ' + (i+1) + ' — set ID in admin') +
-      '</div><div class="vt">Latest Upload ' + (i+1) + '</div></div>';
-    // ADMIN: Replace video IDs from YouTube URL (?v=XXXX)
+  document.getElementById('videos').innerHTML = content.videos.map(function (v, i) {
+    var em = Util.videoEmbed(v);
+    var inner;
+    if (em.type === 'iframe') {
+      inner = '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) +
+        '" allowfullscreen loading="lazy"></iframe>';
+    } else if (em.type === 'video') {
+      inner = '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" ' +
+        'style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
+    } else {
+      inner = 'Video ' + (i + 1) + ' — add a link or upload in admin';
+    }
+    return '<div class="video-card reveal"><div class="frame">' + inner +
+      '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
+    // ADMIN: paste a YouTube/Drive link or upload a video file in Content → Featured Videos.
   }).join('');
   document.getElementById('pillars').innerHTML = content.pillars.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
   document.getElementById('hashtags').innerHTML = content.hashtags.map(function (t) { return '<span class="chip hash">' + esc(t) + '</span>'; }).join('');
@@ -181,6 +188,7 @@
     var roleCat = (e.role || '').toLowerCase();
     var filterKey = e.category;
     return '<div class="card event-card reveal" data-cat="' + esc(filterKey) + '" data-role="' + esc(roleCat) + '">' +
+      (e.image ? '<img src="' + esc(Util.imageUrl(e.image)) + '" alt="' + esc(e.name) + '" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:10px;border:1px solid var(--border);margin-bottom:4px">' : '') +
       (e.milestone ? '<span class="cat-badge" style="background:var(--gold);color:#000">🏆 Milestone</span>' : '') +
       '<h4>' + esc(e.name) + '</h4>' +
       '<div class="event-meta"><span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(e.category) + '</span>' +
@@ -208,7 +216,10 @@
 
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
-    return '<div class="card aff-card reveal tilt"><div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>' +
+    var affLogo = a.logo
+      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
+      : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
+    return '<div class="card aff-card reveal tilt">' + affLogo +
       '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p><p class="aff-offer">' + esc(a.offer) + '</p>' +
       '<a class="btn btn-gold shimmer" href="' + esc(a.url) + '" ' + ext + '>' + esc(a.cta) + '</a></div>';
   }).join('');
@@ -223,7 +234,8 @@
   /* ---------- Testimonials ---------- */
   document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').map(function (t) {
     return '<div class="card test-card reveal"><p class="q">"' + esc(t.quote) + '"</p>' +
-      '<div class="test-author"><div class="test-avatar">' + esc((t.name || '?')[0]) + '</div>' +
+      '<div class="test-author"><div class="test-avatar"' + (t.avatar ? ' style="background:none;overflow:hidden"' : '') + '>' +
+      (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
       '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
   }).join('');
 

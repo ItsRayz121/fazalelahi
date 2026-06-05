@@ -67,5 +67,41 @@ create policy "inquiries admin delete"
   on public.inquiries for delete
   to authenticated using (true);
 
+-- 3) MEDIA STORAGE BUCKET ---------------------------------------------
+-- Holds images & videos uploaded from the admin panel ("Upload from
+-- device"). Public can READ (so the website can show them); only signed-in
+-- admins can UPLOAD / replace / delete. Safe to re-run.
+insert into storage.buckets (id, name, public)
+values ('media', 'media', true)
+on conflict (id) do update set public = true;
+
+-- Anyone can read media (powers <img>/<video> on the public site).
+drop policy if exists "media public read" on storage.objects;
+create policy "media public read"
+  on storage.objects for select
+  using ( bucket_id = 'media' );
+
+-- Only signed-in admins can upload.
+drop policy if exists "media admin insert" on storage.objects;
+create policy "media admin insert"
+  on storage.objects for insert
+  to authenticated
+  with check ( bucket_id = 'media' );
+
+-- Only signed-in admins can replace (upsert) existing files.
+drop policy if exists "media admin update" on storage.objects;
+create policy "media admin update"
+  on storage.objects for update
+  to authenticated
+  using ( bucket_id = 'media' )
+  with check ( bucket_id = 'media' );
+
+-- Only signed-in admins can delete.
+drop policy if exists "media admin delete" on storage.objects;
+create policy "media admin delete"
+  on storage.objects for delete
+  to authenticated
+  using ( bucket_id = 'media' );
+
 -- Done. Next: create your admin login under Authentication → Users
 -- (Add user → enter your email + password → enable "Auto Confirm User").
