@@ -1,0 +1,19 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Node (only if you add tooling later)
+node_modules/
+npm-debug.log*
+
+# Local env / secrets (NEVER commit private keys)
+.env
+.env.local
+*.local.env
+
+# Logs / temp
+*.log
+.cache/

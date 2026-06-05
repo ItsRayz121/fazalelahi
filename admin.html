@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Fazal Elahi CMS</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+:root{--void:#07070F;--deep:#0E0E1C;--surface:rgba(255,255,255,.04);--gold:#F2A900;--emerald:#00D4A0;
+  --blue:#3B82F6;--red:#FF3B3B;--white:#fff;--silver:#B0B0C8;--muted:#5A5A78;--border:rgba(242,169,0,.12);
+  --head:'Outfit',sans-serif;--body:'DM Sans',sans-serif;--mono:'Space Mono',monospace;--disp:'Bebas Neue',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--void);color:var(--silver);font-family:var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--gold);text-decoration:none}
+h1,h2,h3{color:var(--white);font-family:var(--head)}
+button{font-family:var(--head);cursor:pointer}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* ---- LOGIN ---- */
+#login{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#12122a,#07070f);z-index:100}
+.login-box{background:var(--deep);border:1px solid var(--border);border-radius:20px;padding:42px;width:min(400px,90vw);text-align:center}
+.login-box .lock{font-size:46px;margin-bottom:12px}
+.login-box h1{font-family:var(--disp);font-size:38px;letter-spacing:1px}
+.login-box p{font-size:13px;margin-bottom:22px;color:var(--muted)}
+.login-box input{width:100%;background:var(--void);border:1px solid var(--border);border-radius:10px;padding:14px;color:#fff;font-size:15px;margin-bottom:14px}
+.login-box button{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:14px;font-weight:700;font-size:15px}
+.err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
+
+/* ---- LAYOUT ---- */
+#app{display:none;grid-template-columns:250px 1fr;min-height:100vh}
+#sidebar{background:var(--deep);border-right:1px solid var(--border);padding:20px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side-brand{font-family:var(--disp);font-size:26px;color:#fff;padding:0 10px 18px;letter-spacing:1px}
+.side-brand span{color:var(--gold)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:var(--silver);
+  font-family:var(--head);font-weight:500;font-size:14px;cursor:pointer;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;position:relative}
+.nav-item:hover{background:var(--surface);color:#fff}
+.nav-item.active{background:rgba(242,169,0,.12);color:var(--gold)}
+.nav-item .badge{position:absolute;right:10px;background:var(--red);color:#fff;font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:10px}
+#main{padding:30px clamp(16px,3vw,42px);max-width:1100px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:12px}
+.topbar h2{font-size:26px}
+.page-desc{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* ---- COMPONENTS ---- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+label{display:block;font-size:12px;color:var(--silver);margin:12px 0 5px;font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;background:var(--void);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:#fff;font-family:var(--body);font-size:14px}
+textarea{min-height:90px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:9px;padding:11px 18px;font-weight:700;font-size:14px}
+.btn-gold{background:var(--gold);color:#000}
+.btn-em{background:var(--emerald);color:#000}
+.btn-ghost{background:var(--surface);color:#fff;border:1px solid var(--border)}
+.btn-red{background:rgba(255,59,59,.15);color:var(--red);border:1px solid rgba(255,59,59,.3)}
+.btn-sm{padding:7px 12px;font-size:12px}
+.row-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;background:var(--void);
+  border:1px solid var(--border);border-radius:10px;margin-bottom:9px}
+.row-item .info{flex:1;min-width:0}
+.row-item .info strong{color:#fff;font-family:var(--head)}
+.row-item .info small{display:block;color:var(--muted);font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-actions{display:flex;gap:6px;flex-shrink:0}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.stat-card .n{font-family:var(--mono);font-size:30px;color:var(--gold);font-weight:700}
+.stat-card .l{font-size:12px;color:var(--silver);margin-top:4px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--emerald);color:#000;padding:14px 22px;border-radius:10px;
+  font-weight:700;z-index:200;transform:translateY(120px);transition:.4s}
+.toast.show{transform:none}
+.muted{color:var(--muted);font-size:13px}
+.tag{display:inline-block;background:var(--void);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-family:var(--mono);font-size:11px;margin:3px 3px 0 0}
+.pill-status{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:12px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;z-index:150;padding:20px}
+.modal-bg.show{display:grid}
+.modal{background:var(--deep);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(640px,95vw);max-height:90vh;overflow-y:auto}
+.modal h3{margin-bottom:14px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.hidden{display:none!important}
+.hamburger{display:none}
+.field-help{font-size:11px;color:var(--muted);margin-top:3px}
+@media (max-width:820px){
+  #app{grid-template-columns:1fr}
+  #sidebar{position:fixed;left:0;top:0;width:250px;z-index:90;transform:translateX(-100%);transition:.3s}
+  #sidebar.open{transform:none}
+  .hamburger{display:inline-flex;background:var(--gold);color:#000;border:none;border-radius:8px;padding:9px 13px;font-weight:700}
+  .grid2,.grid4,.stat-cards{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="login-box">
+    <div class="lock">🔒</div>
+    <h1>ADMIN ACCESS</h1>
+    <p>Fazal Elahi CMS — authorized access only</p>
+    <input type="password" id="pw" placeholder="Enter password" autocomplete="current-password">
+    <button id="loginBtn">Unlock Dashboard</button>
+    <div class="err" id="loginErr"></div>
+    <p style="margin-top:16px;font-size:11px">Default password: <strong>fazal2026</strong> — change it in Security.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-brand">FAZAL<span>.</span> CMS</div>
+    <nav id="sideNav"></nav>
+    <button class="nav-item" id="logoutBtn" style="margin-top:20px;color:var(--red)">🚪 Logout</button>
+  </aside>
+  <main id="main">
+    <div class="topbar">
+      <div>
+        <button class="hamburger" id="hamburger">☰ Menu</button>
+        <h2 id="pageTitle">Dashboard</h2>
+        <p class="page-desc" id="pageDesc"></p>
+      </div>
+      <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">👁 Preview Site</a>
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, san = Util.sanitize;
+  Store.init();
+
+  /* ============ AUTH ============ */
+  var SESSION_KEY = 'fazal_admin_auth';
+  function isAuthed() { return sessionStorage.getItem(SESSION_KEY) === 'true'; }
+  function showApp() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    buildNav(); route('dashboard');
+  }
+  function logAttempt(ok) {
+    var log = Store.get('fazal_login_log') || [];
+    log.unshift({ ts: new Date().toISOString(), result: ok ? 'Pass' : 'Fail' });
+    localStorage.setItem('fazal_login_log', JSON.stringify(log.slice(0, 10)));
+  }
+  async function tryLogin() {
+    var pw = document.getElementById('pw').value;
+    var hash = await Util.sha256(pw);
+    var stored = localStorage.getItem('fazal_admin_hash') || Store.defaults.fazal_admin_hash;
+    if (hash === stored) {
+      sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); showApp();
+    } else {
+      logAttempt(false);
+      document.getElementById('loginErr').textContent = '❌ Incorrect password.';
+      document.getElementById('pw').value = '';
+    }
+  }
+  document.getElementById('loginBtn').addEventListener('click', tryLogin);
+  document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
+  document.getElementById('logoutBtn').addEventListener('click', function () {
+    sessionStorage.removeItem(SESSION_KEY); location.reload();
+  });
+
+  // First-run / placeholder: ensure a REAL SHA-256 hash is stored.
+  // Store.init() seeds a placeholder hash, so we replace it with the real
+  // hash of the default password "fazal2026" until the admin changes it.
+  (function ensureRealHash() {
+    var stored = localStorage.getItem('fazal_admin_hash');
+    if (stored === null || stored === Store.defaults.fazal_admin_hash) {
+      Util.sha256('fazal2026').then(function (h) { localStorage.setItem('fazal_admin_hash', h); });
+    }
+  })();
+  if (isAuthed()) showApp();
+
+  /* ============ NAV CONFIG ============ */
+  var SECTIONS = [
+    ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Roles Manager'],
+    ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events Manager'],
+    ['projects','🗂️ Projects'], ['kol','🎯 KOL Network'], ['community','🏘️ Community'],
+    ['social','🌐 Social Links'], ['affiliates','🤝 Affiliates'], ['testimonials','💬 Testimonials'],
+    ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
+    ['settings','⚙️ Site Settings'], ['security','🔒 Security']
+  ];
+  function buildNav() {
+    var newInq = Store.get('fazal_inquiries').filter(function (i) { return i.status === 'New'; }).length;
+    document.getElementById('sideNav').innerHTML = SECTIONS.map(function (s) {
+      var badge = (s[0] === 'inquiries' && newInq) ? '<span class="badge">' + newInq + '</span>' : '';
+      return '<button class="nav-item" data-route="' + s[0] + '">' + s[1] + badge + '</button>';
+    }).join('');
+    document.querySelectorAll('.nav-item[data-route]').forEach(function (b) {
+      b.addEventListener('click', function () { route(b.dataset.route); closeSidebar(); });
+    });
+  }
+  function setActive(r) {
+    document.querySelectorAll('.nav-item[data-route]').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.route === r);
+    });
+  }
+
+  /* ============ HELPERS ============ */
+  function toast(msg) {
+    var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function save(key, val, msg) { Store.set(key, val); toast(msg || 'Saved ✓'); buildNav(); }
+  function modal(html) { document.getElementById('modal').innerHTML = html; document.getElementById('modalBg').classList.add('show'); }
+  function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
+  document.getElementById('modalBg').addEventListener('click', function (e) { if (e.target.id === 'modalBg') closeModal(); });
+  window._closeModal = closeModal;
+  function val(id) { return document.getElementById(id).value; }
+  function list(str) { return (str || '').split(',').map(function (s) { return san(s); }).filter(Boolean); }
+  function pageHead(r) {
+    var meta = {
+      dashboard:'Overview of all content and quick actions', profile:'Edit identity, hero stats, bio and contact info',
+      roles:'The seven role cards on the public site', experience:'Work history (full CRUD)',
+      cases:'Proof-of-work case studies', events:'All events — pre-loaded, fully editable',
+      projects:'Additional projects', kol:'KOL partners, services and markets',
+      community:'Community platform cards and features', social:'All social platform links',
+      affiliates:'Affiliate partner cards', testimonials:'Client testimonials',
+      content:'YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags',
+      inquiries:'Contact form submissions', settings:'SEO, maintenance, backup/restore',
+      security:'Password, sessions and login log'
+    };
+    document.getElementById('pageTitle').textContent = SECTIONS.find(function (s) { return s[0] === r; })[1].replace(/^[^ ]+ /, '');
+    document.getElementById('pageDesc').textContent = meta[r] || '';
+  }
+
+  /* ============ ROUTER ============ */
+  function route(r) {
+    setActive(r); pageHead(r);
+    var c = document.getElementById('content');
+    ({
+      dashboard: renderDashboard, profile: renderProfile, roles: renderRoles,
+      experience: renderExperience, cases: renderCases, events: renderEvents,
+      projects: renderProjects, kol: renderKOL, community: renderCommunity,
+      social: renderSocial, affiliates: renderAffiliates, testimonials: renderTestimonials,
+      content: renderContent, keywords: renderKeywords, inquiries: renderInquiries,
+      settings: renderSettings, security: renderSecurity
+    }[r])(c);
+  }
+
+  /* ============ DASHBOARD ============ */
+  function renderDashboard(c) {
+    var inq = Store.get('fazal_inquiries'), newInq = inq.filter(function (i) { return i.status === 'New'; }).length;
+    var act = Store.activity();
+    c.innerHTML =
+      '<div class="stat-cards">' +
+      statCard(Store.get('fazal_events').length, 'Events') +
+      statCard(Store.get('fazal_projects').length, 'Projects') +
+      statCard(Store.get('fazal_testimonials').length, 'Testimonials') +
+      statCard(inq.length + (newInq ? ' (' + newInq + ' new)' : ''), 'Inquiries') + '</div>' +
+      '<div class="card"><h3>Quick Actions</h3><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">' +
+      '<button class="btn btn-gold" data-q="events">+ Add Event</button>' +
+      '<button class="btn btn-gold" data-q="projects">+ Add Project</button>' +
+      '<button class="btn btn-gold" data-q="testimonials">+ Add Testimonial</button>' +
+      '<button class="btn btn-gold" data-q="kol">+ Add KOL Partner</button></div></div>' +
+      '<div class="card"><h3>Data Sync Health</h3><p class="muted" style="margin-top:8px">🟢 localStorage active — public site reads the same data. Changes appear on reload.</p></div>' +
+      '<div class="card"><h3>Recent Activity</h3>' +
+      (act.length ? act.map(function (a) { return '<div class="row-item"><div class="info"><strong>' + esc(a.msg) + '</strong><small>' + new Date(a.ts).toLocaleString() + '</small></div></div>'; }).join('')
+        : '<p class="muted" style="margin-top:8px">No activity yet.</p>') + '</div>';
+    c.querySelectorAll('[data-q]').forEach(function (b) { b.addEventListener('click', function () { route(b.dataset.q); }); });
+  }
+  function statCard(n, l) { return '<div class="stat-card"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>'; }
+
+  /* ============ PROFILE ============ */
+  function renderProfile(c) {
+    var p = Store.get('fazal_profile');
+    var statFields = p.stats.map(function (s, i) {
+      return '<div class="grid2"><input id="sv' + i + '" value="' + esc(s.value) + '" placeholder="Value">' +
+        '<input id="sl' + i + '" value="' + esc(s.label) + '" placeholder="Label"></div>';
+    }).join('');
+    c.innerHTML = '<div class="card">' +
+      f('Name','pf_name',p.name) + f('Hero Tagline','pf_tagline',p.tagline) +
+      f('Sub-tagline','pf_sub',p.subTagline) + ta('Mission / Hero Body','pf_mission',p.mission) +
+      f('Profile Photo URL','pf_photo',p.photo) +
+      '<div class="grid2">' + f('Email','pf_email',p.email) + f('Phone / WhatsApp','pf_phone',p.phone) + '</div>' +
+      '<div class="grid2">' + f('Location','pf_loc',p.location) + f('Availability','pf_avail',p.availability) + '</div>' +
+      f('LinkedIn URL','pf_li',p.linkedin) + f('CV Download URL','pf_cv',p.cvUrl) +
+      '<h3 style="margin-top:18px">Hero Stats (8)</h3>' + statFields +
+      ta('Bio Paragraph 1','pf_bio1',p.bio1) + ta('Bio Paragraph 2','pf_bio2',p.bio2) + ta('Bio Paragraph 3','pf_bio3',p.bio3) +
+      ta('Expertise Tags (comma-separated)','pf_exp',p.expertise.join(', ')) +
+      '<button class="btn btn-gold" id="saveProfile" style="margin-top:18px">💾 Save Profile</button></div>';
+    document.getElementById('saveProfile').addEventListener('click', function () {
+      p.name = san(val('pf_name')); p.tagline = san(val('pf_tagline')); p.subTagline = san(val('pf_sub'));
+      p.mission = san(val('pf_mission')); p.photo = san(val('pf_photo')); p.email = san(val('pf_email'));
+      p.phone = san(val('pf_phone')); p.location = san(val('pf_loc')); p.availability = san(val('pf_avail'));
+      p.linkedin = san(val('pf_li')); p.cvUrl = san(val('pf_cv'));
+      p.bio1 = san(val('pf_bio1')); p.bio2 = san(val('pf_bio2')); p.bio3 = san(val('pf_bio3'));
+      p.expertise = list(val('pf_exp'));
+      p.stats = p.stats.map(function (s, i) { return { value: san(val('sv' + i)), label: san(val('sl' + i)), accent: s.accent }; });
+      save('fazal_profile', p, 'Profile saved ✓');
+    });
+  }
+
+  /* ============ Generic CRUD list builder ============ */
+  function crudList(items, opts) {
+    // opts: {title(item), sub(item)}
+    return items.map(function (it, i) {
+      return '<div class="row-item"><div class="info"><strong>' + esc(opts.title(it)) + '</strong><small>' + esc(opts.sub(it)) + '</small></div>' +
+        '<div class="row-actions">' +
+        (i > 0 ? '<button class="btn btn-ghost btn-sm" data-act="up" data-i="' + i + '">↑</button>' : '') +
+        '<button class="btn btn-ghost btn-sm" data-act="edit" data-i="' + i + '">✏️</button>' +
+        '<button class="btn btn-red btn-sm" data-act="del" data-i="' + i + '">🗑</button></div></div>';
+    }).join('');
+  }
+  function wireCrud(c, key, opts) {
+    c.querySelectorAll('[data-act]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = +b.dataset.i, arr = Store.get(key);
+        if (b.dataset.act === 'del') {
+          modal('<h3>Delete this entry?</h3><p class="muted">This cannot be undone.</p>' +
+            '<div class="modal-actions"><button class="btn btn-ghost" onclick="_closeModal()">Cancel</button>' +
+            '<button class="btn btn-red" id="confDel">Delete</button></div>');
+          document.getElementById('confDel').addEventListener('click', function () {
+            arr.splice(i, 1); save(key, arr, 'Deleted ✓'); closeModal(); opts.rerender();
+          });
+        } else if (b.dataset.act === 'up') {
+          var t = arr[i]; arr[i] = arr[i - 1]; arr[i - 1] = t; save(key, arr, 'Reordered ✓'); opts.rerender();
+        } else if (b.dataset.act === 'edit') { opts.form(arr[i], i); }
+      });
+    });
+  }
+
+  /* ============ ROLES ============ */
+  function renderRoles(c) {
+    var roles = Store.get('fazal_roles');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Role</button>' +
+      crudList(roles, { title: function (r) { return r.icon + ' ' + r.title; }, sub: function (r) { return r.desc; } });
+    document.getElementById('add').addEventListener('click', function () { roleForm({ icon:'⭐', title:'', color:'gold', desc:'', visible:true }, -1); });
+    wireCrud(c, 'fazal_roles', { rerender: function () { renderRoles(c); }, form: roleForm });
+  }
+  function roleForm(r, i) {
+    var colors = ['gold','blue','red','emerald','purple','orange','pkgreen'];
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Role</h3>' +
+      f('Icon (emoji)','r_icon',r.icon) + f('Title','r_title',r.title) +
+      '<label>Badge Color</label><select id="r_color">' + colors.map(function (col) { return '<option' + (col === r.color ? ' selected' : '') + '>' + col + '</option>'; }).join('') + '</select>' +
+      ta('Description','r_desc',r.desc) +
+      '<label><input type="checkbox" id="r_vis" ' + (r.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
+      modalActions('saveRole'));
+    document.getElementById('saveRole').addEventListener('click', function () {
+      var arr = Store.get('fazal_roles');
+      var obj = { icon: san(val('r_icon')), title: san(val('r_title')), color: val('r_color'), desc: san(val('r_desc')), visible: document.getElementById('r_vis').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_roles', arr, 'Role saved ✓'); closeModal(); renderRoles(document.getElementById('content'));
+    });
+  }
+
+  /* ============ EXPERIENCE ============ */
+  function renderExperience(c) {
+    var arr = Store.get('fazal_experience');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Experience</button>' +
+      crudList(arr, { title: function (e) { return e.company + ' — ' + e.role; }, sub: function (e) { return e.start + ' – ' + e.end + ' · ' + e.status; } });
+    document.getElementById('add').addEventListener('click', function () { expForm({ company:'', role:'', status:'Active', start:'', end:'', accent:'gold', desc:'', metrics:[], skills:[], featured:false }, -1); });
+    wireCrud(c, 'fazal_experience', { rerender: function () { renderExperience(c); }, form: expForm });
+  }
+  function expForm(e, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Experience</h3>' +
+      '<div class="grid2">' + f('Company','e_co',e.company) + f('Role','e_role',e.role) + '</div>' +
+      '<div class="grid2"><label>Status</label><label>Accent</label></div><div class="grid2">' +
+      '<select id="e_status">' + ['Active','Completed','Upcoming'].map(function (s) { return '<option' + (s === e.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+      '<select id="e_accent">' + ['gold','emerald'].map(function (s) { return '<option' + (s === e.accent ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>' +
+      '<div class="grid2">' + f('Start','e_start',e.start) + f('End','e_end',e.end) + '</div>' +
+      ta('Description','e_desc',e.desc) +
+      ta('Metrics (comma-separated)','e_metrics',(e.metrics||[]).join(', ')) +
+      ta('Skills (comma-separated)','e_skills',(e.skills||[]).join(', ')) +
+      modalActions('saveExp'));
+    document.getElementById('saveExp').addEventListener('click', function () {
+      var arr = Store.get('fazal_experience');
+      var obj = { company: san(val('e_co')), role: san(val('e_role')), status: val('e_status'), accent: val('e_accent'),
+        start: san(val('e_start')), end: san(val('e_end')), desc: san(val('e_desc')),
+        metrics: list(val('e_metrics')), skills: list(val('e_skills')), featured: true };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_experience', arr, 'Saved ✓'); closeModal(); renderExperience(document.getElementById('content'));
+    });
+  }
+
+  /* ============ CASE STUDIES ============ */
+  function renderCases(c) {
+    var arr = Store.get('fazal_casestudies');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Case Study</button>' +
+      crudList(arr, { title: function (x) { return x.title; }, sub: function (x) { return x.badge; } });
+    document.getElementById('add').addEventListener('click', function () { caseForm({ title:'', badge:'', challenge:'', strategy:'', results:'', metrics:[], tags:[], proofUrl:'' }, -1); });
+    wireCrud(c, 'fazal_casestudies', { rerender: function () { renderCases(c); }, form: caseForm });
+  }
+  function caseForm(x, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Case Study</h3>' +
+      f('Title','c_title',x.title) + f('Badge','c_badge',x.badge) +
+      ta('Challenge','c_ch',x.challenge) + ta('Strategy','c_st',x.strategy) + ta('Results','c_re',x.results) +
+      ta('Metrics (comma-separated)','c_met',(x.metrics||[]).join(', ')) +
+      ta('Tags (comma-separated)','c_tags',(x.tags||[]).join(', ')) +
+      f('Live Proof URL','c_proof',x.proofUrl) + modalActions('saveCase'));
+    document.getElementById('saveCase').addEventListener('click', function () {
+      var arr = Store.get('fazal_casestudies');
+      var obj = { title: san(val('c_title')), badge: san(val('c_badge')), challenge: san(val('c_ch')),
+        strategy: san(val('c_st')), results: san(val('c_re')), metrics: list(val('c_met')), tags: list(val('c_tags')), proofUrl: san(val('c_proof')) };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_casestudies', arr, 'Saved ✓'); closeModal(); renderCases(document.getElementById('content'));
+    });
+  }
+
+  /* ============ EVENTS ============ */
+  function renderEvents(c) {
+    var arr = Store.get('fazal_events');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Event</button>' +
+      '<p class="muted" style="margin-bottom:12px">' + arr.length + ' events</p>' +
+      crudList(arr, { title: function (e) { return (e.milestone ? '🏆 ' : '') + e.name; }, sub: function (e) { return e.category + ' · ' + e.role + ' · ' + e.mode; } });
+    document.getElementById('add').addEventListener('click', function () { eventForm({ name:'', category:'Network', role:'Organizer', mode:'Virtual', date:'[EVENT_DATE]', location:'', milestone:false, url:'', image:'' }, -1); });
+    wireCrud(c, 'fazal_events', { rerender: function () { renderEvents(c); }, form: eventForm });
+  }
+  function eventForm(e, i) {
+    var cats = ['Milestone','Industry Event','Exchange Partner','Education','Network','Partnership','Campaign','Speaker','Community','Other'];
+    var roles = ['Speaker','Organizer','Attendee','Host','Panelist','MC','Partner','Campaign Manager','KOL Manager','Regional Manager','Presenter','Team Lead'];
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Event</h3>' +
+      f('Event Name','ev_name',e.name) +
+      '<div class="grid2"><div><label>Category</label><select id="ev_cat">' + cats.map(function (x) { return '<option' + (x === e.category ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' +
+      '<div><label>My Role</label><select id="ev_role">' + roles.map(function (x) { return '<option' + (x === e.role ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="grid2"><div><label>Mode</label><select id="ev_mode"><option' + (e.mode === 'Virtual' ? ' selected' : '') + '>Virtual</option><option' + (e.mode === 'In-Person' ? ' selected' : '') + '>In-Person</option></select></div>' +
+      f('Date','ev_date',e.date) + '</div>' +
+      f('Location','ev_loc',e.location) + f('Banner / Image URL','ev_img',e.image) + f('External URL','ev_url',e.url) +
+      '<label><input type="checkbox" id="ev_mile" ' + (e.milestone ? 'checked' : '') + ' style="width:auto"> 🏆 Milestone (gold banner treatment)</label>' +
+      modalActions('saveEv'));
+    document.getElementById('saveEv').addEventListener('click', function () {
+      var arr = Store.get('fazal_events');
+      var obj = { name: san(val('ev_name')), category: val('ev_cat'), role: val('ev_role'), mode: val('ev_mode'),
+        date: san(val('ev_date')), location: san(val('ev_loc')), image: san(val('ev_img')), url: san(val('ev_url')),
+        milestone: document.getElementById('ev_mile').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_events', arr, 'Saved ✓'); closeModal(); renderEvents(document.getElementById('content'));
+    });
+  }
+
+  /* ============ PROJECTS ============ */
+  function renderProjects(c) {
+    var arr = Store.get('fazal_projects');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Project</button>' +
+      (arr.length ? crudList(arr, { title: function (x) { return x.name; }, sub: function (x) { return (x.category||'') + ' · ' + (x.status||''); } }) : '<p class="muted">No projects yet.</p>');
+    document.getElementById('add').addEventListener('click', function () { projForm({ name:'', category:'', status:'Active', role:'', start:'', end:'', desc:'', logo:'', url:'', featured:false }, -1); });
+    wireCrud(c, 'fazal_projects', { rerender: function () { renderProjects(c); }, form: projForm });
+  }
+  function projForm(x, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Project</h3>' +
+      f('Name','p_name',x.name) + '<div class="grid2">' + f('Category','p_cat',x.category) + f('Status','p_status',x.status) + '</div>' +
+      f('My Role','p_role',x.role) + '<div class="grid2">' + f('Start','p_start',x.start) + f('End','p_end',x.end) + '</div>' +
+      ta('Description','p_desc',x.desc) + f('Logo URL','p_logo',x.logo) + f('External URL','p_url',x.url) + modalActions('saveProj'));
+    document.getElementById('saveProj').addEventListener('click', function () {
+      var arr = Store.get('fazal_projects');
+      var obj = { name: san(val('p_name')), category: san(val('p_cat')), status: san(val('p_status')), role: san(val('p_role')),
+        start: san(val('p_start')), end: san(val('p_end')), desc: san(val('p_desc')), logo: san(val('p_logo')), url: san(val('p_url')), featured: false };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_projects', arr, 'Saved ✓'); closeModal(); renderProjects(document.getElementById('content'));
+    });
+  }
+
+  /* ============ KOL ============ */
+  function renderKOL(c) {
+    var k = Store.get('fazal_kol_network');
+    c.innerHTML = '<div class="card">' + ta('Intro Text','k_intro',k.intro) +
+      ta('Syndicates Text','k_synd',k.syndicates) +
+      '<button class="btn btn-gold" id="saveKolText" style="margin-top:10px">💾 Save Text</button></div>' +
+      '<div class="card"><h3>KOL Partners</h3><button class="btn btn-gold btn-sm" id="addPartner" style="margin:10px 0">+ Add Partner</button>' +
+      k.partners.map(function (pn, i) { return '<div class="row-item"><div class="info"><strong>' + esc(pn.name) + '</strong><small>' + esc(pn.platform) + '</small></div>' +
+        '<div class="row-actions"><button class="btn btn-red btn-sm" data-delp="' + i + '">🗑</button></div></div>'; }).join('') + '</div>' +
+      '<div class="card"><h3>Markets</h3><button class="btn btn-gold btn-sm" id="addMarket" style="margin:10px 0">+ Add Market</button>' +
+      k.markets.map(function (m, i) { return '<span class="tag">' + esc(m.flag) + ' ' + esc(m.name) + ' <a href="#" data-delm="' + i + '" style="color:var(--red)">×</a></span>'; }).join('') + '</div>';
+    document.getElementById('saveKolText').addEventListener('click', function () { k.intro = san(val('k_intro')); k.syndicates = san(val('k_synd')); save('fazal_kol_network', k, 'Saved ✓'); });
+    document.getElementById('addPartner').addEventListener('click', function () {
+      modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') + f('Avatar URL','kp_av','') + modalActions('saveKP'));
+      document.getElementById('saveKP').addEventListener('click', function () {
+        k.partners.push({ name: san(val('kp_name')), platform: san(val('kp_plat')), url: san(val('kp_url')), avatar: san(val('kp_av')) });
+        save('fazal_kol_network', k, 'Added ✓'); closeModal(); renderKOL(document.getElementById('content'));
+      });
+    });
+    document.getElementById('addMarket').addEventListener('click', function () {
+      modal('<h3>Add Market</h3>' + f('Flag (emoji)','m_flag','🌍') + f('Country','m_name','') + modalActions('saveM'));
+      document.getElementById('saveM').addEventListener('click', function () {
+        k.markets.push({ flag: san(val('m_flag')), name: san(val('m_name')) });
+        save('fazal_kol_network', k, 'Added ✓'); closeModal(); renderKOL(document.getElementById('content'));
+      });
+    });
+    c.querySelectorAll('[data-delp]').forEach(function (b) { b.addEventListener('click', function () { k.partners.splice(+b.dataset.delp, 1); save('fazal_kol_network', k, 'Deleted ✓'); renderKOL(c); }); });
+    c.querySelectorAll('[data-delm]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); k.markets.splice(+b.dataset.delm, 1); save('fazal_kol_network', k, 'Deleted ✓'); renderKOL(c); }); });
+  }
+
+  /* ============ COMMUNITY ============ */
+  function renderCommunity(c) {
+    var cm = Store.get('fazal_community');
+    c.innerHTML = cm.cards.map(function (card, i) {
+      return '<div class="card"><h3>Card ' + (i + 1) + ' — ' + esc(card.platform) + '</h3>' +
+        f('Name','cm_name' + i,card.name) + f('URL','cm_url' + i,card.url) + f('Count','cm_cnt' + i,card.count) +
+        ta('Description','cm_desc' + i,card.desc) + f('CTA Text','cm_cta' + i,card.cta) +
+        '<label><input type="checkbox" id="cm_vis' + i + '" ' + (card.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label></div>';
+    }).join('') +
+      '<div class="card">' + ta('Feature Strip (comma-separated)','cm_feat',cm.features.join(', ')) +
+      '<button class="btn btn-gold" id="saveComm" style="margin-top:10px">💾 Save Community</button></div>';
+    document.getElementById('saveComm').addEventListener('click', function () {
+      cm.cards = cm.cards.map(function (card, i) {
+        return { platform: card.platform, name: san(val('cm_name' + i)), url: san(val('cm_url' + i)), count: san(val('cm_cnt' + i)),
+          desc: san(val('cm_desc' + i)), cta: san(val('cm_cta' + i)), visible: document.getElementById('cm_vis' + i).checked };
+      });
+      cm.features = list(val('cm_feat')); save('fazal_community', cm, 'Saved ✓');
+    });
+  }
+
+  /* ============ SOCIAL ============ */
+  function renderSocial(c) {
+    var arr = Store.get('fazal_social');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Platform</button>' +
+      crudList(arr, { title: function (s) { return s.platform; }, sub: function (s) { return s.handle + ' · ' + s.url; } });
+    document.getElementById('add').addEventListener('click', function () { socialForm({ platform:'', url:'', handle:'', color:'#F2A900', count:'', visible:true }, -1); });
+    wireCrud(c, 'fazal_social', { rerender: function () { renderSocial(c); }, form: socialForm });
+  }
+  function socialForm(s, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Social Platform</h3>' +
+      f('Platform Name','s_plat',s.platform) + f('URL','s_url',s.url) + f('Handle','s_handle',s.handle) +
+      f('Brand Color (hex)','s_color',s.color) + f('Follower Count','s_count',s.count) +
+      '<label><input type="checkbox" id="s_vis" ' + (s.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
+      '<p class="field-help">Icons auto-match by platform name (YouTube, Telegram, WhatsApp, Twitter, Facebook, LinkedIn, Linktree).</p>' +
+      modalActions('saveSoc'));
+    document.getElementById('saveSoc').addEventListener('click', function () {
+      var arr = Store.get('fazal_social');
+      var obj = { platform: san(val('s_plat')), url: san(val('s_url')), handle: san(val('s_handle')), color: san(val('s_color')), count: san(val('s_count')), visible: document.getElementById('s_vis').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_social', arr, 'Saved ✓'); closeModal(); renderSocial(document.getElementById('content'));
+    });
+  }
+
+  /* ============ AFFILIATES ============ */
+  function renderAffiliates(c) {
+    var arr = Store.get('fazal_affiliates');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Affiliate</button>' +
+      crudList(arr, { title: function (a) { return a.name; }, sub: function (a) { return a.url; } });
+    document.getElementById('add').addEventListener('click', function () { affForm({ name:'', logo:'', color:'#F2A900', desc:'', offer:'', url:'', cta:'Open Account', visible:true }, -1); });
+    wireCrud(c, 'fazal_affiliates', { rerender: function () { renderAffiliates(c); }, form: affForm });
+  }
+  function affForm(a, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Affiliate</h3>' +
+      f('Name','a_name',a.name) + f('Logo URL','a_logo',a.logo) + f('Brand Color (hex)','a_color',a.color) +
+      ta('Description','a_desc',a.desc) + f('Offer Text','a_offer',a.offer) + f('Affiliate URL','a_url',a.url) + f('CTA Text','a_cta',a.cta) +
+      '<label><input type="checkbox" id="a_vis" ' + (a.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
+      modalActions('saveAff'));
+    document.getElementById('saveAff').addEventListener('click', function () {
+      var arr = Store.get('fazal_affiliates');
+      var obj = { name: san(val('a_name')), logo: san(val('a_logo')), color: san(val('a_color')), desc: san(val('a_desc')),
+        offer: san(val('a_offer')), url: san(val('a_url')), cta: san(val('a_cta')), visible: document.getElementById('a_vis').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_affiliates', arr, 'Saved ✓'); closeModal(); renderAffiliates(document.getElementById('content'));
+    });
+  }
+
+  /* ============ TESTIMONIALS ============ */
+  function renderTestimonials(c) {
+    var arr = Store.get('fazal_testimonials');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Testimonial</button>' +
+      crudList(arr, { title: function (t) { return t.name + ' — ' + t.title; }, sub: function (t) { return t.quote; } });
+    document.getElementById('add').addEventListener('click', function () { testForm({ quote:'', name:'', title:'', avatar:'', featured:true }, -1); });
+    wireCrud(c, 'fazal_testimonials', { rerender: function () { renderTestimonials(c); }, form: testForm });
+  }
+  function testForm(t, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Testimonial</h3>' +
+      ta('Quote','t_quote',t.quote) + f('Name','t_name',t.name) + f('Company / Role','t_title',t.title) + f('Avatar URL','t_av',t.avatar) +
+      modalActions('saveTest'));
+    document.getElementById('saveTest').addEventListener('click', function () {
+      var arr = Store.get('fazal_testimonials');
+      var obj = { quote: san(val('t_quote')), name: san(val('t_name')), title: san(val('t_title')), avatar: san(val('t_av')), featured: true };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_testimonials', arr, 'Saved ✓'); closeModal(); renderTestimonials(document.getElementById('content'));
+    });
+  }
+
+  /* ============ CONTENT / YT ============ */
+  function renderContent(c) {
+    var ct = Store.get('fazal_content');
+    c.innerHTML = ct.channels.map(function (ch, i) {
+      return '<div class="card"><h3>Channel ' + (i + 1) + '</h3>' + f('Name','ct_name' + i,ch.name) + f('URL','ct_url' + i,ch.url) +
+        ta('Description','ct_desc' + i,ch.desc) + f('Subscribers','ct_subs' + i,ch.subs) + '</div>';
+    }).join('') +
+      '<div class="card"><h3>Featured Videos (YouTube IDs)</h3><p class="field-help">Just the ID from the URL ?v=XXXX</p>' +
+      ct.videos.map(function (v, i) { return f('Video ' + (i + 1) + ' ID','ct_vid' + i,v); }).join('') + '</div>' +
+      '<div class="card">' + ta('Content Pillars (comma-separated)','ct_pillars',ct.pillars.join(', ')) +
+      ta('Hashtags (comma-separated)','ct_hash',ct.hashtags.join(', ')) +
+      f('Frequency / Section Sub','ct_freq',ct.frequency) +
+      '<button class="btn btn-gold" id="saveContent" style="margin-top:10px">💾 Save Content</button></div>';
+    document.getElementById('saveContent').addEventListener('click', function () {
+      ct.channels = ct.channels.map(function (ch, i) { return { name: san(val('ct_name' + i)), url: san(val('ct_url' + i)), desc: san(val('ct_desc' + i)), subs: san(val('ct_subs' + i)) }; });
+      ct.videos = ct.videos.map(function (v, i) { return san(val('ct_vid' + i)); });
+      ct.pillars = list(val('ct_pillars')); ct.hashtags = list(val('ct_hash')); ct.frequency = san(val('ct_freq'));
+      save('fazal_content', ct, 'Saved ✓');
+    });
+  }
+
+  /* ============ KEYWORDS ============ */
+  function renderKeywords(c) {
+    var arr = Store.get('fazal_keywords');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Keyword</button>' +
+      '<button class="btn btn-ghost" id="exportKw" style="margin-bottom:14px">⬇ Export .txt</button>' +
+      crudList(arr, { title: function (k) { return k.text; }, sub: function (k) { return k.category + (k.featured ? ' · featured' : ''); } });
+    document.getElementById('add').addEventListener('click', function () { kwForm({ text:'', category:'Hashtag', featured:true }, -1); });
+    document.getElementById('exportKw').addEventListener('click', function () {
+      download('keywords.txt', arr.map(function (k) { return k.text + ' [' + k.category + ']'; }).join('\n'));
+    });
+    wireCrud(c, 'fazal_keywords', { rerender: function () { renderKeywords(c); }, form: kwForm });
+  }
+  function kwForm(k, i) {
+    var cats = ['Primary KW','Hashtag','Content Pillar','Campaign Tag','SEO Keyword'];
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Keyword</h3>' + f('Text','k_text',k.text) +
+      '<label>Category</label><select id="k_cat">' + cats.map(function (x) { return '<option' + (x === k.category ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
+      '<label><input type="checkbox" id="k_feat" ' + (k.featured ? 'checked' : '') + ' style="width:auto"> Featured</label>' + modalActions('saveKw'));
+    document.getElementById('saveKw').addEventListener('click', function () {
+      var arr = Store.get('fazal_keywords');
+      var obj = { text: san(val('k_text')), category: val('k_cat'), featured: document.getElementById('k_feat').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_keywords', arr, 'Saved ✓'); closeModal(); renderKeywords(document.getElementById('content'));
+    });
+  }
+
+  /* ============ INQUIRIES ============ */
+  function renderInquiries(c) {
+    var arr = Store.get('fazal_inquiries');
+    var statusColors = { New:'var(--red)', 'In Review':'var(--gold)', Replied:'var(--emerald)', Archived:'var(--muted)' };
+    c.innerHTML = '<button class="btn btn-ghost" id="exportInq" style="margin-bottom:14px">⬇ Export CSV</button>' +
+      (arr.length ? arr.map(function (q, i) {
+        return '<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">' +
+          '<strong style="color:#fff">' + esc(q.name) + ' &lt;' + esc(q.email) + '&gt;</strong>' +
+          '<span class="pill-status" style="background:' + (statusColors[q.status] || 'var(--muted)') + '22;color:' + (statusColors[q.status] || 'var(--muted)') + '">' + esc(q.status) + '</span></div>' +
+          '<p class="muted" style="margin:6px 0">' + esc(q.company || '—') + ' · ' + esc(q.type) + ' · ' + new Date(q.ts).toLocaleString() + '</p>' +
+          '<p>' + esc(q.message) + '</p>' +
+          '<div class="row-actions" style="margin-top:10px">' +
+          '<select data-st="' + i + '">' + ['New','In Review','Replied','Archived'].map(function (s) { return '<option' + (s === q.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+          '<button class="btn btn-red btn-sm" data-delq="' + i + '">🗑</button></div></div>';
+      }).join('') : '<p class="muted">No inquiries yet.</p>');
+    c.querySelectorAll('[data-st]').forEach(function (sel) { sel.addEventListener('change', function () { arr[+sel.dataset.st].status = sel.value; save('fazal_inquiries', arr, 'Status updated ✓'); renderInquiries(c); }); });
+    c.querySelectorAll('[data-delq]').forEach(function (b) { b.addEventListener('click', function () { arr.splice(+b.dataset.delq, 1); save('fazal_inquiries', arr, 'Deleted ✓'); renderInquiries(c); }); });
+    var exp = document.getElementById('exportInq');
+    if (exp) exp.addEventListener('click', function () {
+      var csv = 'Name,Email,Company,Type,Status,Date,Message\n' + arr.map(function (q) {
+        return [q.name, q.email, q.company, q.type, q.status, q.ts, q.message].map(function (v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+      download('inquiries.csv', csv);
+    });
+  }
+
+  /* ============ SETTINGS ============ */
+  function renderSettings(c) {
+    var s = Store.get('fazal_settings');
+    c.innerHTML = '<div class="card">' +
+      f('Site Title','st_title',s.title) + ta('Meta Description','st_desc',s.description) +
+      f('Hero Headline Override','st_hh',s.heroHeadline || '') + f('Hero Sub Override','st_hs',s.heroSub || '') +
+      f('Footer Tagline','st_foot',s.footerTagline) + f('Site URL','st_url',s.siteUrl) + f('OG Image URL','st_og',s.ogImage) +
+      '<label><input type="checkbox" id="st_maint" ' + (s.maintenance ? 'checked' : '') + ' style="width:auto"> 🚧 Maintenance Mode (public site → Coming Soon)</label>' +
+      '<label><input type="checkbox" id="st_disc" ' + (s.showDisclaimer !== false ? 'checked' : '') + ' style="width:auto"> Show "Not financial advice" disclaimer</label>' +
+      ta('Custom CSS (injected into public site)','st_css',Store.get('fazal_customcss')) +
+      '<button class="btn btn-gold" id="saveSettings" style="margin-top:12px">💾 Save Settings</button></div>' +
+      '<div class="card"><h3>Backup &amp; Restore</h3><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">' +
+      '<button class="btn btn-em" id="exportData">⬇ Export All Data (JSON)</button>' +
+      '<label class="btn btn-ghost" style="margin:0">⬆ Import JSON<input type="file" id="importData" accept=".json" style="display:none"></label>' +
+      '<button class="btn btn-red" id="resetData">↺ Reset to Defaults</button></div></div>';
+    document.getElementById('saveSettings').addEventListener('click', function () {
+      s.title = san(val('st_title')); s.description = san(val('st_desc')); s.heroHeadline = san(val('st_hh'));
+      s.heroSub = san(val('st_hs')); s.footerTagline = san(val('st_foot')); s.siteUrl = san(val('st_url')); s.ogImage = san(val('st_og'));
+      s.maintenance = document.getElementById('st_maint').checked; s.showDisclaimer = document.getElementById('st_disc').checked;
+      Store.set('fazal_customcss', val('st_css')); save('fazal_settings', s, 'Settings saved ✓');
+    });
+    document.getElementById('exportData').addEventListener('click', function () {
+      var d = new Date().toISOString().slice(0, 10);
+      download('fazal-backup-' + d + '.json', JSON.stringify(Store.exportAll(), null, 2));
+    });
+    document.getElementById('importData').addEventListener('change', function (e) {
+      var file = e.target.files[0]; if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try { Store.importAll(JSON.parse(reader.result)); toast('Imported ✓'); renderSettings(c); buildNav(); }
+        catch (err) { toast('❌ Invalid JSON'); }
+      };
+      reader.readAsText(file);
+    });
+    document.getElementById('resetData').addEventListener('click', function () {
+      modal('<h3>⚠️ Reset ALL data to defaults?</h3><p class="muted">This wipes every change and restores the original content. Type RESET to confirm.</p>' +
+        '<input id="resetConf" placeholder="Type RESET">' + modalActions('confReset', 'Reset Everything', 'btn-red'));
+      document.getElementById('confReset').addEventListener('click', function () {
+        if (val('resetConf') === 'RESET') { Store.resetAll(); toast('Reset complete ✓'); closeModal(); renderSettings(c); buildNav(); }
+        else toast('❌ Type RESET exactly');
+      });
+    });
+  }
+
+  /* ============ SECURITY ============ */
+  function renderSecurity(c) {
+    var log = Store.get('fazal_login_log') || [];
+    c.innerHTML = '<div class="card"><h3>Change Password</h3>' +
+      f('New Password','sec_pw','') + f('Confirm Password','sec_pw2','') +
+      '<button class="btn btn-gold" id="changePw" style="margin-top:10px">🔑 Update Password</button>' +
+      '<p class="field-help">Stored as SHA-256 hash. Plain text is never saved.</p></div>' +
+      '<div class="card"><h3>Session</h3><label>Session Timeout</label>' +
+      '<select id="sec_timeout"><option>30 min</option><option>60 min</option><option>2 hrs</option><option selected>Never</option></select>' +
+      '<button class="btn btn-red" id="forceLogout" style="margin-top:12px">🚪 Force Logout (clear session)</button>' +
+      '<p class="field-help">Tip: enable 2FA on your hosting platform (Netlify / Vercel / Cloudflare) for an extra layer.</p></div>' +
+      '<div class="card"><h3>Login Attempt Log (last 10)</h3>' +
+      (log.length ? log.map(function (l) { return '<div class="row-item"><div class="info"><strong style="color:' + (l.result === 'Pass' ? 'var(--emerald)' : 'var(--red)') + '">' + l.result + '</strong><small>' + new Date(l.ts).toLocaleString() + '</small></div></div>'; }).join('') : '<p class="muted">No logins recorded.</p>') + '</div>';
+    document.getElementById('changePw').addEventListener('click', async function () {
+      var pw = val('sec_pw'), pw2 = val('sec_pw2');
+      if (pw.length < 6) return toast('❌ Min 6 characters');
+      if (pw !== pw2) return toast('❌ Passwords do not match');
+      var hash = await Util.sha256(pw); localStorage.setItem('fazal_admin_hash', hash); toast('Password updated ✓');
+      document.getElementById('sec_pw').value = ''; document.getElementById('sec_pw2').value = '';
+    });
+    document.getElementById('forceLogout').addEventListener('click', function () { sessionStorage.removeItem(SESSION_KEY); location.reload(); });
+  }
+
+  /* ============ FORM HELPERS ============ */
+  function f(label, id, value) { return '<label>' + label + '</label><input id="' + id + '" value="' + esc(value || '') + '">'; }
+  function ta(label, id, value) { return '<label>' + label + '</label><textarea id="' + id + '">' + esc(value || '') + '</textarea>'; }
+  function modalActions(saveId, saveLabel, cls) {
+    return '<div class="modal-actions"><button class="btn btn-ghost" onclick="_closeModal()">Cancel</button>' +
+      '<button class="btn ' + (cls || 'btn-gold') + '" id="' + saveId + '">' + (saveLabel || 'Save') + '</button></div>';
+  }
+  function download(name, content) {
+    var blob = new Blob([content], { type: 'text/plain' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /* ============ MOBILE SIDEBAR ============ */
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
+  document.getElementById('hamburger').addEventListener('click', function () { document.getElementById('sidebar').classList.toggle('open'); });
+})();
+</script>
+</body>
+</html>
