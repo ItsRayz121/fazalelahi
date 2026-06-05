@@ -2,10 +2,10 @@
    FAZAL ELAHI — Public site renderer
    Reads from FAZAL.Store (data.js) and paints every dynamic section.
    ===================================================================== */
-(function () {
+(async function () {
   'use strict';
   var Store = FAZAL.Store, esc = FAZAL.Util.escape;
-  Store.init(); // seed defaults if first visit
+  await Store.bootstrap(); // load shared cloud content (or seed local defaults)
 
   /* ---------- Official SVG icons (brand-correct) ---------- */
   var ICON = {
@@ -233,8 +233,8 @@
     var fd = new FormData(e.target), san = FAZAL.Util.sanitize;
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
       type: san(fd.get('type')), message: san(fd.get('message')), status: 'New', ts: new Date().toISOString() };
-    var inq = Store.get('fazal_inquiries'); inq.unshift(entry); Store.set('fazal_inquiries', inq);
-    document.getElementById('formMsg').textContent = '✅ Message saved! Opening your email client as backup…';
+    Store.submitInquiry(entry); // saves to cloud (and local cache)
+    document.getElementById('formMsg').textContent = '✅ Message sent! Opening your email client as backup…';
     e.target.reset();
     var body = encodeURIComponent('Name: ' + entry.name + '\nCompany: ' + entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
     window.location.href = 'mailto:' + p.email + '?subject=' + encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;

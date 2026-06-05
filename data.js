@@ -8,6 +8,26 @@
 (function (global) {
   'use strict';
 
+  /* =====================================================================
+     SUPABASE CONFIG
+     The anon key is PUBLIC-SAFE — it is meant to live in frontend code and
+     is protected by Row Level Security (see schema.sql). NEVER put the
+     `service_role` or `sb_secret_` key here.
+     To disable cloud and run pure-localStorage, blank out SUPABASE_URL.
+     ===================================================================== */
+  var SUPABASE_URL = 'https://dnprmvvjxbbxbnixjfye.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRucHJtdnZqeGJieGJuaXhqZnllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjQyNzEsImV4cCI6MjA5NjI0MDI3MX0.eKFF69rTGa2nRiRgP0XijITaPEcCjvaSMWOuhBrxbAo';
+
+  var sb = null, cloudEnabled = false;
+  try {
+    if (global.supabase && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+      sb = global.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
+      cloudEnabled = true;
+    }
+  } catch (e) { console.warn('Supabase init failed — running local only', e); }
+
   /* ---------- Default dataset (REAL client data pre-filled) ---------- */
   const DEFAULTS = {
     fazal_profile: {
@@ -220,6 +240,11 @@
     set(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
       logActivity('Updated ' + key);
+      // Mirror content edits to Supabase (admin must be authenticated; RLS enforces it).
+      if (cloudEnabled && CONTENT_KEYS.indexOf(key) > -1) {
+        sb.from('site_content').upsert({ key: key, value: value, updated_at: new Date().toISOString() })
+          .then(function (r) { if (r.error) console.warn('Cloud save failed for ' + key, r.error.message); });
+      }
     },
 
     // Initialise any missing keys with defaults (call once on load).
@@ -265,6 +290,97 @@
   Store.activity = function () {
     try { return JSON.parse(localStorage.getItem('fazal_activity') || '[]'); }
     catch (e) { return []; }
+  };
+
+  /* =====================================================================
+     CLOUD LAYER (Supabase) — hybrid: localStorage is the live cache,
+     Supabase is the shared source of truth across all visitors/devices.
+     ===================================================================== */
+  Store.cloudEnabled = cloudEnabled;
+  // Keys synced to the shared `site_content` table (everything except
+  // local-only auth/log keys and inquiries which have their own table).
+  var CONTENT_KEYS = Object.keys(DEFAULTS).filter(function (k) {
+    return k !== 'fazal_admin_hash' && k !== 'fazal_inquiries';
+  });
+
+  // Load shared content from the cloud into the local cache, then defaults fill gaps.
+  Store.bootstrap = async function () {
+    Store.init();
+    if (!cloudEnabled) return;
+    try {
+      var res = await sb.from('site_content').select('key,value');
+      if (res.error) throw res.error;
+      (res.data || []).forEach(function (row) {
+        localStorage.setItem(row.key, JSON.stringify(row.value));
+      });
+    } catch (e) { console.warn('Cloud read failed — using local cache', e.message || e); }
+  };
+
+  // Upload every content key to the cloud (used to seed an empty project / manual resync).
+  Store.syncAllToCloud = async function () {
+    if (!cloudEnabled) return { ok: false, msg: 'Cloud disabled' };
+    var rows = CONTENT_KEYS.map(function (k) {
+      return { key: k, value: Store.get(k), updated_at: new Date().toISOString() };
+    });
+    var res = await sb.from('site_content').upsert(rows);
+    return { ok: !res.error, msg: res.error ? res.error.message : ('Synced ' + rows.length + ' records to cloud') };
+  };
+
+  Store.cloudCount = async function () {
+    if (!cloudEnabled) return 0;
+    var res = await sb.from('site_content').select('key', { count: 'exact', head: true });
+    return res.count || 0;
+  };
+
+  /* ---------- Inquiries (separate table; visitors insert anonymously) ---------- */
+  Store.submitInquiry = async function (entry) {
+    var local = Store.get('fazal_inquiries'); local.unshift(entry);
+    localStorage.setItem('fazal_inquiries', JSON.stringify(local));
+    if (cloudEnabled) {
+      try {
+        await sb.from('inquiries').insert({
+          name: entry.name, email: entry.email, company: entry.company,
+          type: entry.type, message: entry.message, status: 'New'
+        });
+      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); }
+    }
+  };
+  Store.getInquiries = async function () {
+    if (cloudEnabled) {
+      try {
+        var res = await sb.from('inquiries').select('*').order('created_at', { ascending: false });
+        if (res.error) throw res.error;
+        return (res.data || []).map(function (r) {
+          return { id: r.id, name: r.name, email: r.email, company: r.company,
+            type: r.type, message: r.message, status: r.status, ts: r.created_at };
+        });
+      } catch (e) { console.warn('Inquiry cloud read failed', e.message || e); }
+    }
+    return Store.get('fazal_inquiries');
+  };
+  Store.updateInquiry = async function (id, status) {
+    if (cloudEnabled && id != null) { try { await sb.from('inquiries').update({ status: status }).eq('id', id); } catch (e) {} }
+  };
+  Store.deleteInquiry = async function (id) {
+    if (cloudEnabled && id != null) { try { await sb.from('inquiries').delete().eq('id', id); } catch (e) {} }
+  };
+
+  /* ---------- Supabase Auth (admin login) ---------- */
+  Store.signIn = async function (email, password) {
+    if (!cloudEnabled) return { ok: false, msg: 'Cloud disabled' };
+    var res = await sb.auth.signInWithPassword({ email: email, password: password });
+    return { ok: !res.error, msg: res.error ? res.error.message : 'ok' };
+  };
+  Store.signOut = async function () { if (cloudEnabled) { try { await sb.auth.signOut(); } catch (e) {} } };
+  Store.updatePassword = async function (pw) {
+    if (!cloudEnabled) return { ok: false, msg: 'Cloud disabled' };
+    var res = await sb.auth.updateUser({ password: pw });
+    return { ok: !res.error, msg: res.error ? res.error.message : 'ok' };
+  };
+  Store.cloudSession = async function () {
+    if (!cloudEnabled) return null;
+    var res = await sb.auth.getSession();
+    return res.data ? res.data.session : null;
   };
 
   /* ---------- Helpers shared by both pages ---------- */

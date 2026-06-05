@@ -62,6 +62,32 @@ Replace these via the admin panel (or directly in `data.js` defaults / `index.ht
 
 Drop all four files into any static host — Netlify, Vercel, Cloudflare Pages, GitHub Pages, or shared hosting. No configuration needed. Enable HTTPS (automatic on those platforms) and 2FA on the host account.
 
+## Cloud sync (Supabase) — admin edits go live for ALL visitors
+
+The site runs in **cloud mode** when `SUPABASE_URL` + `SUPABASE_ANON_KEY` are set in `data.js`
+(they are). The public site reads shared content from Supabase; the admin writes to it.
+If the cloud is unreachable it falls back to localStorage automatically.
+
+### One-time setup
+1. **Run the schema** — Supabase → SQL Editor → paste all of `schema.sql` → **Run**.
+   Creates `site_content` + `inquiries` tables with Row Level Security:
+   - public can READ content + SUBMIT inquiries
+   - only the signed-in admin can EDIT content + READ inquiries
+2. **Create your admin login** — Supabase → Authentication → Users → **Add user** →
+   your email + a password → tick **Auto Confirm User**.
+   *(Also: Authentication → Providers → Email → make sure "Confirm email" is OFF, or the auto-confirmed user logs in fine.)*
+3. **First admin login** seeds the cloud automatically with all default content
+   (you'll see "Cloud initialized"). After that, every save in the admin updates the live site.
+
+### Security
+- Only the **anon** (public) key is in the frontend — this is by design and safe; RLS protects writes.
+- **Never** commit or share the `service_role` / `sb_secret_` keys. If exposed, rotate them in
+  Supabase → Settings → API.
+- Admin login is real Supabase Auth (email + password), not a local password, in cloud mode.
+
+### Turning cloud off
+Blank out `SUPABASE_URL` in `data.js` → the site reverts to pure-localStorage (single-browser) mode.
+
 ## Notes
 
 - Contact email used throughout is **fazalelahi5577@gmail.com** (from the brief). The account email on file was `fazalelahi057@gmail.com` — change it in Profile & Stats if the brief's value is wrong.

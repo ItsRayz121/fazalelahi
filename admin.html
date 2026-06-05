@@ -97,10 +97,11 @@ textarea{min-height:90px;resize:vertical}
     <div class="lock">🔒</div>
     <h1>ADMIN ACCESS</h1>
     <p>Fazal Elahi CMS — authorized access only</p>
+    <input type="email" id="email" placeholder="Email" autocomplete="username" style="display:none">
     <input type="password" id="pw" placeholder="Enter password" autocomplete="current-password">
     <button id="loginBtn">Unlock Dashboard</button>
     <div class="err" id="loginErr"></div>
-    <p style="margin-top:16px;font-size:11px">Default password: <strong>fazal2026</strong> — change it in Security.</p>
+    <p style="margin-top:16px;font-size:11px" id="loginHint">Default password: <strong>fazal2026</strong> — change it in Security.</p>
   </div>
 </div>
 
@@ -127,6 +128,7 @@ textarea{min-height:90px;resize:vertical}
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data.js"></script>
 <script>
 (function () {
@@ -136,10 +138,27 @@ textarea{min-height:90px;resize:vertical}
 
   /* ============ AUTH ============ */
   var SESSION_KEY = 'fazal_admin_auth';
+  var CLOUD = Store.cloudEnabled;
+  var inquiriesCache = [];
   function isAuthed() { return sessionStorage.getItem(SESSION_KEY) === 'true'; }
-  function showApp() {
+
+  // Cloud-mode login uses email + password (Supabase Auth); local mode uses password only.
+  if (CLOUD) {
+    document.getElementById('email').style.display = '';
+    document.getElementById('loginHint').innerHTML = '🔐 Cloud mode — sign in with your Supabase admin email &amp; password.';
+  }
+
+  async function showApp() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('app').style.display = 'grid';
+    if (CLOUD) {
+      await Store.bootstrap();
+      try {
+        var cnt = await Store.cloudCount();
+        if (cnt === 0) { var r = await Store.syncAllToCloud(); toast('Cloud initialized: ' + r.msg); }
+      } catch (e) {}
+      inquiriesCache = await Store.getInquiries();
+    }
     buildNav(); route('dashboard');
   }
   function logAttempt(ok) {
@@ -149,32 +168,43 @@ textarea{min-height:90px;resize:vertical}
   }
   async function tryLogin() {
     var pw = document.getElementById('pw').value;
+    var errEl = document.getElementById('loginErr');
+    if (CLOUD) {
+      var email = document.getElementById('email').value.trim();
+      errEl.textContent = 'Signing in…';
+      var res = await Store.signIn(email, pw);
+      if (res.ok) { sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); await showApp(); }
+      else { logAttempt(false); errEl.textContent = '❌ ' + (res.msg || 'Login failed'); document.getElementById('pw').value = ''; }
+      return;
+    }
     var hash = await Util.sha256(pw);
     var stored = localStorage.getItem('fazal_admin_hash') || Store.defaults.fazal_admin_hash;
-    if (hash === stored) {
-      sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); showApp();
-    } else {
-      logAttempt(false);
-      document.getElementById('loginErr').textContent = '❌ Incorrect password.';
-      document.getElementById('pw').value = '';
-    }
+    if (hash === stored) { sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); showApp(); }
+    else { logAttempt(false); errEl.textContent = '❌ Incorrect password.'; document.getElementById('pw').value = ''; }
   }
   document.getElementById('loginBtn').addEventListener('click', tryLogin);
   document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
-  document.getElementById('logoutBtn').addEventListener('click', function () {
-    sessionStorage.removeItem(SESSION_KEY); location.reload();
+  document.getElementById('logoutBtn').addEventListener('click', async function () {
+    await Store.signOut(); sessionStorage.removeItem(SESSION_KEY); location.reload();
   });
 
-  // First-run / placeholder: ensure a REAL SHA-256 hash is stored.
-  // Store.init() seeds a placeholder hash, so we replace it with the real
-  // hash of the default password "fazal2026" until the admin changes it.
-  (function ensureRealHash() {
-    var stored = localStorage.getItem('fazal_admin_hash');
-    if (stored === null || stored === Store.defaults.fazal_admin_hash) {
-      Util.sha256('fazal2026').then(function (h) { localStorage.setItem('fazal_admin_hash', h); });
-    }
+  // Local-mode only: ensure a REAL SHA-256 hash of the default password "fazal2026".
+  if (!CLOUD) {
+    (function ensureRealHash() {
+      var stored = localStorage.getItem('fazal_admin_hash');
+      if (stored === null || stored === Store.defaults.fazal_admin_hash) {
+        Util.sha256('fazal2026').then(function (h) { localStorage.setItem('fazal_admin_hash', h); });
+      }
+    })();
+  }
+
+  // Restore an existing session on load.
+  (async function restoreSession() {
+    if (CLOUD) {
+      var session = await Store.cloudSession();
+      if (session) { sessionStorage.setItem(SESSION_KEY, 'true'); await showApp(); }
+    } else if (isAuthed()) { showApp(); }
   })();
-  if (isAuthed()) showApp();
 
   /* ============ NAV CONFIG ============ */
   var SECTIONS = [
@@ -185,8 +215,9 @@ textarea{min-height:90px;resize:vertical}
     ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
     ['settings','⚙️ Site Settings'], ['security','🔒 Security']
   ];
+  function inqList() { return CLOUD ? inquiriesCache : Store.get('fazal_inquiries'); }
   function buildNav() {
-    var newInq = Store.get('fazal_inquiries').filter(function (i) { return i.status === 'New'; }).length;
+    var newInq = inqList().filter(function (i) { return i.status === 'New'; }).length;
     document.getElementById('sideNav').innerHTML = SECTIONS.map(function (s) {
       var badge = (s[0] === 'inquiries' && newInq) ? '<span class="badge">' + newInq + '</span>' : '';
       return '<button class="nav-item" data-route="' + s[0] + '">' + s[1] + badge + '</button>';
@@ -245,7 +276,7 @@ textarea{min-height:90px;resize:vertical}
 
   /* ============ DASHBOARD ============ */
   function renderDashboard(c) {
-    var inq = Store.get('fazal_inquiries'), newInq = inq.filter(function (i) { return i.status === 'New'; }).length;
+    var inq = inqList(), newInq = inq.filter(function (i) { return i.status === 'New'; }).length;
     var act = Store.activity();
     c.innerHTML =
       '<div class="stat-cards">' +
@@ -618,10 +649,13 @@ textarea{min-height:90px;resize:vertical}
   }
 
   /* ============ INQUIRIES ============ */
-  function renderInquiries(c) {
-    var arr = Store.get('fazal_inquiries');
+  async function renderInquiries(c) {
+    if (CLOUD) { inquiriesCache = await Store.getInquiries(); buildNav(); }
+    var arr = inqList();
     var statusColors = { New:'var(--red)', 'In Review':'var(--gold)', Replied:'var(--emerald)', Archived:'var(--muted)' };
+    function persistLocal() { if (!CLOUD) localStorage.setItem('fazal_inquiries', JSON.stringify(arr)); }
     c.innerHTML = '<button class="btn btn-ghost" id="exportInq" style="margin-bottom:14px">⬇ Export CSV</button>' +
+      (CLOUD ? '<button class="btn btn-ghost" id="refreshInq" style="margin:0 0 14px 8px">🔄 Refresh</button>' : '') +
       (arr.length ? arr.map(function (q, i) {
         return '<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">' +
           '<strong style="color:#fff">' + esc(q.name) + ' &lt;' + esc(q.email) + '&gt;</strong>' +
@@ -632,8 +666,16 @@ textarea{min-height:90px;resize:vertical}
           '<select data-st="' + i + '">' + ['New','In Review','Replied','Archived'].map(function (s) { return '<option' + (s === q.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
           '<button class="btn btn-red btn-sm" data-delq="' + i + '">🗑</button></div></div>';
       }).join('') : '<p class="muted">No inquiries yet.</p>');
-    c.querySelectorAll('[data-st]').forEach(function (sel) { sel.addEventListener('change', function () { arr[+sel.dataset.st].status = sel.value; save('fazal_inquiries', arr, 'Status updated ✓'); renderInquiries(c); }); });
-    c.querySelectorAll('[data-delq]').forEach(function (b) { b.addEventListener('click', function () { arr.splice(+b.dataset.delq, 1); save('fazal_inquiries', arr, 'Deleted ✓'); renderInquiries(c); }); });
+    c.querySelectorAll('[data-st]').forEach(function (sel) { sel.addEventListener('change', async function () {
+      var q = arr[+sel.dataset.st]; q.status = sel.value;
+      await Store.updateInquiry(q.id, sel.value); persistLocal(); toast('Status updated ✓'); buildNav();
+    }); });
+    c.querySelectorAll('[data-delq]').forEach(function (b) { b.addEventListener('click', async function () {
+      var q = arr[+b.dataset.delq]; await Store.deleteInquiry(q.id); arr.splice(+b.dataset.delq, 1);
+      persistLocal(); toast('Deleted ✓'); renderInquiries(c);
+    }); });
+    var ref = document.getElementById('refreshInq');
+    if (ref) ref.addEventListener('click', function () { renderInquiries(c); });
     var exp = document.getElementById('exportInq');
     if (exp) exp.addEventListener('click', function () {
       var csv = 'Name,Email,Company,Type,Status,Date,Message\n' + arr.map(function (q) {
@@ -654,6 +696,9 @@ textarea{min-height:90px;resize:vertical}
       '<label><input type="checkbox" id="st_disc" ' + (s.showDisclaimer !== false ? 'checked' : '') + ' style="width:auto"> Show "Not financial advice" disclaimer</label>' +
       ta('Custom CSS (injected into public site)','st_css',Store.get('fazal_customcss')) +
       '<button class="btn btn-gold" id="saveSettings" style="margin-top:12px">💾 Save Settings</button></div>' +
+      '<div class="card"><h3>☁️ Cloud Sync (Supabase)</h3>' +
+      '<p class="muted" style="margin:8px 0">' + (CLOUD ? '🟢 Connected — admin edits go live to all visitors.' : '⚪ Local only — edits stay in this browser.') + '</p>' +
+      (CLOUD ? '<button class="btn btn-em" id="pushCloud">⬆ Push all data to cloud</button>' : '') + '</div>' +
       '<div class="card"><h3>Backup &amp; Restore</h3><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">' +
       '<button class="btn btn-em" id="exportData">⬇ Export All Data (JSON)</button>' +
       '<label class="btn btn-ghost" style="margin:0">⬆ Import JSON<input type="file" id="importData" accept=".json" style="display:none"></label>' +
@@ -663,6 +708,11 @@ textarea{min-height:90px;resize:vertical}
       s.heroSub = san(val('st_hs')); s.footerTagline = san(val('st_foot')); s.siteUrl = san(val('st_url')); s.ogImage = san(val('st_og'));
       s.maintenance = document.getElementById('st_maint').checked; s.showDisclaimer = document.getElementById('st_disc').checked;
       Store.set('fazal_customcss', val('st_css')); save('fazal_settings', s, 'Settings saved ✓');
+    });
+    var pushBtn = document.getElementById('pushCloud');
+    if (pushBtn) pushBtn.addEventListener('click', async function () {
+      pushBtn.textContent = 'Pushing…'; var r = await Store.syncAllToCloud();
+      toast(r.ok ? ('✓ ' + r.msg) : ('❌ ' + r.msg)); pushBtn.textContent = '⬆ Push all data to cloud';
     });
     document.getElementById('exportData').addEventListener('click', function () {
       var d = new Date().toISOString().slice(0, 10);
@@ -704,7 +754,12 @@ textarea{min-height:90px;resize:vertical}
       var pw = val('sec_pw'), pw2 = val('sec_pw2');
       if (pw.length < 6) return toast('❌ Min 6 characters');
       if (pw !== pw2) return toast('❌ Passwords do not match');
-      var hash = await Util.sha256(pw); localStorage.setItem('fazal_admin_hash', hash); toast('Password updated ✓');
+      if (CLOUD) {
+        var r = await Store.updatePassword(pw);
+        toast(r.ok ? 'Password updated ✓' : ('❌ ' + r.msg));
+      } else {
+        var hash = await Util.sha256(pw); localStorage.setItem('fazal_admin_hash', hash); toast('Password updated ✓');
+      }
       document.getElementById('sec_pw').value = ''; document.getElementById('sec_pw2').value = '';
     });
     document.getElementById('forceLogout').addEventListener('click', function () { sessionStorage.removeItem(SESSION_KEY); location.reload(); });
