@@ -4,7 +4,9 @@
    ===================================================================== */
 (async function () {
   'use strict';
-  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape;
+  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, clean = Util.clean;
+  // True when a URL is real (not empty and not an unfilled [TOKEN]).
+  function liveUrl(u) { return !!clean(u); }
   await Store.bootstrap(); // load shared cloud content (or seed local defaults)
 
   /* ---------- Official SVG icons (brand-correct) ---------- */
@@ -63,7 +65,10 @@
   document.getElementById('bio2').textContent = p.bio2;
   document.getElementById('bio3').textContent = p.bio3;
   document.getElementById('emailBtn').href = 'mailto:' + p.email;
-  document.getElementById('cvBtn').href = p.cvUrl;
+  // Only show the Download CV button when a real file URL is set.
+  var cvBtn = document.getElementById('cvBtn');
+  if (liveUrl(p.cvUrl)) { cvBtn.href = clean(p.cvUrl); }
+  else { cvBtn.style.display = 'none'; }
 
   document.getElementById('aboutCred').innerHTML = [
     '📍 Based in ' + esc(p.location),
@@ -75,10 +80,19 @@
   document.getElementById('tagCloud').innerHTML = (p.expertise || [])
     .map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
 
-  document.getElementById('contactCards').innerHTML = [
-    '📧 ' + esc(p.email), '💼 linkedin.com/in/fazal-elahi',
-    '📱 ' + esc(p.phone) + ' (WhatsApp)', '🌍 ' + esc(p.location) + ' · ' + esc(p.availability)
-  ].map(function (t) { return '<div class="card reveal">' + t + '</div>'; }).join('');
+  // Icon-only contact — raw email/number live in href only (privacy), never shown as text.
+  function contactIcon(href, iconHTML, label, hd) {
+    var isLink = href.indexOf('http') === 0;
+    return '<a class="card contact-icon reveal" href="' + esc(href) + '" ' + (isLink ? ext + ' ' : '') +
+      'aria-label="' + esc(label) + '"><span class="ci-ic">' + iconHTML + '</span>' +
+      '<span class="ci-tx"><span class="ci-nm">' + esc(label) + '</span><span class="ci-hd">' + esc(hd) + '</span></span></a>';
+  }
+  document.getElementById('contactCards').innerHTML =
+    contactIcon('mailto:' + p.email, '<span class="ci-emoji">✉️</span>', 'Email', 'Tap to email') +
+    contactIcon(liveUrl(p.whatsapp) ? clean(p.whatsapp) : 'https://wa.me/', ICON.whatsapp, 'WhatsApp', 'Chat on WhatsApp') +
+    contactIcon(liveUrl(p.linkedin) ? clean(p.linkedin) : 'https://linkedin.com/in/fazal-elahi', ICON.linkedin, 'LinkedIn', 'Connect') +
+    '<div class="card contact-icon reveal"><span class="ci-ic"><span class="ci-emoji">🌍</span></span>' +
+      '<span class="ci-tx"><span class="ci-nm">' + esc(p.location) + '</span><span class="ci-hd">' + esc(p.availability) + '</span></span></div>';
 
   /* ---------- Mini + footer social ---------- */
   var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
@@ -88,6 +102,17 @@
   }
   document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
   document.getElementById('footSocial').innerHTML = social.map(socialIconHTML).join('');
+  // Compact discovery sets — nav (top picks) + mobile menu (all).
+  var navSocialEl = document.getElementById('navSocial');
+  var mobileSocialEl = document.getElementById('mobileSocial');
+  if (navSocialEl) {
+    var navPicks = ['youtube', 'telegram', 'twitter', 'whatsapp', 'linkedin'];
+    var picked = navPicks.map(function (key) {
+      return social.filter(function (s) { return (s.platform || '').toLowerCase().indexOf(key) > -1; })[0];
+    }).filter(Boolean);
+    navSocialEl.innerHTML = (picked.length ? picked : social.slice(0, 5)).map(socialIconHTML).join('');
+  }
+  if (mobileSocialEl) mobileSocialEl.innerHTML = social.map(socialIconHTML).join('');
 
   /* ---------- Roles ---------- */
   document.getElementById('rolesGrid').innerHTML = Store.get('fazal_roles')
@@ -110,27 +135,29 @@
   var content = Store.get('fazal_content');
   document.getElementById('contentSub').textContent = content.frequency;
   document.getElementById('channels').innerHTML = content.channels.map(function (c) {
+    var subs = clean(c.subs);
     return '<div class="card channel-card reveal"><div class="yt c-red">' + ICON.youtube + '</div>' +
       '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
-      '<div class="metric">📺 ' + esc(c.subs) + ' subscribers</div>' +
+      (subs ? '<div class="metric">📺 ' + esc(subs) + ' subscribers</div>' : '') +
       '<a class="btn btn-gold shimmer" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
   }).join('');
-  document.getElementById('videos').innerHTML = content.videos.map(function (v, i) {
-    var em = Util.videoEmbed(v);
-    var inner;
-    if (em.type === 'iframe') {
-      inner = '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) +
-        '" allowfullscreen loading="lazy"></iframe>';
-    } else if (em.type === 'video') {
-      inner = '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" ' +
-        'style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
-    } else {
-      inner = 'Video ' + (i + 1) + ' — add a link or upload in admin';
-    }
-    return '<div class="video-card reveal"><div class="frame">' + inner +
-      '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
-    // ADMIN: paste a YouTube/Drive link or upload a video file in Content → Featured Videos.
-  }).join('');
+  // Only render videos that resolve to a real embed — never show empty "add a
+  // link" frames on the public site (admin still manages them in Content).
+  var liveVideos = content.videos
+    .map(function (v) { return Util.videoEmbed(v); })
+    .filter(function (em) { return em.type === 'iframe' || em.type === 'video'; });
+  var videosWrap = document.getElementById('videos');
+  if (liveVideos.length) {
+    videosWrap.innerHTML = liveVideos.map(function (em, i) {
+      var inner = em.type === 'iframe'
+        ? '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
+        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
+      return '<div class="video-card reveal"><div class="frame">' + inner +
+        '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
+    }).join('');
+  } else {
+    videosWrap.style.display = 'none'; // no videos set yet — collapse the row
+  }
   document.getElementById('pillars').innerHTML = content.pillars.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
   document.getElementById('hashtags').innerHTML = content.hashtags.map(function (t) { return '<span class="chip hash">' + esc(t) + '</span>'; }).join('');
 
@@ -139,11 +166,28 @@
   document.getElementById('commGrid').innerHTML = comm.cards.filter(function (c) { return c.visible !== false; }).map(function (c) {
     var col = c.platform === 'whatsapp' ? '#25D366' : '#2AABEE';
     var ic = c.platform === 'whatsapp' ? ICON.whatsapp : ICON.telegram;
+    var cnt = clean(c.count);
     return '<div class="card comm-card reveal"><div class="ico" style="background:' + col + '22;color:' + col + '">' + ic + '</div>' +
-      '<h3>' + esc(c.name) + '</h3><div class="cnt">' + esc(c.count) + '</div><p>' + esc(c.desc) + '</p>' +
+      '<h3>' + esc(c.name) + '</h3>' + (cnt ? '<div class="cnt">' + esc(cnt) + '</div>' : '') + '<p>' + esc(c.desc) + '</p>' +
       '<a class="btn btn-glass" href="' + esc(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
   }).join('');
   document.getElementById('featStrip').innerHTML = comm.features.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('');
+
+  /* ---------- Regional Leadership cards ---------- */
+  var regionGrid = document.getElementById('regionGrid');
+  if (regionGrid) {
+    regionGrid.innerHTML = (Store.get('fazal_regions') || []).filter(function (r) { return r.visible !== false; })
+      .map(function (r) {
+        var secondary = /secondary/i.test(r.tier || '');
+        function row(ic, v) { return clean(v) ? '<div class="rc-row"><span class="ic">' + ic + '</span><span>' + esc(clean(v)) + '</span></div>' : ''; }
+        return '<div class="card region-card reveal' + (secondary ? ' secondary' : '') + '">' +
+          '<div class="rc-head"><span class="rc-flag">' + esc(r.flag) + '</span><span class="rc-name">' + esc(r.name) + '</span></div>' +
+          (clean(r.tier) ? '<span class="rc-tier">' + esc(clean(r.tier)) + '</span>' : '') +
+          (clean(r.reach) ? '<div class="rc-reach">' + esc(clean(r.reach)) + '</div>' : '') +
+          row('👥', r.communities) + row('🗣️', r.languages) + row('⚡', r.activity) +
+          '</div>';
+      }).join('');
+  }
 
   /* ---------- Experience ---------- */
   document.getElementById('expList').innerHTML = Store.get('fazal_experience').map(function (e) {
@@ -164,8 +208,18 @@
     return '<div class="card reveal tilt"><div class="ico">' + esc(s.icon) + '</div><h4>' + esc(s.title) + '</h4><p>' + esc(s.desc) + '</p></div>';
   }).join('');
   document.getElementById('kolPartners').innerHTML = kol.partners.map(function (k) {
-    return '<a class="kol-partner reveal" href="' + esc(k.url) + '" ' + ext + '>' + esc(k.name) + '<span>' + esc(k.platform) + '</span></a>';
-  }).join('') + '<div class="kol-partner reveal" style="color:var(--gold)">+ Dozens More in Network</div>';
+    var initial = (String(k.name || '').replace(/^@/, '').charAt(0) || '?').toUpperCase();
+    var avatar = clean(k.avatar)
+      ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
+      : '<span class="kp-avatar kp-initial">' + esc(initial) + '</span>';
+    var followers = clean(k.followers);
+    var country = clean(k.country);
+    return '<a class="kol-partner reveal" href="' + esc(k.url) + '" ' + ext + '>' + avatar +
+      '<span class="kp-body"><span class="kp-name">' + esc(k.name) + '</span>' +
+      '<span class="kp-plat">' + esc(k.platform) + '</span>' +
+      '<span class="kp-meta">' + (followers ? '<span>👥 ' + esc(followers) + '</span>' : '') +
+        (country ? '<span>' + esc(country) + '</span>' : '') + '</span></span></a>';
+  }).join('') + '<div class="kol-partner kp-more reveal">+ Dozens More<span class="kp-plat">in the Network</span></div>';
   document.getElementById('kolMarkets').innerHTML = kol.markets.map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
@@ -177,7 +231,7 @@
       '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div>' +
       '<div class="metrics">' + c.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
       '<div class="skills" style="margin:14px 0">' + c.tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' +
-      '<a class="btn btn-emerald" href="' + esc(c.proofUrl) + '" ' + ext + '>🔗 Live Proof</a></div>';
+      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
   }).join('');
 
   /* ---------- Events & Gallery (timeline + lightbox) ---------- */
@@ -368,16 +422,20 @@
     var affLogo = a.logo
       ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
       : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
+    var affCta = liveUrl(a.url)
+      ? '<a class="btn btn-gold shimmer" href="' + esc(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
+      : '<span class="btn btn-glass" style="opacity:.55;cursor:default" aria-disabled="true">Link Coming Soon</span>';
     return '<div class="card aff-card reveal tilt">' + affLogo +
       '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p><p class="aff-offer">' + esc(a.offer) + '</p>' +
-      '<a class="btn btn-gold shimmer" href="' + esc(a.url) + '" ' + ext + '>' + esc(a.cta) + '</a></div>';
+      affCta + '</div>';
   }).join('');
 
   /* ---------- Social hub ---------- */
   document.getElementById('socialGrid').innerHTML = social.map(function (s) {
+    var scount = clean(s.count);
     return '<a class="card social-card reveal" href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
       '<span style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</span>' +
-      '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (s.count ? ' · ' + esc(s.count) : '') + '</span></span></a>';
+      '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (scount ? ' · ' + esc(scount) : '') + '</span></span></a>';
   }).join('');
 
   /* ---------- Testimonials ---------- */

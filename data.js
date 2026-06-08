@@ -281,9 +281,9 @@
     fazal_kol_network: {
       intro: "My KOL management goes beyond just connecting projects with influencers. I engineer growth loops — matching the right creator with the right audience, at the right time, with the right incentive structure. The result: sticky users who care about the tech, not just the airdrop.",
       partners: [
-        { name: '@tabraizshams', platform: 'YouTube Partner', url: 'https://youtube.com/@tabraizshams', avatar: '' },
-        { name: '@imroztricks', platform: 'YouTube Partner', url: 'https://youtube.com/@imroztricks', avatar: '' },
-        { name: '@shahidbaloch2.0', platform: 'YouTube Partner', url: 'https://youtube.com/@shahidbaloch2.0', avatar: '' }
+        { name: '@tabraizshams', platform: 'YouTube Partner', url: 'https://youtube.com/@tabraizshams', followers: '', country: '🇵🇰 Pakistan', avatar: '' },
+        { name: '@imroztricks', platform: 'YouTube Partner', url: 'https://youtube.com/@imroztricks', followers: '', country: '🇵🇰 Pakistan', avatar: '' },
+        { name: '@shahidbaloch2.0', platform: 'YouTube Partner', url: 'https://youtube.com/@shahidbaloch2.0', followers: '', country: '🇵🇰 Pakistan', avatar: '' }
       ],
       markets: [
         { flag: '🇵🇰', name: 'Pakistan' }, { flag: '🇮🇳', name: 'India' }, { flag: '🇧🇩', name: 'Bangladesh' },
@@ -309,6 +309,17 @@
       features: ['🌍 Active in 5 Countries', '🛡️ Scam Alert System', '📅 Daily Updates', '🤝 Real Engagement Only']
     },
 
+    /* ---- Regional Leadership cards (premium region grid) ----
+       Primary focus: Pakistan, India, Bangladesh · Secondary: Indonesia, Nigeria.
+       Managed in admin → "Regional Leadership". */
+    fazal_regions: [
+      { flag: '🇵🇰', name: 'Pakistan', tier: 'Primary Market', reach: '460K+ users reached', communities: 'Telegram · YouTube · WhatsApp', languages: 'Urdu · English', activity: 'Live events, meetups & regional ops', visible: true },
+      { flag: '🇮🇳', name: 'India', tier: 'Primary Market', reach: 'High-engagement Web3 audience', communities: 'Telegram · YouTube', languages: 'Hindi · English', activity: 'KOL campaigns & community growth', visible: true },
+      { flag: '🇧🇩', name: 'Bangladesh', tier: 'Primary Market', reach: 'Fast-growing crypto community', communities: 'Telegram · YouTube', languages: 'Bangla · English', activity: 'Creator partnerships & onboarding', visible: true },
+      { flag: '🇮🇩', name: 'Indonesia', tier: 'Secondary Market', reach: 'Emerging SEA market', communities: 'Telegram', languages: 'Bahasa · English', activity: 'KOL network expansion', visible: true },
+      { flag: '🇳🇬', name: 'Nigeria', tier: 'Secondary Market', reach: 'West Africa gateway', communities: 'Telegram · Twitter/X', languages: 'English', activity: 'Creator partnerships', visible: true }
+    ],
+
     fazal_social: [
       { platform: 'YouTube (Main)', url: 'https://www.youtube.com/@LearningHubByFazal', handle: '@LearningHubByFazal', color: '#FF0000', count: '[YT_SUBSCRIBERS]', visible: true },
       { platform: 'YouTube (Lab)', url: 'https://www.youtube.com/@fazalcryptolab', handle: '@fazalcryptolab', color: '#FF0000', count: '[YT_LAB_SUBSCRIBERS]', visible: true },
@@ -323,8 +334,9 @@
 
     fazal_affiliates: [
       { name: 'Binance', logo: '', color: '#F3BA2F', desc: "The world's #1 crypto exchange. Used by 200M+ traders globally.", offer: 'Get up to 20% fee discount with my referral link.', url: '[BINANCE_AFFILIATE_URL]', cta: 'Open Free Account', visible: true },
-      { name: 'OKX', logo: '', color: '#FFFFFF', desc: 'Professional-grade trading for serious crypto users.', offer: 'Exclusive sign-up bonus with my partner link.', url: '[OKX_AFFILIATE_URL]', cta: 'Join OKX', visible: true },
-      { name: 'Bitbullet', logo: '', color: '#F2A900', desc: 'Premium crypto signals, tools, and alpha access.', offer: 'Exclusive access via my referral.', url: '[BITBULLET_AFFILIATE_URL]', cta: 'Try Bitbullet', visible: true }
+      { name: 'OKX', logo: '', color: '#C9C9C9', desc: 'Professional-grade trading for serious crypto users.', offer: 'Exclusive sign-up bonus with my partner link.', url: '[OKX_AFFILIATE_URL]', cta: 'Join OKX', visible: true },
+      { name: 'Bitget', logo: '', color: '#00E5D0', desc: 'Leading copy-trading platform with deep liquidity.', offer: 'Welcome bonus + fee rebate via my link.', url: '[BITGET_AFFILIATE_URL]', cta: 'Join Bitget', visible: true },
+      { name: 'Bybit', logo: '', color: '#F7A600', desc: 'Fast, reliable derivatives & spot trading.', offer: 'Sign-up rewards with my partner link.', url: '[BYBIT_AFFILIATE_URL]', cta: 'Join Bybit', visible: true }
     ],
 
     fazal_testimonials: [
@@ -340,7 +352,7 @@
       ],
       videos: ['[YOUTUBE_VIDEO_ID_1]', '[YOUTUBE_VIDEO_ID_2]', '[YOUTUBE_VIDEO_ID_3]'],
       pillars: ['📦 Airdrops','🧪 Testnets','🏦 DeFi','🛡️ Scam Alerts','💱 Exchange Reviews','🌐 Web3 Tools','📊 Market Updates','🎓 Beginner Guides'],
-      hashtags: ['#cryptoairdrops','#web3marketing','#testnetairdrops','#cryptocommunity','#LearningHubByFazal','#DeFi','#blockchain','#noinvestment'],
+      hashtags: ['#cryptoairdrops','#web3marketing','#testnetairdrops','#cryptocommunity','#LearningHubByFazal','#DeFi','#blockchain','#MarketAnalysis'],
       frequency: 'Fresh crypto content. Airdrop guides. Testnet tutorials. Scam alerts. Every week.'
     },
 
@@ -360,8 +372,8 @@
       footerTagline: 'Educating. Building. Scaling. From Pakistan to the World.',
       maintenance: false,
       showDisclaimer: true,
-      siteUrl: '[SITE_URL]',
-      ogImage: '[OG_IMAGE_URL]'
+      siteUrl: 'https://fazalelahi.vercel.app/',
+      ogImage: 'https://fazalelahi.vercel.app/fazal.jpg'
     },
 
     fazal_customcss: '',
@@ -575,6 +587,13 @@
     // Strip HTML tags from user input before persisting.
     sanitize: function (str) {
       return String(str == null ? '' : str).replace(/<[^>]*>/g, '').trim();
+    },
+    // Blank out unfilled placeholder tokens like "[TG_CHANNEL_MEMBERS]" so raw
+    // tokens never reach the public DOM. Anything wrapped in [ ... ] is treated
+    // as "not filled in yet" and collapses to an empty string.
+    clean: function (str) {
+      var s = String(str == null ? '' : str).trim();
+      return /^\[.*\]$/.test(s) ? '' : s;
     },
     escape: function (str) {
       return String(str == null ? '' : str)

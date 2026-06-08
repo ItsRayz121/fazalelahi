@@ -223,6 +223,7 @@ textarea{min-height:90px;resize:vertical}
     ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Roles Manager'],
     ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events & Gallery'],
     ['projects','🗂️ Projects'], ['kol','🎯 KOL Network'], ['community','🏘️ Community'],
+    ['regions','🌍 Regional Leadership'],
     ['social','🌐 Social Links'], ['affiliates','🤝 Affiliates'], ['testimonials','💬 Testimonials'],
     ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
     ['settings','⚙️ Site Settings'], ['security','🔒 Security']
@@ -262,7 +263,7 @@ textarea{min-height:90px;resize:vertical}
       roles:'The seven role cards on the public site', experience:'Work history (full CRUD)',
       cases:'Proof-of-work case studies', events:'Events with photo & video galleries — captions, dates, full control',
       projects:'Additional projects', kol:'KOL partners, services and markets',
-      community:'Community platform cards and features', social:'All social platform links',
+      community:'Community platform cards and features', regions:'Premium region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', social:'All social platform links',
       affiliates:'Affiliate partner cards', testimonials:'Client testimonials',
       content:'YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags',
       inquiries:'Contact form submissions', settings:'SEO, maintenance, backup/restore',
@@ -280,6 +281,7 @@ textarea{min-height:90px;resize:vertical}
       dashboard: renderDashboard, profile: renderProfile, roles: renderRoles,
       experience: renderExperience, cases: renderCases, events: renderEvents,
       projects: renderProjects, kol: renderKOL, community: renderCommunity,
+      regions: renderRegions,
       social: renderSocial, affiliates: renderAffiliates, testimonials: renderTestimonials,
       content: renderContent, keywords: renderKeywords, inquiries: renderInquiries,
       settings: renderSettings, security: renderSecurity
@@ -564,9 +566,11 @@ textarea{min-height:90px;resize:vertical}
       k.markets.map(function (m, i) { return '<span class="tag">' + esc(m.flag) + ' ' + esc(m.name) + ' <a href="#" data-delm="' + i + '" style="color:var(--red)">×</a></span>'; }).join('') + '</div>';
     document.getElementById('saveKolText').addEventListener('click', function () { k.intro = san(val('k_intro')); k.syndicates = san(val('k_synd')); save('fazal_kol_network', k, 'Saved ✓'); });
     document.getElementById('addPartner').addEventListener('click', function () {
-      modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') + mf('Avatar / Photo','kp_av','','image') + modalActions('saveKP'));
+      modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') +
+        f('Followers (e.g. 120K)','kp_fol','') + f('Country (e.g. 🇵🇰 Pakistan)','kp_country','') + mf('Avatar / Photo','kp_av','','image') + modalActions('saveKP'));
       document.getElementById('saveKP').addEventListener('click', function () {
-        k.partners.push({ name: san(val('kp_name')), platform: san(val('kp_plat')), url: san(val('kp_url')), avatar: san(val('kp_av')) });
+        k.partners.push({ name: san(val('kp_name')), platform: san(val('kp_plat')), url: san(val('kp_url')),
+          followers: san(val('kp_fol')), country: san(val('kp_country')), avatar: san(val('kp_av')) });
         save('fazal_kol_network', k, 'Added ✓'); closeModal(); renderKOL(document.getElementById('content'));
       });
     });
@@ -598,6 +602,32 @@ textarea{min-height:90px;resize:vertical}
           desc: san(val('cm_desc' + i)), cta: san(val('cm_cta' + i)), visible: document.getElementById('cm_vis' + i).checked };
       });
       cm.features = list(val('cm_feat')); save('fazal_community', cm, 'Saved ✓');
+    });
+  }
+
+  /* ============ REGIONAL LEADERSHIP ============ */
+  function renderRegions(c) {
+    var arr = Store.get('fazal_regions');
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Region</button>' +
+      crudList(arr, { title: function (r) { return r.flag + ' ' + r.name; }, sub: function (r) { return (r.tier || '') + ' · ' + (r.reach || ''); } });
+    document.getElementById('add').addEventListener('click', function () { regionForm({ flag:'🌍', name:'', tier:'Primary Market', reach:'', communities:'', languages:'', activity:'', visible:true }, -1); });
+    wireCrud(c, 'fazal_regions', { rerender: function () { renderRegions(c); }, form: regionForm });
+  }
+  function regionForm(r, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Region</h3>' +
+      f('Flag (emoji)','r_flag',r.flag) + f('Country / Region','r_name',r.name) +
+      '<label>Tier</label><select id="r_tier">' +
+        ['Primary Market','Secondary Market'].map(function (x) { return '<option' + (x === r.tier ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
+      f('Audience Reach','r_reach',r.reach) + f('Communities','r_comm',r.communities) +
+      f('Languages','r_lang',r.languages) + f('Activity','r_act',r.activity) +
+      '<label><input type="checkbox" id="r_vis" ' + (r.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
+      modalActions('saveRegion'));
+    document.getElementById('saveRegion').addEventListener('click', function () {
+      var arr = Store.get('fazal_regions');
+      var obj = { flag: san(val('r_flag')), name: san(val('r_name')), tier: val('r_tier'), reach: san(val('r_reach')),
+        communities: san(val('r_comm')), languages: san(val('r_lang')), activity: san(val('r_act')), visible: document.getElementById('r_vis').checked };
+      if (i < 0) arr.push(obj); else arr[i] = obj;
+      save('fazal_regions', arr, 'Saved ✓'); closeModal(); renderRegions(document.getElementById('content'));
     });
   }
 
