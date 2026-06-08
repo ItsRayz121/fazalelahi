@@ -180,39 +180,188 @@
       '<a class="btn btn-emerald" href="' + esc(c.proofUrl) + '" ' + ext + '>🔗 Live Proof</a></div>';
   }).join('');
 
-  /* ---------- Events + filters ---------- */
-  var events = Store.get('fazal_events');
-  var catColors = { Milestone:'gold', Speaker:'red', Network:'emerald', Partnership:'purple', Campaign:'orange', Education:'blue' };
-  function eventCard(e) {
-    var col = badgeColor(catColors[e.category] || 'gold');
-    var roleCat = (e.role || '').toLowerCase();
-    var filterKey = e.category;
-    return '<div class="card event-card reveal" data-cat="' + esc(filterKey) + '" data-role="' + esc(roleCat) + '">' +
-      (e.image ? '<img src="' + esc(Util.imageUrl(e.image)) + '" alt="' + esc(e.name) + '" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:10px;border:1px solid var(--border);margin-bottom:4px">' : '') +
-      (e.milestone ? '<span class="cat-badge" style="background:var(--gold);color:#000">🏆 Milestone</span>' : '') +
-      '<h4>' + esc(e.name) + '</h4>' +
-      '<div class="event-meta"><span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(e.category) + '</span>' +
-      '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + esc(e.role) + '</span>' +
-      '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + (e.mode === 'In-Person' ? '📍 In-Person' : '🌐 Virtual') + '</span>' +
-      '<span class="cat-badge" style="background:var(--glass);color:var(--muted)">' + esc(e.date) + '</span></div>' +
-      (e.url ? '<a class="btn btn-glass" style="margin-top:10px" href="' + esc(e.url) + '" ' + ext + '>View Event</a>' : '') +
-      '</div>';
-  }
-  document.getElementById('eventsGrid').innerHTML = events.map(eventCard).join('');
-  var filters = ['All','Speaker','Organizer','Partnership','Campaign','Education','Network'];
-  document.getElementById('eventFilters').innerHTML = filters.map(function (f, i) {
-    return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + f + '">' + f + '</button>';
-  }).join('');
-  document.getElementById('eventFilters').addEventListener('click', function (ev) {
-    var btn = ev.target.closest('.filter-btn'); if (!btn) return;
-    document.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    var f = btn.dataset.filter.toLowerCase();
-    document.querySelectorAll('.event-card').forEach(function (card) {
-      var match = f === 'all' || (card.dataset.cat || '').toLowerCase().indexOf(f) > -1 || (card.dataset.role || '').indexOf(f) > -1;
-      card.style.display = match ? '' : 'none';
+  /* ---------- Events & Gallery (timeline + lightbox) ---------- */
+  (function () {
+    var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
+      return g && (g.media && g.media.length);
     });
-  });
+    var grid = document.getElementById('eventsGrid');
+    var filtersEl = document.getElementById('eventFilters');
+    if (!grid) return;
+
+    var catColors = { CreatorX:'gold', Exchange:'emerald', University:'blue', 'Industry Event':'purple',
+      Speaker:'red', Partnership:'purple', Campaign:'orange', Community:'emerald', Network:'emerald',
+      Education:'blue', Milestone:'gold' };
+
+    // Build a flat media list per event (images + valid videos), each with caption.
+    function mediaOf(g) {
+      return (g.media || []).map(function (m) {
+        if (m.type === 'video') return { kind: 'video', embed: Util.videoEmbed(m.src), caption: m.caption || '' };
+        return { kind: 'image', src: m.src, caption: m.caption || '' };
+      }).filter(function (m) { return m.kind === 'image' || (m.embed && m.embed.type !== 'none'); });
+    }
+    function counts(g) {
+      var imgs = 0, vids = 0;
+      (g.media || []).forEach(function (m) {
+        if (m.type === 'video') { if (Util.videoEmbed(m.src).type !== 'none') vids++; }
+        else imgs++;
+      });
+      return { imgs: imgs, vids: vids };
+    }
+    grid.className = 'timeline';
+    grid.innerHTML = gallery.map(function (g, gi) {
+      var col = badgeColor(catColors[g.category] || 'gold');
+      var c = counts(g), media = mediaOf(g);
+      // Cover slideshow uses only the images (videos play in the lightbox on click).
+      var imgSlides = [];
+      media.forEach(function (m, k) { if (m.kind === 'image') imgSlides.push({ src: m.src, mi: k }); });
+      var slidesHTML = imgSlides.length
+        ? '<div class="tl-slides">' + imgSlides.map(function (o, si) {
+            return '<div class="tl-slide' + (si === 0 ? ' active' : '') + '" data-mi="' + o.mi + '">' +
+              '<img src="' + esc(Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
+          }).join('') + '</div>'
+        : '';
+      var navHTML = imgSlides.length > 1
+        ? '<button class="tl-arrow tl-prev" aria-label="Previous photo">‹</button>' +
+          '<button class="tl-arrow tl-next" aria-label="Next photo">›</button>' +
+          '<div class="tl-dots">' + imgSlides.map(function (_, si) {
+            return '<span class="tl-cdot' + (si === 0 ? ' active' : '') + '" data-si="' + si + '"></span>';
+          }).join('') + '</div>'
+        : '';
+      var tags = '<span class="cat-badge" style="background:rgba(7,7,15,.7);color:#fff">📷 ' + c.imgs + '</span>' +
+        (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
+      return '<div class="tl-item reveal" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
+        '<div class="tl-dot"></div>' +
+        '<div class="tl-card gcard" data-gi="' + gi + '" role="button" tabindex="0" aria-label="Open gallery for ' + esc(g.title) + '">' +
+          '<div class="tl-cover">' + slidesHTML + navHTML +
+            '<div class="tl-tags">' + tags + '</div>' +
+            (g.milestone ? '<span class="tl-mile">🏆 Milestone</span>' : '') + '</div>' +
+          '<div class="tl-body">' +
+            (g.date ? '<div class="tl-date">' + esc(g.date) + '</div>' : '') +
+            '<h4>' + esc(g.title) + '</h4>' +
+            '<div class="event-meta">' +
+              '<span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(g.category) + '</span>' +
+              (g.role ? '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + esc(g.role) + '</span>' : '') +
+              (g.location ? '<span class="cat-badge" style="background:var(--glass);color:var(--muted)">📍 ' + esc(g.location) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div></div>';
+    }).join('');
+
+    // Auto-rotating cover slideshows (staggered, pause on hover, reduced-motion aware).
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    Array.prototype.forEach.call(grid.querySelectorAll('.tl-item'), function (item, gi) {
+      var cover = item.querySelector('.tl-cover'); if (!cover) return;
+      var slides = cover.querySelectorAll('.tl-slide');
+      var dots = cover.querySelectorAll('.tl-cdot');
+      if (slides.length < 2) return;
+      var idx = 0, timer = null;
+      function show(n) {
+        idx = (n + slides.length) % slides.length;
+        for (var k = 0; k < slides.length; k++) slides[k].classList.toggle('active', k === idx);
+        for (var d = 0; d < dots.length; d++) dots[d].classList.toggle('active', d === idx);
+      }
+      function stop() { if (timer) { clearInterval(timer); timer = null; } }
+      function start() { if (reduceMotion) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
+      var prev = cover.querySelector('.tl-prev'), next = cover.querySelector('.tl-next');
+      if (prev) prev.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx - 1); start(); });
+      if (next) next.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx + 1); start(); });
+      Array.prototype.forEach.call(dots, function (dot) {
+        dot.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(+dot.dataset.si); start(); });
+      });
+      cover.addEventListener('mouseenter', stop);
+      cover.addEventListener('mouseleave', start);
+      cover._activeMi = function () { var s = slides[idx]; return s ? +s.getAttribute('data-mi') : 0; };
+      setTimeout(start, 500 + gi * 500); // stagger so cards don't flip in unison
+    });
+
+    // Filters from the categories actually present.
+    if (filtersEl) {
+      var cats = ['All'];
+      gallery.forEach(function (g) { if (g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
+      filtersEl.innerHTML = cats.map(function (f, i) {
+        return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
+      }).join('');
+      filtersEl.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('.filter-btn'); if (!btn) return;
+        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var f = btn.dataset.filter.toLowerCase();
+        grid.querySelectorAll('.tl-item').forEach(function (item) {
+          var match = f === 'all' || (item.dataset.cat || '').toLowerCase() === f ||
+            (item.dataset.role || '').indexOf(f) > -1;
+          item.style.display = match ? '' : 'none';
+        });
+      });
+    }
+
+    // ---- Lightbox ----
+    var lb = document.getElementById('lightbox');
+    if (!lb) return;
+    var lbStage = document.getElementById('lbStage');
+    var lbThumbs = document.getElementById('lbThumbs');
+    var lbTitle = document.getElementById('lbTitle');
+    var lbCount = document.getElementById('lbCount');
+    var lbCaption = document.getElementById('lbCaption');
+    var curMedia = [], curIdx = 0, curTitle = '';
+
+    function renderStage() {
+      var item = curMedia[curIdx]; if (!item) return;
+      var html;
+      if (item.kind === 'image') html = '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
+      else if (item.embed.type === 'iframe') html = '<iframe src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      else html = '<video src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
+      lbStage.innerHTML = html;
+      lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
+      if (lbCaption) { lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none'; }
+      Array.prototype.forEach.call(lbThumbs.children, function (b, i) { b.classList.toggle('active', i === curIdx); });
+      var active = lbThumbs.children[curIdx];
+      if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+    function openLightbox(gi, start) {
+      var g = gallery[gi]; curMedia = mediaOf(g);
+      if (!curMedia.length) return;
+      curIdx = (start && start < curMedia.length) ? start : 0; curTitle = g.title;
+      lbTitle.textContent = g.title + (g.location ? ' — ' + g.location : '');
+      lbThumbs.innerHTML = curMedia.map(function (m, i) {
+        var inner = m.kind === 'image' ? '<img src="' + esc(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
+        return '<button data-i="' + i + '" aria-label="Item ' + (i + 1) + '">' + inner + '</button>';
+      }).join('');
+      lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden'; renderStage();
+    }
+    function closeLightbox() {
+      lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true');
+      lbStage.innerHTML = ''; document.body.style.overflow = '';
+    }
+    function step(d) { if (!curMedia.length) return; curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); }
+
+    grid.addEventListener('click', function (e) {
+      if (e.target.closest('.tl-arrow') || e.target.closest('.tl-cdot')) return; // carousel controls, not open
+      var card = e.target.closest('.gcard'); if (!card) return;
+      var cover = card.querySelector('.tl-cover');
+      var start = (cover && cover._activeMi) ? cover._activeMi() : 0;
+      openLightbox(parseInt(card.dataset.gi, 10), start);
+    });
+    grid.addEventListener('keydown', function (e) {
+      var card = e.target.closest('.gcard'); if (!card) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(parseInt(card.dataset.gi, 10)); }
+    });
+    document.getElementById('lbClose').addEventListener('click', closeLightbox);
+    document.getElementById('lbPrev').addEventListener('click', function () { step(-1); });
+    document.getElementById('lbNext').addEventListener('click', function () { step(1); });
+    lbThumbs.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      curIdx = parseInt(b.dataset.i, 10); renderStage();
+    });
+    lb.addEventListener('click', function (e) { if (e.target === lb) closeLightbox(); });
+    document.addEventListener('keydown', function (e) {
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') step(-1);
+      else if (e.key === 'ArrowRight') step(1);
+    });
+  })();
 
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {

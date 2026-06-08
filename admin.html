@@ -221,7 +221,7 @@ textarea{min-height:90px;resize:vertical}
   /* ============ NAV CONFIG ============ */
   var SECTIONS = [
     ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Roles Manager'],
-    ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events Manager'],
+    ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events & Gallery'],
     ['projects','🗂️ Projects'], ['kol','🎯 KOL Network'], ['community','🏘️ Community'],
     ['social','🌐 Social Links'], ['affiliates','🤝 Affiliates'], ['testimonials','💬 Testimonials'],
     ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
@@ -260,7 +260,7 @@ textarea{min-height:90px;resize:vertical}
     var meta = {
       dashboard:'Overview of all content and quick actions', profile:'Edit identity, hero stats, bio and contact info',
       roles:'The seven role cards on the public site', experience:'Work history (full CRUD)',
-      cases:'Proof-of-work case studies', events:'All events — pre-loaded, fully editable',
+      cases:'Proof-of-work case studies', events:'Events with photo & video galleries — captions, dates, full control',
       projects:'Additional projects', kol:'KOL partners, services and markets',
       community:'Community platform cards and features', social:'All social platform links',
       affiliates:'Affiliate partner cards', testimonials:'Client testimonials',
@@ -292,7 +292,7 @@ textarea{min-height:90px;resize:vertical}
     var act = Store.activity();
     c.innerHTML =
       '<div class="stat-cards">' +
-      statCard(Store.get('fazal_events').length, 'Events') +
+      statCard((Store.get('fazal_gallery') || []).length, 'Events') +
       statCard(Store.get('fazal_projects').length, 'Projects') +
       statCard(Store.get('fazal_testimonials').length, 'Testimonials') +
       statCard(inq.length + (newInq ? ' (' + newInq + ' new)' : ''), 'Inquiries') + '</div>' +
@@ -445,34 +445,87 @@ textarea{min-height:90px;resize:vertical}
     });
   }
 
-  /* ============ EVENTS ============ */
-  function renderEvents(c) {
-    var arr = Store.get('fazal_events');
-    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Event</button>' +
-      '<p class="muted" style="margin-bottom:12px">' + arr.length + ' events</p>' +
-      crudList(arr, { title: function (e) { return (e.milestone ? '🏆 ' : '') + e.name; }, sub: function (e) { return e.category + ' · ' + e.role + ' · ' + e.mode; } });
-    document.getElementById('add').addEventListener('click', function () { eventForm({ name:'', category:'Network', role:'Organizer', mode:'Virtual', date:'[EVENT_DATE]', location:'', milestone:false, url:'', image:'' }, -1); });
-    wireCrud(c, 'fazal_events', { rerender: function () { renderEvents(c); }, form: eventForm });
+  /* ============ EVENTS & GALLERY ============ */
+  var GAL_CATS = ['CreatorX','Exchange','University','Industry Event','Speaker','Partnership','Campaign','Community','Network','Education','Milestone','Other'];
+  function galleryArr() { return Store.get('fazal_gallery') || []; }
+  function galCounts(g) {
+    var imgs = 0, vids = 0;
+    (g.media || []).forEach(function (m) { if (m.type === 'video') vids++; else imgs++; });
+    return imgs + ' photo' + (imgs === 1 ? '' : 's') + (vids ? ' · ' + vids + ' video' + (vids === 1 ? '' : 's') : '');
   }
-  function eventForm(e, i) {
-    var cats = ['Milestone','Industry Event','Exchange Partner','Education','Network','Partnership','Campaign','Speaker','Community','Other'];
-    var roles = ['Speaker','Organizer','Attendee','Host','Panelist','MC','Partner','Campaign Manager','KOL Manager','Regional Manager','Presenter','Team Lead'];
-    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Event</h3>' +
-      f('Event Name','ev_name',e.name) +
-      '<div class="grid2"><div><label>Category</label><select id="ev_cat">' + cats.map(function (x) { return '<option' + (x === e.category ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' +
-      '<div><label>My Role</label><select id="ev_role">' + roles.map(function (x) { return '<option' + (x === e.role ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div></div>' +
-      '<div class="grid2"><div><label>Mode</label><select id="ev_mode"><option' + (e.mode === 'Virtual' ? ' selected' : '') + '>Virtual</option><option' + (e.mode === 'In-Person' ? ' selected' : '') + '>In-Person</option></select></div>' +
-      f('Date','ev_date',e.date) + '</div>' +
-      f('Location','ev_loc',e.location) + mf('Event Banner / Image','ev_img',e.image,'image') + f('External URL','ev_url',e.url) +
-      '<label><input type="checkbox" id="ev_mile" ' + (e.milestone ? 'checked' : '') + ' style="width:auto"> 🏆 Milestone (gold banner treatment)</label>' +
-      modalActions('saveEv'));
-    document.getElementById('saveEv').addEventListener('click', function () {
-      var arr = Store.get('fazal_events');
-      var obj = { name: san(val('ev_name')), category: val('ev_cat'), role: val('ev_role'), mode: val('ev_mode'),
-        date: san(val('ev_date')), location: san(val('ev_loc')), image: san(val('ev_img')), url: san(val('ev_url')),
-        milestone: document.getElementById('ev_mile').checked };
-      if (i < 0) arr.push(obj); else arr[i] = obj;
-      save('fazal_events', arr, 'Saved ✓'); closeModal(); renderEvents(document.getElementById('content'));
+  function renderEvents(c) {
+    var arr = galleryArr();
+    c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Event</button>' +
+      '<p class="muted" style="margin-bottom:12px">' + arr.length + ' events · click ✏️ to edit photos, captions, videos &amp; date</p>' +
+      crudList(arr, { title: function (e) { return (e.milestone ? '🏆 ' : '') + e.title; },
+        sub: function (e) { return [e.category, e.role, e.date, galCounts(e)].filter(Boolean).join(' · '); } });
+    document.getElementById('add').addEventListener('click', function () {
+      editGallery(-1, { title:'', category:'Speaker', role:'Speaker', location:'', date:'', milestone:false, media:[] });
+    });
+    wireCrud(c, 'fazal_gallery', { rerender: function () { renderEvents(c); }, form: function (g, i) { editGallery(i, JSON.parse(JSON.stringify(g))); } });
+  }
+
+  // Full-page inline editor (so the dynamic media list can grow/shrink cleanly).
+  function editGallery(idx, draft) {
+    var c = document.getElementById('content');
+    function syncDraft() {
+      draft.title = san(val('gg_title')); draft.category = val('gg_cat'); draft.role = san(val('gg_role'));
+      draft.location = san(val('gg_loc')); draft.date = san(val('gg_date'));
+      draft.milestone = document.getElementById('gg_mile').checked;
+      draft.media = (draft.media || []).map(function (m, j) {
+        return { type: m.type, src: san(val('gm_src' + j)), caption: san(val('gm_cap' + j)) };
+      });
+    }
+    var mediaHTML = (draft.media || []).map(function (m, j) {
+      var isVid = m.type === 'video';
+      return '<div class="card" style="background:var(--void);margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<strong style="color:#fff">' + (isVid ? '🎬 Video ' : '📷 Photo ') + (j + 1) + '</strong>' +
+          '<div class="row-actions">' +
+            (j > 0 ? '<button class="btn btn-ghost btn-sm" data-mact="up" data-mi="' + j + '">↑</button>' : '') +
+            '<button class="btn btn-red btn-sm" data-mact="del" data-mi="' + j + '">🗑</button></div></div>' +
+        mf(isVid ? 'Video link (YouTube / Google Drive / GitHub) or upload' : 'Photo (link or upload)', 'gm_src' + j, m.src, isVid ? 'video' : 'image') +
+        f('Caption — who / what is in this ' + (isVid ? 'video' : 'photo') + '?', 'gm_cap' + j, m.caption) +
+      '</div>';
+    }).join('');
+
+    c.innerHTML = '<div class="card">' +
+      '<h3>' + (idx < 0 ? 'Add Event' : 'Edit Event') + '</h3>' +
+      f('Event Title','gg_title',draft.title) +
+      '<div class="grid2"><div><label>Category</label><select id="gg_cat">' +
+        GAL_CATS.map(function (x) { return '<option' + (x === draft.category ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' +
+        '<div>' + f('My Role','gg_role',draft.role) + '</div></div>' +
+      '<div class="grid2">' + f('Location','gg_loc',draft.location) + f('Date (e.g. Mar 2026 — drives timeline)','gg_date',draft.date) + '</div>' +
+      '<label><input type="checkbox" id="gg_mile" ' + (draft.milestone ? 'checked' : '') + ' style="width:auto"> 🏆 Milestone (gold highlight)</label>' +
+      '</div>' +
+      '<div class="card"><h3>Photos &amp; Videos</h3>' +
+        '<p class="field-help">Each item shows a caption under it in the gallery lightbox. Upload from device or paste a link.</p>' +
+        '<div id="galMedia">' + (mediaHTML || '<p class="muted">No media yet — add a photo or video below.</p>') + '</div>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">' +
+          '<button class="btn btn-ghost btn-sm" id="addPhoto">+ Add Photo</button>' +
+          '<button class="btn btn-ghost btn-sm" id="addVideo">+ Add Video</button></div></div>' +
+      '<div style="display:flex;gap:10px;margin-top:6px">' +
+        '<button class="btn btn-gold" id="gSave">💾 Save Event</button>' +
+        '<button class="btn btn-ghost" id="gCancel">← Back</button></div>';
+
+    document.getElementById('addPhoto').addEventListener('click', function () { syncDraft(); draft.media.push({ type:'image', src:'', caption:'' }); editGallery(idx, draft); });
+    document.getElementById('addVideo').addEventListener('click', function () { syncDraft(); draft.media.push({ type:'video', src:'', caption:'' }); editGallery(idx, draft); });
+    c.querySelectorAll('[data-mact]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        syncDraft(); var j = +b.dataset.mi;
+        if (b.dataset.mact === 'del') draft.media.splice(j, 1);
+        else if (b.dataset.mact === 'up') { var t = draft.media[j]; draft.media[j] = draft.media[j - 1]; draft.media[j - 1] = t; }
+        editGallery(idx, draft);
+      });
+    });
+    document.getElementById('gCancel').addEventListener('click', function () { renderEvents(c); });
+    document.getElementById('gSave').addEventListener('click', function () {
+      syncDraft();
+      if (!draft.title) { toast('❌ Add an event title'); return; }
+      draft.media = (draft.media || []).filter(function (m) { return m.src; });
+      var arr = galleryArr();
+      if (idx < 0) arr.push(draft); else arr[idx] = draft;
+      save('fazal_gallery', arr, 'Event saved ✓'); renderEvents(c);
     });
   }
 

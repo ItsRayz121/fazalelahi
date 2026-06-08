@@ -17,3 +17,7 @@ npm-debug.log*
 # Logs / temp
 *.log
 .cache/
+
+# Original full-resolution event archive (kept locally, NOT pushed).
+# Only the web-optimized copies in assets/events/ are deployed.
+Fazal Elahi Events/

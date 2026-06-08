@@ -385,6 +385,98 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
 .foot-bottom p{margin-bottom:5px}
 @media (max-width:800px){.foot-grid{grid-template-columns:1fr 1fr}}
 
+/* ===================== EVENT GALLERY ===================== */
+#gallery{background:var(--deep)}
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.gcard{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);
+  background:var(--surface);cursor:pointer;transition:transform .3s,border-color .3s,box-shadow .3s}
+.gcard:hover{transform:translateY(-4px);border-color:rgba(242,169,0,.4);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.gcard .cover{position:relative;aspect-ratio:4/3;overflow:hidden;background:#000}
+.gcard .cover img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.gcard:hover .cover img{transform:scale(1.06)}
+.gcard .cover::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(7,7,15,.85),transparent 55%)}
+.gcard .meta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px}
+.gcard .meta h4{font-family:var(--head);font-size:17px;font-weight:700;color:#fff;margin-bottom:5px}
+.gcard .meta .loc{font-family:var(--mono);font-size:11px;color:var(--silver)}
+.gcard .tags{position:absolute;top:12px;left:12px;z-index:2;display:flex;gap:7px}
+.gcard .gtag{font-family:var(--mono);font-size:10px;letter-spacing:.5px;padding:5px 10px;border-radius:20px;
+  background:rgba(7,7,15,.7);backdrop-filter:blur(6px);color:#fff;display:flex;align-items:center;gap:5px}
+.gcard .gtag.vid{background:rgba(255,59,59,.85)}
+@media (max-width:900px){.gallery-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.gallery-grid{grid-template-columns:1fr}}
+
+/* events timeline */
+.timeline{position:relative;margin-top:10px;padding-left:34px}
+.timeline::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(to bottom,var(--gold),rgba(242,169,0,.15))}
+.tl-item{position:relative;margin-bottom:26px}
+.tl-dot{position:absolute;left:-31px;top:18px;width:16px;height:16px;border-radius:50%;
+  background:var(--gold);border:3px solid var(--void);box-shadow:0 0 0 3px rgba(242,169,0,.18);z-index:2}
+.tl-card{display:grid;grid-template-columns:240px 1fr;gap:0;border-radius:16px;overflow:hidden}
+.tl-cover{position:relative;aspect-ratio:4/3;overflow:hidden;background:#000}
+.tl-slides{position:absolute;inset:0}
+.tl-slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.tl-slide.active{opacity:1}
+.tl-slide img{width:100%;height:100%;object-fit:cover;transform-origin:center;will-change:transform}
+/* Ken Burns: the visible photo slowly zooms/pans for a cinematic feel */
+.tl-slide.active img{animation:kenburns 8s ease-in-out infinite alternate}
+.tl-slide:nth-child(even).active img{animation-name:kenburns2}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.1) translate(-1.5%,-1%)}}
+@keyframes kenburns2{from{transform:scale(1.08) translate(1.5%,1%)}to{transform:scale(1)}}
+/* subtle prev/next arrows */
+.tl-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:28px;height:28px;
+  border-radius:50%;border:none;background:rgba(7,7,15,.45);color:#fff;font-size:18px;line-height:1;
+  cursor:pointer;display:grid;place-items:center;opacity:0;transition:opacity .25s,background .2s;backdrop-filter:blur(4px)}
+.tl-card:hover .tl-arrow{opacity:.65}
+.tl-arrow:hover{opacity:1;background:var(--gold);color:#000}
+.tl-prev{left:8px} .tl-next{right:8px}
+.tl-dots{position:absolute;bottom:9px;left:0;right:0;z-index:3;display:flex;gap:5px;justify-content:center}
+.tl-cdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);cursor:pointer;transition:.2s}
+.tl-cdot.active{background:var(--gold);width:16px;border-radius:4px}
+@media (max-width:900px){.tl-arrow{opacity:.5}}
+.tl-tags{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:2}
+.tl-tags .cat-badge{backdrop-filter:blur(6px)}
+.tl-mile{position:absolute;bottom:10px;left:10px;z-index:2;background:var(--gold);color:#000;
+  font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:20px;font-weight:700}
+.tl-body{padding:18px 20px;display:flex;flex-direction:column;justify-content:center}
+.tl-date{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:1px;margin-bottom:6px}
+.tl-body h4{font-family:var(--head);font-size:20px;font-weight:700;margin-bottom:10px}
+@media (max-width:680px){
+  .tl-card{grid-template-columns:1fr}
+  .tl-cover{aspect-ratio:16/9}
+}
+
+/* lightbox */
+#lightbox{position:fixed;inset:0;z-index:100000;background:rgba(5,5,12,.96);backdrop-filter:blur(8px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:clamp(14px,4vw,40px)}
+#lightbox.open{display:flex}
+#lightbox .lb-head{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+  padding:18px clamp(14px,4vw,40px);z-index:3}
+#lightbox .lb-title{font-family:var(--head);font-weight:700;color:#fff;font-size:clamp(15px,2vw,20px)}
+#lightbox .lb-count{font-family:var(--mono);font-size:12px;color:var(--silver);margin-top:2px}
+#lightbox .lb-close{background:var(--glass);border:1px solid rgba(255,255,255,.18);color:#fff;width:44px;height:44px;
+  border-radius:50%;font-size:24px;cursor:pointer;display:grid;place-items:center;line-height:1}
+#lightbox .lb-close:hover{background:var(--gold);color:#000}
+#lightbox .lb-stage{max-width:1100px;width:100%;height:78vh;display:grid;place-items:center;position:relative}
+#lightbox .lb-stage img,#lightbox .lb-stage video{max-width:100%;max-height:78vh;border-radius:12px;
+  object-fit:contain;background:#000}
+#lightbox .lb-stage iframe{width:min(1100px,92vw);height:min(62vw,72vh);border:0;border-radius:12px;background:#000}
+#lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(7,7,15,.6);
+  border:1px solid rgba(255,255,255,.18);color:#fff;width:52px;height:52px;border-radius:50%;font-size:26px;
+  cursor:pointer;display:grid;place-items:center;z-index:3;transition:.2s}
+#lightbox .lb-nav:hover{background:var(--gold);color:#000}
+#lightbox .lb-prev{left:clamp(6px,2vw,20px)} #lightbox .lb-next{right:clamp(6px,2vw,20px)}
+#lightbox .lb-caption{margin-top:14px;max-width:900px;text-align:center;color:var(--white);
+  font-family:var(--head);font-size:clamp(14px,1.8vw,17px);font-weight:500;line-height:1.4;
+  background:rgba(7,7,15,.6);border:1px solid var(--border);padding:10px 18px;border-radius:10px}
+#lightbox .lb-thumbs{display:flex;gap:8px;margin-top:16px;max-width:100%;overflow-x:auto;padding-bottom:6px}
+#lightbox .lb-thumbs button{flex:0 0 auto;width:64px;height:48px;border-radius:8px;overflow:hidden;border:2px solid transparent;
+  background:#000;cursor:pointer;padding:0;position:relative}
+#lightbox .lb-thumbs button.active{border-color:var(--gold)}
+#lightbox .lb-thumbs img{width:100%;height:100%;object-fit:cover}
+#lightbox .lb-thumbs .vthumb{width:100%;height:100%;display:grid;place-items:center;color:#fff;font-size:18px;background:rgba(255,59,59,.4)}
+@media (max-width:600px){#lightbox .lb-nav{width:42px;height:42px;font-size:20px}}
+
 /* maintenance */
 #maintenance{position:fixed;inset:0;background:var(--void);z-index:99999;display:none;
   flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
@@ -601,7 +693,7 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
   <div class="wrap">
     <span class="eyebrow reveal">In The Room</span>
     <h2 class="sec-title reveal">IN THE ROOM<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Real events. Real rooms. Real impact. This is what building Web3 in Pakistan looks like.</p>
+    <p class="sec-sub reveal">Real events. Real rooms. Real impact. Filter by type, then tap any event to open its photo &amp; video gallery.</p>
     <div class="milestone-banner reveal">
       <span class="tag">🏆 MILESTONE ACHIEVEMENT</span>
       <h3>Organized Pakistan's First Web3 Physical Event — Lahore</h3>
@@ -719,6 +811,19 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
     </div>
   </div>
 </footer>
+
+<!-- ============ LIGHTBOX ============ -->
+<div id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Event media viewer">
+  <div class="lb-head">
+    <div><div class="lb-title" id="lbTitle"></div><div class="lb-count" id="lbCount"></div></div>
+    <button class="lb-close" id="lbClose" aria-label="Close gallery">×</button>
+  </div>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous">‹</button>
+  <div class="lb-stage" id="lbStage"></div>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next">›</button>
+  <div class="lb-caption" id="lbCaption"></div>
+  <div class="lb-thumbs" id="lbThumbs"></div>
+</div>
 
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 

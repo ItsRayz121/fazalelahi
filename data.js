@@ -129,6 +129,153 @@
       { name: 'CreatorX Community — Pakistan Team', category: 'Network', role: 'Regional Manager', mode: 'In-Person', date: '[EVENT_DATE]', location: 'Pakistan', milestone: false, url: '', image: '' }
     ],
 
+    /* ---- Event Gallery (real events with curated photos + optional videos) ----
+       Each item: { title, category, role, location, date, milestone, media:[ {type:'image'|'video', src, caption} ] }
+       Managed in admin → "Events & Gallery". `date` (e.g. 'Mar 2026') powers the timeline order. */
+    fazal_gallery: [
+      {
+        title: 'CreatorX Third Event — Multan', category: 'CreatorX', role: 'Organizer & Host', location: 'Multan, Pakistan', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'CreatorX Second Event — Sukkur', category: 'CreatorX', role: 'Organizer & Host', location: 'Sukkur, Pakistan', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'CreatorX First Event — Lahore', category: 'CreatorX', role: 'Organizer & Host', location: 'Lahore, Pakistan', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-4.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'CreatorX & CBS', category: 'CreatorX', role: 'Partner / Host', location: 'Pakistan', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Binance January Event', category: 'Exchange', role: 'Attendee / Representative', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/binance-january/binance-january-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-january/binance-january-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-january/binance-january-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-january/binance-january-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-january/binance-january-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Binance Pizza Day Event', category: 'Exchange', role: 'Attendee / Representative', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/binance-pizza-day/binance-pizza-day-1.png', caption: '' },
+        { type: 'image', src: 'assets/events/binance-pizza-day/binance-pizza-day-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-pizza-day/binance-pizza-day-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-pizza-day/binance-pizza-day-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/binance-pizza-day/binance-pizza-day-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'LUMS Event', category: 'University', role: 'Speaker', location: 'LUMS, Lahore', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/lums/lums-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/lums/lums-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/lums/lums-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/lums/lums-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/lums/lums-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Money Matters', category: 'Industry Event', role: 'Attendee / Representative', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/money-matters/money-matters-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/money-matters/money-matters-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/money-matters/money-matters-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/money-matters/money-matters-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/money-matters/money-matters-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Edversity, OKX & BingX', category: 'Exchange', role: 'Representative', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/edversity-okx-bingx/edversity-okx-bingx-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/edversity-okx-bingx/edversity-okx-bingx-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/edversity-okx-bingx/edversity-okx-bingx-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/edversity-okx-bingx/edversity-okx-bingx-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/edversity-okx-bingx/edversity-okx-bingx-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'MEXC Event — Lahore', category: 'Exchange', role: 'Representative', location: 'Lahore, Pakistan', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/mexc-lahore/mexc-lahore-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/mexc-lahore/mexc-lahore-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/mexc-lahore/mexc-lahore-3.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'OPCat Layer', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/opcat-layer/opcat-layer-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/opcat-layer/opcat-layer-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/opcat-layer/opcat-layer-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/opcat-layer/opcat-layer-4.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Tilted', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/tilted/tilted-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/tilted/tilted-2.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/tilted/tilted-3.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/tilted/tilted-4.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/tilted/tilted-5.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Wealth Season', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/wealth-season/wealth-season-1.jpg', caption: '' },
+        { type: 'image', src: 'assets/events/wealth-season/wealth-season-2.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Emergence Marketing', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/emergence-marketing/emergence-marketing-1.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Stand in Gold', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/stand-in-gold/stand-in-gold-1.jpg', caption: '' }
+        ]
+      },
+      {
+        title: 'Dev3Pack', category: 'Speaker', role: 'Speaker', location: '', date: '', milestone: false,
+        media: [
+        { type: 'image', src: 'assets/events/dev3pack/dev3pack-1.jpg', caption: '' }
+        ]
+      }
+    ],
+
     fazal_projects: [],
 
     fazal_kol_network: {
