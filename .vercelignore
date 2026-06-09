@@ -1,0 +1,8 @@
+# Original full-resolution event archive — local only, NEVER deployed.
+# Web-optimized copies live in assets/events/ and ARE deployed.
+Fazal Elahi Events/
+
+# Repo / dev files not needed on the static host
+.git
+README.md
+schema.sql
