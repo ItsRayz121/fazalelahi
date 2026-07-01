@@ -858,9 +858,17 @@ textarea{min-height:90px;resize:vertical}
     ['services','🤝 Work With Me'], ['events','🎪 Events & Gallery'], ['affiliates','🤝 Affiliates'],
     ['social','🌐 Social Links'], ['testimonials','💬 Testimonials']
   ];
+  // Tag collections that render as chips on the public site — each tag can be
+  // individually shown/hidden without deleting it from its list.
+  var TAG_GROUPS = [
+    ['expertise','🏷️ Expertise Tags (About section)', function () { return (Store.get('fazal_profile').expertise) || []; }],
+    ['pillars','📚 Content Pillars', function () { return (Store.get('fazal_content').pillars) || []; }],
+    ['hashtags','#️⃣ Hashtags', function () { return (Store.get('fazal_content').hashtags) || []; }]
+  ];
   function renderVisibility(c) {
     var vis = Store.get('fazal_sections') || {};
-    c.innerHTML = '<div class="card"><h3>Show / Hide Public Sections</h3>' +
+    var hidden = Store.get('fazal_hidden') || {};
+    var sectionsCard = '<div class="card"><h3>Show / Hide Public Sections</h3>' +
       '<p class="field-help">Turn a section OFF to remove it from the live website. It collapses cleanly — the next section moves up, no empty gap. Hero and Contact are always shown.</p>' +
       PUBLIC_SECTIONS.map(function (s) {
         return '<label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);cursor:pointer">' +
@@ -868,10 +876,43 @@ textarea{min-height:90px;resize:vertical}
           '<span style="color:#fff">' + s[1] + '</span></label>';
       }).join('') +
       '<button class="btn btn-gold" id="saveVis" style="margin-top:14px">💾 Save Visibility</button></div>';
+
+    var tagsCard = '<div class="card"><h3>Show / Hide Individual Tags</h3>' +
+      '<p class="field-help">Uncheck any tag to remove just that chip from the live site. The tag stays in your list here — flip it back on anytime. To add or rename tags, use the Profile / Content sections.</p>' +
+      TAG_GROUPS.map(function (g) {
+        var items = g[2](), h = hidden[g[0]] || [];
+        if (!items.length) return '';
+        return '<div style="margin:14px 0 4px"><strong style="color:#fff">' + g[1] + '</strong>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' +
+          items.map(function (t) {
+            var on = h.indexOf(t) < 0;
+            return '<label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;' +
+              'border:1px solid var(--border);background:var(--glass);cursor:pointer;font-size:13px' +
+              (on ? '' : ';opacity:.5') + '">' +
+              '<input type="checkbox" class="tagvis" data-cat="' + g[0] + '" data-val="' + esc(t) + '" ' +
+              (on ? 'checked' : '') + ' style="width:auto"><span style="color:#fff">' + esc(t) + '</span></label>';
+          }).join('') + '</div></div>';
+      }).join('') +
+      '<button class="btn btn-gold" id="saveTags" style="margin-top:16px">💾 Save Tag Visibility</button></div>';
+
+    c.innerHTML = sectionsCard + tagsCard;
     document.getElementById('saveVis').addEventListener('click', function () {
       var out = {};
       c.querySelectorAll('.secvis').forEach(function (cb) { out[cb.dataset.id] = cb.checked; });
       save('fazal_sections', out, 'Visibility saved ✓');
+    });
+    document.getElementById('saveTags').addEventListener('click', function () {
+      var out = {};
+      c.querySelectorAll('.tagvis').forEach(function (cb) {
+        var cat = cb.dataset.cat;
+        if (!out[cat]) out[cat] = [];
+        if (!cb.checked) out[cat].push(cb.dataset.val);
+      });
+      save('fazal_hidden', out, 'Tag visibility saved ✓');
+    });
+    // Live opacity feedback as you toggle, before saving.
+    c.querySelectorAll('.tagvis').forEach(function (cb) {
+      cb.addEventListener('change', function () { cb.closest('label').style.opacity = cb.checked ? '' : '.5'; });
     });
   }
 

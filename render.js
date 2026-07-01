@@ -9,6 +9,14 @@
   function liveUrl(u) { return !!clean(u); }
   await Store.bootstrap(); // load shared cloud content (or seed local defaults)
 
+  // Per-tag show/hide (admin → "Show / Hide"). `shown(cat, arr)` drops any tag
+  // whose exact text is listed as hidden under that category in fazal_hidden.
+  var HIDDEN = Store.get('fazal_hidden') || {};
+  function shown(cat, arr) {
+    var h = HIDDEN[cat] || [];
+    return (arr || []).filter(function (t) { return h.indexOf(t) < 0; });
+  }
+
   /* ---------- Official SVG icons (brand-correct) ---------- */
   var ICON = {
     youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.5 15.5v-7l6.3 3.5z"/></svg>',
@@ -77,7 +85,7 @@
     '💼 ' + esc(p.availability) + ' Available'
   ].map(function (t) { return '<span class="pill">' + t + '</span>'; }).join('');
 
-  document.getElementById('tagCloud').innerHTML = (p.expertise || [])
+  document.getElementById('tagCloud').innerHTML = shown('expertise', p.expertise)
     .map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
 
   // Icon-only contact — raw email/number live in href only (privacy), never shown as text.
@@ -158,8 +166,8 @@
   } else {
     videosWrap.style.display = 'none'; // no videos set yet — collapse the row
   }
-  document.getElementById('pillars').innerHTML = content.pillars.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
-  document.getElementById('hashtags').innerHTML = content.hashtags.map(function (t) { return '<span class="chip hash">' + esc(t) + '</span>'; }).join('');
+  document.getElementById('pillars').innerHTML = shown('pillars', content.pillars).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
+  document.getElementById('hashtags').innerHTML = shown('hashtags', content.hashtags).map(function (t) { return '<span class="chip hash">' + esc(t) + '</span>'; }).join('');
 
   /* ---------- Community ---------- */
   var comm = Store.get('fazal_community');

@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-01-banner-video-tabs';
+  var DATA_VERSION = '2026-07-01-tag-visibility';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -436,6 +436,12 @@
        public site (it collapses out of flow — the next section moves up, no gap).
        Missing / true = visible. Managed in admin → "Show / Hide Sections". */
     fazal_sections: {},
+
+    /* Per-tag show/hide. Map of category → array of hidden tag VALUES, e.g.
+       { expertise:['DeFi'], pillars:[], hashtags:['#blockchain'] }. A tag whose
+       exact text is listed here is filtered out of the public site. Managed in
+       admin → "Show / Hide" (Individual Tags). Missing category = all shown. */
+    fazal_hidden: {},
 
     // SHA-256 of "fazal2026" — CHANGE THIS in admin Security before deploy.
     fazal_admin_hash: '5e9c0a3f1c2c3e7e0a3b8d8b9f8b6f4a1d2c3e4f5a6b7c8d9e0f1a2b3c4d5e6f'
