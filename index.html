@@ -574,6 +574,104 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
   flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
 #maintenance h1{font-family:var(--disp);font-size:64px}
 
+/* ============================================================
+   RESPONSIVE REFINEMENTS — tuned for every device
+   large tablet → tablet → phone → small phone → landscape
+   (added on top of the per-section breakpoints above)
+   ============================================================ */
+
+/* prevent any stray horizontal overflow on touch devices */
+html,body{max-width:100%}
+
+/* ---- Large tablets / small laptops ---- */
+@media (max-width:1024px){
+  .hero-inner{gap:30px}
+  .roles-grid{gap:18px}
+  .svc-grid{gap:18px}
+}
+
+/* ---- Tablets (portrait) ---- */
+@media (max-width:768px){
+  section{padding:clamp(40px,7vw,60px) clamp(16px,5vw,42px)}
+  .sec-sub{margin-bottom:24px}
+  .milestone-banner{padding:20px 18px}
+  .feat-strip{padding:18px}
+  .timeline{padding-left:28px}
+  .foot-social a{width:38px;height:38px}
+}
+
+/* ---- Phones ---- */
+@media (max-width:560px){
+  section{padding:38px 16px}
+  .sec-title{font-size:clamp(36px,11vw,52px)}
+  .sec-sub{font-size:15px}
+  .eyebrow{font-size:11px;letter-spacing:2px}
+
+  /* hero: no forced full height, cleaner stacked layout */
+  #hero{min-height:auto;padding-top:92px;padding-bottom:44px}
+  .hero-sub{font-size:17px}
+  .hero-body{font-size:16px}
+  .hero-cta{gap:10px}
+  .hero-cta .btn{flex:1 1 100%;justify-content:center}
+
+  /* hero photo + floating stats kept inside the viewport */
+  .hero-photo{width:min(258px,66vw)}
+  .float-stat{padding:9px 12px;animation-duration:5s}
+  .float-stat .v{font-size:17px}
+  .float-stat .l{font-size:10px;max-width:96px}
+  .fs1{top:2%;left:0}
+  .fs2{bottom:8%;right:0}
+  .fs3{display:none}
+
+  /* nav + mobile menu */
+  .brand{font-size:22px}
+  #mobileNav{gap:18px}
+  #mobileNav a{font-size:28px}
+
+  /* generic tighter spacing */
+  .card{padding:22px}
+  .btn{padding:13px 20px;font-size:14.5px}
+  .stat{padding:22px 12px}
+  .milestone-banner h3{font-size:clamp(22px,7vw,30px)}
+
+  /* stacked CTA/track buttons go full width */
+  .track .btn{width:100%;margin-right:0}
+  .track .btn+.btn{margin-top:2px}
+  .svc-foot,.flag-row{justify-content:flex-start}
+
+  /* keep single-column grids readable */
+  .region-cards,.kol-partners,.aff-grid{grid-template-columns:1fr}
+}
+
+/* ---- Small phones ---- */
+@media (max-width:380px){
+  section{padding:34px 13px}
+  .sec-title{font-size:32px}
+  .hero h1{font-size:clamp(40px,13vw,52px)}
+  .hero-badges .pill{font-size:10px;padding:6px 11px}
+  .stat .num{font-size:26px}
+  .brand{font-size:20px}
+  .brand .flag{display:none}
+  .float-stat{transform:scale(.9)}
+  #maintenance h1{font-size:44px}
+}
+
+/* ---- Bigger tap targets on touch / no-hover devices ---- */
+@media (hover:none){
+  .mini-social a{width:44px;height:44px}
+  .foot-social a{width:40px;height:40px}
+  .nav-links a{padding:8px 0}
+  .filter-btn,.mv-tab{padding:10px 16px}
+}
+
+/* ---- Landscape phones (short viewports) ---- */
+@media (max-height:500px) and (orientation:landscape){
+  #hero{min-height:auto;padding-top:78px;padding-bottom:40px}
+  .hero-photo{width:min(200px,32vw)}
+  #mobileNav{gap:10px}
+  #mobileNav a{font-size:22px}
+}
+
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .reveal{opacity:1;transform:none}
