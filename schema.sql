@@ -28,6 +28,14 @@ create policy "content admin write"
   using (true)
   with check (true);
 
+-- TABLE-LEVEL GRANTS (REQUIRED) — RLS policies above only take effect once the
+-- API roles also hold table privileges. Tables created via raw SQL are NOT
+-- auto-granted to anon/authenticated, which is why public reads previously
+-- failed with "permission denied for table site_content". These are idempotent.
+grant usage on schema public to anon, authenticated;
+grant select on public.site_content to anon, authenticated;      -- public website reads
+grant insert, update, delete on public.site_content to authenticated; -- admin writes
+
 
 -- 2) INQUIRIES TABLE ---------------------------------------------------
 -- Contact-form submissions. Visitors (anon) can INSERT; only admins read.
@@ -66,6 +74,10 @@ drop policy if exists "inquiries admin delete" on public.inquiries;
 create policy "inquiries admin delete"
   on public.inquiries for delete
   to authenticated using (true);
+
+-- TABLE-LEVEL GRANTS for inquiries (see note above). Idempotent.
+grant insert on public.inquiries to anon, authenticated;         -- visitors submit the form
+grant select, update, delete on public.inquiries to authenticated; -- admin manages them
 
 -- 3) MEDIA STORAGE BUCKET ---------------------------------------------
 -- Holds images & videos uploaded from the admin panel ("Upload from
