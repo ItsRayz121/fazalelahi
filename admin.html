@@ -366,9 +366,12 @@ textarea{min-height:90px;resize:vertical}
   function renderProfile(c) {
     var p = Store.get('fazal_profile');
     var statFields = p.stats.map(function (s, i) {
-      return '<div class="grid2"><input id="sv' + i + '" value="' + esc(s.value) + '" placeholder="Value">' +
+      var hid = s.visible === false;
+      return '<div class="card-head" style="margin-top:12px"><h3 style="font-size:15px">Stat ' + (i + 1) + (hid ? ' <span class="hid-badge">Hidden</span>' : '') + '</h3>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-vist="' + i + '" title="Show / hide this stat on the live site">' + (hid ? '🙈' : '👁️') + '</button></div>' +
+        '<div class="grid2"><input id="sv' + i + '" value="' + esc(s.value) + '" placeholder="Value">' +
         '<input id="sl' + i + '" value="' + esc(s.label) + '" placeholder="Label"></div>' +
-        '<label style="display:flex;align-items:center;gap:6px;margin:-4px 0 12px;font-size:13px;color:var(--muted)">' +
+        '<label style="display:flex;align-items:center;gap:6px;margin:6px 0 4px;font-size:13px;color:var(--muted)">' +
         '<input type="checkbox" id="sc' + i + '" ' + (s.visible !== false ? 'checked' : '') + ' style="width:auto"> Show this stat on site</label>';
     }).join('');
     c.innerHTML = '<div class="card">' +
@@ -382,7 +385,8 @@ textarea{min-height:90px;resize:vertical}
       ta('Bio Paragraph 1','pf_bio1',p.bio1) + ta('Bio Paragraph 2','pf_bio2',p.bio2) + ta('Bio Paragraph 3','pf_bio3',p.bio3) +
       ta('Expertise Tags (comma-separated)','pf_exp',p.expertise.join(', ')) +
       '<button class="btn btn-gold" id="saveProfile" style="margin-top:18px">💾 Save Profile</button></div>';
-    document.getElementById('saveProfile').addEventListener('click', function () {
+    // Capture all profile form fields into p (shared by Save and the per-stat toggle).
+    function grab() {
       p.name = san(val('pf_name')); p.tagline = san(val('pf_tagline')); p.subTagline = san(val('pf_sub'));
       p.mission = san(val('pf_mission')); p.photo = san(val('pf_photo')); p.email = san(val('pf_email'));
       p.phone = san(val('pf_phone')); p.location = san(val('pf_loc')); p.availability = san(val('pf_avail'));
@@ -390,8 +394,18 @@ textarea{min-height:90px;resize:vertical}
       p.bio1 = san(val('pf_bio1')); p.bio2 = san(val('pf_bio2')); p.bio3 = san(val('pf_bio3'));
       p.expertise = list(val('pf_exp'));
       p.stats = p.stats.map(function (s, i) { return { value: san(val('sv' + i)), label: san(val('sl' + i)), accent: s.accent, visible: document.getElementById('sc' + i).checked }; });
-      save('fazal_profile', p, 'Profile saved ✓');
+    }
+    document.getElementById('saveProfile').addEventListener('click', function () {
+      grab(); save('fazal_profile', p, 'Profile saved ✓');
     });
+    // Inline show/hide per stat — capture any unsaved edits first so they aren't lost on rerender.
+    c.querySelectorAll('[data-vist]').forEach(function (b) { b.addEventListener('click', function () {
+      grab();
+      var i = +b.dataset.vist;
+      p.stats[i].visible = p.stats[i].visible === false;
+      save('fazal_profile', p, p.stats[i].visible ? 'Stat shown ✓' : 'Stat hidden ✓');
+      renderProfile(c);
+    }); });
   }
 
   /* ============ Generic CRUD list builder ============ */
