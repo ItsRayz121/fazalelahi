@@ -285,7 +285,7 @@
     // Build a flat media list per event (images + valid videos), each with caption.
     function mediaOf(g) {
       return (g.media || []).map(function (m) {
-        if (m.type === 'video') return { kind: 'video', embed: Util.videoEmbed(m.src), caption: m.caption || '' };
+        if (m.type === 'video') return { kind: 'video', embed: Util.videoEmbed(m.src), orient: m.orient || '', caption: m.caption || '' };
         return { kind: 'image', src: m.src, caption: m.caption || '' };
       }).filter(function (m) { return m.kind === 'image' || (m.embed && m.embed.type !== 'none'); });
     }
@@ -406,9 +406,10 @@
     function renderStage() {
       var item = curMedia[curIdx]; if (!item) return;
       var html;
+      var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
       if (item.kind === 'image') html = '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      else html = '<video src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
+      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      else html = '<video' + pc + ' src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
       lbStage.innerHTML = html;
       lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
       if (lbCaption) { lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none'; }
@@ -495,12 +496,31 @@
     e.preventDefault();
     var fd = new FormData(e.target), san = FAZAL.Util.sanitize;
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
-      type: san(fd.get('type')), message: san(fd.get('message')), status: 'New', ts: new Date().toISOString() };
-    Store.submitInquiry(entry); // saves to cloud (and local cache)
-    document.getElementById('formMsg').textContent = '✅ Message sent! Opening your email client as backup…';
-    e.target.reset();
-    var body = encodeURIComponent('Name: ' + entry.name + '\nCompany: ' + entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
-    window.location.href = 'mailto:' + p.email + '?subject=' + encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
+      type: san(fd.get('type')), message: san(fd.get('message')) };
+    var msg = document.getElementById('formMsg');
+    function openMail() {
+      var body = encodeURIComponent('Name: ' + entry.name + '\nEmail: ' + entry.email + '\nCompany: ' +
+        entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
+      window.location.href = 'mailto:' + p.email + '?subject=' +
+        encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
+    }
+    var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
+    if (endpoint) { // Formspree (or similar) — visitor stays on the page
+      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
+      var body = new FormData();
+      Object.keys(entry).forEach(function (k) { body.append(k, entry[k]); });
+      fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
+        .then(function (r) {
+          if (!r.ok) throw new Error('bad status');
+          msg.style.color = 'var(--emerald)';
+          msg.textContent = "✅ Message sent! I'll get back to you soon.";
+          e.target.reset();
+        })
+        .catch(function () { msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…'; openMail(); });
+    } else { // no service configured — open the visitor's email app
+      msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…';
+      openMail(); e.target.reset();
+    }
   });
 
   /* ===================================================================
