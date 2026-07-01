@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-01-block-visibility';
+  var DATA_VERSION = '2026-07-01-network-tree';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -431,6 +431,82 @@
     },
 
     fazal_customcss: '',
+
+    /* "The Network Tree" — a constellation of people Fazal has connected with.
+       Each entry = one connection (photo of Fazal + that person). `thumb` is the
+       small square avatar shown as a node/bubble; `photo` is the full image shown
+       in the click popup. Names/roles start blank — fill them in admin → Network
+       Tree. New people can be added anytime; extras beyond the visible ring tuck
+       into a "+N more" grid so the section never grows past one screen. */
+    fazal_network_tree: {
+      intro: 'Every handshake tells a story. This is the network I’ve built across Web3 — founders, creators, exchange teams and community leaders. Tap any face to see who they are.',
+      people: [
+      { name: '', role: '', thumb: 'assets/network/n01-t.jpg', photo: 'assets/network/n01.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n02-t.jpg', photo: 'assets/network/n02.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n03-t.jpg', photo: 'assets/network/n03.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n04-t.jpg', photo: 'assets/network/n04.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n05-t.jpg', photo: 'assets/network/n05.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n06-t.jpg', photo: 'assets/network/n06.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n07-t.jpg', photo: 'assets/network/n07.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n08-t.jpg', photo: 'assets/network/n08.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n09-t.jpg', photo: 'assets/network/n09.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n10-t.jpg', photo: 'assets/network/n10.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n11-t.jpg', photo: 'assets/network/n11.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n12-t.jpg', photo: 'assets/network/n12.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n13-t.jpg', photo: 'assets/network/n13.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n14-t.jpg', photo: 'assets/network/n14.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n15-t.jpg', photo: 'assets/network/n15.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n16-t.jpg', photo: 'assets/network/n16.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n17-t.jpg', photo: 'assets/network/n17.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n18-t.jpg', photo: 'assets/network/n18.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n19-t.jpg', photo: 'assets/network/n19.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n20-t.jpg', photo: 'assets/network/n20.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n21-t.jpg', photo: 'assets/network/n21.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n22-t.jpg', photo: 'assets/network/n22.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n23-t.jpg', photo: 'assets/network/n23.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n24-t.jpg', photo: 'assets/network/n24.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n25-t.jpg', photo: 'assets/network/n25.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n26-t.jpg', photo: 'assets/network/n26.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n27-t.jpg', photo: 'assets/network/n27.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n28-t.jpg', photo: 'assets/network/n28.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n29-t.jpg', photo: 'assets/network/n29.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n30-t.jpg', photo: 'assets/network/n30.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n31-t.jpg', photo: 'assets/network/n31.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n32-t.jpg', photo: 'assets/network/n32.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n33-t.jpg', photo: 'assets/network/n33.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n34-t.jpg', photo: 'assets/network/n34.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n35-t.jpg', photo: 'assets/network/n35.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n36-t.jpg', photo: 'assets/network/n36.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n37-t.jpg', photo: 'assets/network/n37.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n38-t.jpg', photo: 'assets/network/n38.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n39-t.jpg', photo: 'assets/network/n39.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n40-t.jpg', photo: 'assets/network/n40.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n41-t.jpg', photo: 'assets/network/n41.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n42-t.jpg', photo: 'assets/network/n42.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n43-t.jpg', photo: 'assets/network/n43.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n44-t.jpg', photo: 'assets/network/n44.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n45-t.jpg', photo: 'assets/network/n45.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n46-t.jpg', photo: 'assets/network/n46.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n47-t.jpg', photo: 'assets/network/n47.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n48-t.jpg', photo: 'assets/network/n48.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n49-t.jpg', photo: 'assets/network/n49.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n50-t.jpg', photo: 'assets/network/n50.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n51-t.jpg', photo: 'assets/network/n51.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n52-t.jpg', photo: 'assets/network/n52.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n53-t.jpg', photo: 'assets/network/n53.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n54-t.jpg', photo: 'assets/network/n54.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n55-t.jpg', photo: 'assets/network/n55.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n56-t.jpg', photo: 'assets/network/n56.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n57-t.jpg', photo: 'assets/network/n57.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n58-t.jpg', photo: 'assets/network/n58.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n59-t.jpg', photo: 'assets/network/n59.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n60-t.jpg', photo: 'assets/network/n60.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n61-t.jpg', photo: 'assets/network/n61.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n62-t.jpg', photo: 'assets/network/n62.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n63-t.jpg', photo: 'assets/network/n63.jpg', visible: true },
+      { name: '', role: '', thumb: 'assets/network/n64-t.jpg', photo: 'assets/network/n64.jpg', visible: true }
+      ]
+    },
 
     /* Whole-section show/hide. Any id set to false hides that <section> on the
        public site (it collapses out of flow — the next section moves up, no gap).

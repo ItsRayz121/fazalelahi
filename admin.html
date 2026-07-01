@@ -250,7 +250,7 @@ textarea{min-height:90px;resize:vertical}
   var SECTIONS = [
     ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Identity — What I Do'],
     ['experience','💼 Battle Tested (Experience)'], ['cases','📋 Proof Of Work'], ['events','🎪 In The Room (Events)'],
-    ['projects','🗂️ Projects'], ['kol','🎯 The KOL Network'], ['community','🏘️ The Community'],
+    ['projects','🗂️ Projects'], ['kol','🎯 The KOL Network'], ['networktree','🌳 The Network Tree'], ['community','🏘️ The Community'],
     ['regions','🌍 Regional Leadership'], ['services','🤝 Work With Me'],
     ['social','🌐 Find Me Everywhere'], ['affiliates','🤝 Trusted Exchanges'], ['testimonials','💬 Reputation'],
     ['content','🎥 Learn With Me'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
@@ -291,6 +291,7 @@ textarea{min-height:90px;resize:vertical}
       roles:'"Identity → What I Do" — the seven role cards on the public site', experience:'"Battle Tested" — work history (full CRUD)',
       cases:'"Proof Of Work" — case studies', events:'"In The Room" — events with photo & video galleries (captions, dates, full control)',
       projects:'Additional projects (not shown on the public site)', kol:'"The KOL Network" — partners, services and markets',
+      networktree:'"The Network Tree" — the people you\'ve connected with. Add a name & role to each face; upload new people anytime.',
       community:'"The Community" — platform cards and features', regions:'"Regional Leadership" — region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', services:'"Work With Me" — service offerings & engagement process', social:'"Find Me Everywhere" — all social platform links',
       affiliates:'"Trusted Exchanges" — affiliate partner cards', testimonials:'"Reputation" — client testimonials',
       content:'"Learn With Me" — YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags (not shown on the public site)',
@@ -307,7 +308,7 @@ textarea{min-height:90px;resize:vertical}
      Note: admin route 'regions' → public section 'regional'. Pages with no single
      matching section (profile, keywords, inquiries, settings…) show no toggle. */
   var ROUTE_SECTION = { roles:'roles', experience:'experience', cases:'cases', events:'events',
-    kol:'kol', community:'community', regions:'regional', services:'services', social:'social',
+    kol:'kol', networktree:'network-tree', community:'community', regions:'regional', services:'services', social:'social',
     affiliates:'affiliates', testimonials:'testimonials', content:'content' };
   function updateSectionToggle(r) {
     var btn = document.getElementById('sectionToggle');
@@ -335,7 +336,7 @@ textarea{min-height:90px;resize:vertical}
     ({
       dashboard: renderDashboard, profile: renderProfile, roles: renderRoles,
       experience: renderExperience, cases: renderCases, events: renderEvents,
-      projects: renderProjects, kol: renderKOL, community: renderCommunity,
+      projects: renderProjects, kol: renderKOL, networktree: renderNetworkTree, community: renderCommunity,
       regions: renderRegions, services: renderServices,
       social: renderSocial, affiliates: renderAffiliates, testimonials: renderTestimonials,
       content: renderContent, keywords: renderKeywords, inquiries: renderInquiries,
@@ -674,6 +675,84 @@ textarea{min-height:90px;resize:vertical}
     c.querySelectorAll('[data-vism]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); var i = +b.dataset.vism; k.markets[i].visible = k.markets[i].visible === false; save('fazal_kol_network', k, k.markets[i].visible ? 'Shown ✓' : 'Hidden ✓'); renderKOL(c); }); });
   }
 
+  /* ============ THE NETWORK TREE ============ */
+  function renderNetworkTree(c) {
+    var nt = Store.get('fazal_network_tree');
+    if (!nt || !Array.isArray(nt.people)) { nt = { intro: (nt && nt.intro) || '', people: [] }; }
+    var named = nt.people.filter(function (p) { return (p.name || '').trim(); }).length;
+    c.innerHTML =
+      '<div class="card">' + ta('Intro Text (shown under the title)', 'nt_intro', nt.intro || '') +
+        '<button class="btn btn-gold" id="ntSaveText" style="margin-top:10px">💾 Save Text</button></div>' +
+      '<div class="card"><div class="card-head"><h3>People in the Tree</h3>' +
+        '<span class="muted" style="font-size:12px">' + named + ' of ' + nt.people.length + ' named</span></div>' +
+        '<p class="field-help">Tap ✏️ on any face to add their name &amp; role. Use 👁️ to show/hide a face, ↑ to move it earlier (the first faces appear in the constellation ring), 🗑 to remove. Add new people anytime.</p>' +
+        '<button class="btn btn-gold btn-sm" id="ntAdd" style="margin:6px 0 14px">+ Add Person</button>' +
+        '<div id="ntRows">' + ntRows(nt.people) + '</div></div>';
+
+    document.getElementById('ntSaveText').addEventListener('click', function () {
+      nt.intro = san(val('nt_intro')); save('fazal_network_tree', nt, 'Saved ✓');
+    });
+    document.getElementById('ntAdd').addEventListener('click', function () { ntForm({ name:'', role:'', thumb:'', photo:'', visible:true }, -1); });
+    wireNtRows(c, nt);
+  }
+  function ntRows(people) {
+    if (!people.length) return '<p class="muted">No people yet. Click “Add Person” to start your tree.</p>';
+    return people.map(function (p, i) {
+      var hid = p.visible === false;
+      var img = Util.imageUrl(p.thumb || p.photo || '');
+      var nm = (p.name || '').trim() || '➕ Add a name';
+      var rl = (p.role || '').trim() || ('Photo ' + (i + 1) + (hid ? ' · hidden' : ''));
+      return '<div class="row-item"' + (hid ? ' style="opacity:.5"' : '') + '>' +
+        '<div class="info" style="display:flex;align-items:center;gap:12px">' +
+          (img ? '<img src="' + esc(img) + '" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.visibility=\'hidden\'">'
+               : '<span style="width:46px;height:46px;border-radius:50%;background:var(--border);flex-shrink:0"></span>') +
+          '<div><strong' + ((p.name || '').trim() ? '' : ' style="color:var(--muted)"') + '>' + esc(nm) + '</strong><small>' + esc(rl) + '</small></div></div>' +
+        '<div class="row-actions">' +
+          '<button class="btn btn-ghost btn-sm" data-ntact="vis" data-i="' + i + '" title="' + (hid ? 'Hidden — click to show' : 'Visible — click to hide') + '">' + (hid ? '🙈' : '👁️') + '</button>' +
+          (i > 0 ? '<button class="btn btn-ghost btn-sm" data-ntact="up" data-i="' + i + '">↑</button>' : '') +
+          '<button class="btn btn-ghost btn-sm" data-ntact="edit" data-i="' + i + '">✏️</button>' +
+          '<button class="btn btn-red btn-sm" data-ntact="del" data-i="' + i + '">🗑</button></div></div>';
+    }).join('');
+  }
+  function wireNtRows(c, nt) {
+    c.querySelectorAll('[data-ntact]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = +b.dataset.i, act = b.dataset.ntact;
+        if (act === 'vis') { nt.people[i].visible = nt.people[i].visible === false; save('fazal_network_tree', nt, nt.people[i].visible ? 'Shown ✓' : 'Hidden ✓'); renderNetworkTree(c); }
+        else if (act === 'up') { var t = nt.people[i]; nt.people[i] = nt.people[i - 1]; nt.people[i - 1] = t; save('fazal_network_tree', nt, 'Moved ✓'); renderNetworkTree(c); }
+        else if (act === 'edit') { ntForm(nt.people[i], i); }
+        else if (act === 'del') {
+          modal('<h3>Remove this person?</h3><p class="muted">This removes the face from the tree. It cannot be undone.</p>' +
+            '<div class="modal-actions"><button class="btn btn-ghost" onclick="_closeModal()">Cancel</button>' +
+            '<button class="btn btn-red" id="ntConfDel">Remove</button></div>');
+          document.getElementById('ntConfDel').addEventListener('click', function () {
+            nt.people.splice(i, 1); save('fazal_network_tree', nt, 'Removed ✓'); closeModal(); renderNetworkTree(c);
+          });
+        }
+      });
+    });
+  }
+  function ntForm(person, idx) {
+    var isNew = idx < 0;
+    modal('<h3>' + (isNew ? 'Add Person' : 'Edit Person') + '</h3>' +
+      f('Name', 'nt_name', person.name || '') +
+      f('Role / Title (e.g. Founder, KOL, Exchange Team)', 'nt_role', person.role || '') +
+      mf('Photo', 'nt_photo', person.photo || '', 'image') +
+      modalActions('ntSavePerson', isNew ? 'Add' : 'Save'));
+    document.getElementById('ntSavePerson').addEventListener('click', function () {
+      var nt = Store.get('fazal_network_tree');
+      if (!nt || !Array.isArray(nt.people)) nt = { intro: '', people: [] };
+      var photo = san(val('nt_photo'));
+      // Keep the pre-made square thumbnail if the photo wasn't changed; otherwise use the new photo for both.
+      var thumb = (photo && photo === person.photo && person.thumb) ? person.thumb : photo;
+      var obj = { name: san(val('nt_name')), role: san(val('nt_role')), thumb: thumb, photo: photo,
+                  visible: person.visible !== false };
+      if (isNew) nt.people.push(obj); else nt.people[idx] = obj;
+      save('fazal_network_tree', nt, isNew ? 'Added ✓' : 'Saved ✓');
+      closeModal(); renderNetworkTree(document.getElementById('content'));
+    });
+  }
+
   /* ============ COMMUNITY ============ */
   function renderCommunity(c) {
     var cm = Store.get('fazal_community');
@@ -961,7 +1040,7 @@ textarea{min-height:90px;resize:vertical}
   var PUBLIC_SECTIONS = [
     ['roles','🎭 Identity — What I Do'], ['stats','📊 Real Numbers, Real Impact'], ['about','📖 My Story'],
     ['content','🎥 Learn With Me'], ['community','🏘️ The Community'], ['regional','🌍 Regional Leadership'],
-    ['experience','💼 Battle Tested'], ['kol','🎯 The KOL Network'], ['cases','📋 Proof Of Work'],
+    ['experience','💼 Battle Tested'], ['kol','🎯 The KOL Network'], ['network-tree','🌳 The Network Tree'], ['cases','📋 Proof Of Work'],
     ['services','🤝 Work With Me'], ['events','🎪 In The Room'], ['affiliates','🤝 Trusted Exchanges'],
     ['social','🌐 Find Me Everywhere'], ['testimonials','💬 Reputation']
   ];

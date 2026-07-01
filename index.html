@@ -707,6 +707,78 @@ html,body{max-width:100%}
   #mobileNav a{font-size:22px}
 }
 
+/* ============ THE NETWORK TREE (constellation) ============ */
+#network-tree .nt-intro{max-width:760px;margin-bottom:6px}
+.nt-stage{position:relative;width:100%;max-width:960px;margin:34px auto 8px;
+  height:clamp(430px,58vw,600px)}
+.nt-links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}
+.nt-links line{stroke:rgba(242,169,0,.28);stroke-width:.28;
+  stroke-dasharray:1.4 1.4;animation:ntFlow 9s linear infinite}
+@keyframes ntFlow{to{stroke-dashoffset:-40}}
+.nt-core,.nt-node{position:absolute;transform:translate(-50%,-50%);border-radius:50%;
+  overflow:hidden;background:#0E0E1C;cursor:pointer;z-index:2;
+  border:2px solid rgba(242,169,0,.5)}
+.nt-core img,.nt-node img{width:100%;height:100%;object-fit:cover}
+.nt-core{left:50%;top:50%;width:clamp(88px,15vw,120px);height:clamp(88px,15vw,120px);
+  border-color:var(--gold);box-shadow:0 0 0 6px rgba(242,169,0,.10),0 0 44px rgba(242,169,0,.35);
+  z-index:4;cursor:default;animation:ntPulse 4s ease-in-out infinite}
+@keyframes ntPulse{0%,100%{box-shadow:0 0 0 6px rgba(242,169,0,.10),0 0 40px rgba(242,169,0,.28)}
+  50%{box-shadow:0 0 0 10px rgba(242,169,0,.06),0 0 60px rgba(242,169,0,.5)}}
+.nt-core .nt-core-tag{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--gold);white-space:nowrap}
+.nt-node{width:clamp(46px,8vw,64px);height:clamp(46px,8vw,64px);
+  box-shadow:0 6px 20px rgba(0,0,0,.5);transition:transform .3s,border-color .3s,box-shadow .3s;
+  animation:ntFloat var(--d,6s) ease-in-out infinite;will-change:transform}
+@keyframes ntFloat{0%,100%{margin-top:0}50%{margin-top:-7px}}
+.nt-node:hover,.nt-node:focus-visible{border-color:var(--gold);
+  box-shadow:0 0 0 4px rgba(242,169,0,.14),0 10px 26px rgba(0,0,0,.6);z-index:5;outline:none}
+.nt-node:hover{transform:translate(-50%,-50%) scale(1.14)}
+.nt-node .nt-tip{position:absolute;left:50%;top:-30px;transform:translateX(-50%);
+  background:#12121F;border:1px solid var(--border);color:#fff;font-family:var(--head);
+  font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .2s}
+.nt-node:hover .nt-tip{opacity:1}
+/* full-network wall of faces */
+.nt-wall-head{display:flex;align-items:center;gap:12px;margin:30px 0 14px}
+.nt-wall-head .eyebrow{margin:0}
+.nt-wall-head .nt-count{font-family:var(--mono);font-size:12px;color:var(--silver)}
+.nt-wall{display:flex;flex-wrap:wrap;gap:clamp(8px,1.4vw,14px)}
+.nt-chip{position:relative;width:clamp(44px,7vw,58px);height:clamp(44px,7vw,58px);
+  border-radius:50%;overflow:hidden;cursor:pointer;background:#0E0E1C;
+  border:2px solid rgba(255,255,255,.08);transition:transform .25s,border-color .25s}
+.nt-chip img{width:100%;height:100%;object-fit:cover}
+.nt-chip:hover,.nt-chip:focus-visible{transform:translateY(-4px) scale(1.06);
+  border-color:var(--gold);outline:none;z-index:2}
+.nt-chip .nt-tip{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  background:#12121F;border:1px solid var(--border);color:#fff;font-family:var(--head);
+  font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:3}
+.nt-chip:hover .nt-tip{opacity:1}
+/* person popup */
+#ntModal{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;
+  background:rgba(5,5,12,.9);backdrop-filter:blur(6px);padding:20px}
+#ntModal.open{display:flex}
+.nt-card{position:relative;width:min(440px,94vw);background:var(--deep);
+  border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.nt-card .nt-photo{width:100%;max-height:66vh;object-fit:cover;background:#000;display:block}
+.nt-card .nt-info{padding:18px 22px 22px}
+.nt-card .nt-name{font-family:var(--head);font-size:22px;font-weight:700;color:#fff}
+.nt-card .nt-role{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--gold);margin-top:6px}
+.nt-card .nt-role.empty{color:var(--muted)}
+.nt-mclose{position:absolute;top:12px;right:12px;z-index:3;width:38px;height:38px;border-radius:50%;
+  border:none;background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.nt-mclose:hover{background:var(--gold);color:#000}
+.nt-mnav{position:absolute;top:calc(50% - 40px);transform:translateY(-50%);z-index:3;width:44px;height:44px;
+  border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.nt-mnav:hover{background:var(--gold);color:#000}
+.nt-mprev{left:12px}.nt-mnext{right:12px}
+.nt-mcount{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:3;
+  font-family:var(--mono);font-size:11px;color:#fff;background:rgba(0,0,0,.5);padding:4px 12px;border-radius:20px}
+@media (max-width:600px){
+  .nt-core .nt-core-tag{bottom:-22px;font-size:10px}
+  .nt-node .nt-tip{display:none}
+}
+
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .reveal,.tl-item.reveal{opacity:1;transform:none}
@@ -727,6 +799,7 @@ html,body{max-width:100%}
     <li><a href="#experience">Experience</a></li>
     <li><a href="#community">Community</a></li>
     <li><a href="#affiliates">Affiliates</a></li>
+    <li><a href="#network-tree">Network</a></li>
     <li><a href="#events">Events</a></li>
     <li><a href="#social">Socials</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -739,7 +812,7 @@ html,body{max-width:100%}
 <div id="mobileNav" aria-hidden="true">
   <button class="close" id="mobileClose" aria-label="Close menu">×</button>
   <a href="#content">Education</a><a href="#about">About</a><a href="#experience">Experience</a>
-  <a href="#community">Community</a><a href="#services">Work With Me</a><a href="#affiliates">Affiliates</a><a href="#events">Events</a>
+  <a href="#community">Community</a><a href="#services">Work With Me</a><a href="#affiliates">Affiliates</a><a href="#network-tree">Network</a><a href="#events">Events</a>
   <a href="#social">Socials</a><a href="#contact">Contact</a>
 </div>
 
@@ -895,6 +968,21 @@ html,body{max-width:100%}
       <span class="pill">✅ Direct Access Enabled</span>
       <a class="btn btn-gold shimmer" href="#contact">🤝 Run a KOL Campaign With Me</a>
     </div>
+  </div>
+</section>
+
+<!-- ============ THE NETWORK TREE ============ -->
+<section id="network-tree">
+  <div class="wrap">
+    <span class="eyebrow reveal">The Network Tree</span>
+    <h2 class="sec-title reveal">THE NETWORK TREE<span class="dot">.</span></h2>
+    <p class="sec-sub reveal nt-intro" id="ntIntro"></p>
+    <div class="nt-stage reveal" id="ntStage" aria-hidden="true"></div>
+    <div class="nt-wall-head reveal">
+      <span class="eyebrow">The Full Network</span>
+      <span class="nt-count" id="ntCount"></span>
+    </div>
+    <div class="nt-wall reveal" id="ntWall"></div>
   </div>
 </section>
 
@@ -1061,6 +1149,20 @@ html,body{max-width:100%}
   <button class="lb-nav lb-next" id="lbNext" aria-label="Next">›</button>
   <div class="lb-caption" id="lbCaption"></div>
   <div class="lb-thumbs" id="lbThumbs"></div>
+</div>
+
+<div id="ntModal" role="dialog" aria-modal="true" aria-label="Network connection">
+  <div class="nt-card">
+    <span class="nt-mcount" id="ntMCount"></span>
+    <button class="nt-mclose" id="ntMClose" aria-label="Close">×</button>
+    <button class="nt-mnav nt-mprev" id="ntMPrev" aria-label="Previous">‹</button>
+    <button class="nt-mnav nt-mnext" id="ntMNext" aria-label="Next">›</button>
+    <img class="nt-photo" id="ntMPhoto" src="" alt="">
+    <div class="nt-info">
+      <div class="nt-name" id="ntMName"></div>
+      <div class="nt-role" id="ntMRole"></div>
+    </div>
+  </div>
 </div>
 
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>

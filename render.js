@@ -231,6 +231,88 @@
   document.getElementById('kolMarkets').innerHTML = kol.markets.filter(function (m) { return m.visible !== false; }).map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
+  /* ---------- The Network Tree (constellation) ----------
+     A central "Fazal" node with linking lines out to a featured ring of faces,
+     plus a full wall of every connection below. Click any face → popup with the
+     full photo + name/role, walkable with ‹ › / arrow keys. Names are managed in
+     admin → Network Tree; blank names fall back to a neutral label. */
+  (function () {
+    var nt = Store.get('fazal_network_tree'); if (!nt) return;
+    var stage = document.getElementById('ntStage'), wall = document.getElementById('ntWall');
+    var introEl = document.getElementById('ntIntro'), countEl = document.getElementById('ntCount');
+    if (!stage || !wall) return;
+    if (introEl) introEl.textContent = nt.intro || '';
+    var people = (nt.people || []).filter(function (x) { return x.visible !== false; });
+    if (!people.length) { var sec = document.getElementById('network-tree'); if (sec) sec.style.display = 'none'; return; }
+
+    var prof = Store.get('fazal_profile') || {};
+    function thumbOf(x) { return Util.imageUrl(x.thumb || x.photo || ''); }
+    function fullOf(x)  { return Util.imageUrl(x.photo || x.thumb || ''); }
+    function nameOf(x)  { return clean(x.name) ? x.name : 'Network Connection'; }
+    if (countEl) countEl.textContent = people.length + ' connection' + (people.length === 1 ? '' : 's') + ' and growing';
+
+    // Featured ring(s): first faces laid out on an inner + outer ellipse (percent coords).
+    var featured = people.slice(0, Math.min(16, people.length));
+    var innerN = Math.min(6, featured.length), outerN = featured.length - innerN;
+    function ringPos(idx, total, rx, ry, offset) {
+      var a = offset + (idx / total) * Math.PI * 2;
+      return { x: 50 + rx * Math.cos(a), y: 50 + ry * Math.sin(a) };
+    }
+    var positions = featured.map(function (x, i) {
+      return i < innerN ? ringPos(i, innerN, 24, 26, -Math.PI / 2)
+                        : ringPos(i - innerN, outerN || 1, 43, 40, -Math.PI / 2 + Math.PI / (outerN || 1));
+    });
+    var svgLines = positions.map(function (pt) {
+      return '<line x1="50" y1="50" x2="' + pt.x.toFixed(1) + '" y2="' + pt.y.toFixed(1) + '"/>';
+    }).join('');
+    var coreName = prof.name || 'Fazal Elahi';
+    var core = '<div class="nt-core"><img src="' + esc(Util.imageUrl(prof.photo || fullOf(people[0]))) +
+      '" alt="' + esc(coreName) + '"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
+    var nodes = featured.map(function (x, i) {
+      var pt = positions[i], gi = people.indexOf(x);
+      var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
+      return '<button class="nt-node" style="left:' + pt.x.toFixed(1) + '%;top:' + pt.y.toFixed(1) +
+        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" aria-label="' + esc(nameOf(x)) + '">' +
+        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+    }).join('');
+    stage.innerHTML = '<svg class="nt-links" viewBox="0 0 100 100" preserveAspectRatio="none">' + svgLines + '</svg>' + core + nodes;
+
+    // Wall of every visible face.
+    wall.innerHTML = people.map(function (x, i) {
+      var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
+      return '<button class="nt-chip" data-i="' + i + '" aria-label="' + esc(nameOf(x)) + '">' +
+        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+    }).join('');
+
+    // Popup viewer.
+    var modal = document.getElementById('ntModal');
+    var mPhoto = document.getElementById('ntMPhoto'), mName = document.getElementById('ntMName'),
+        mRole = document.getElementById('ntMRole'), mCount = document.getElementById('ntMCount');
+    var cur = 0;
+    function show(i) {
+      cur = (i + people.length) % people.length; var x = people[cur];
+      mPhoto.src = fullOf(x); mPhoto.alt = nameOf(x);
+      mName.textContent = clean(x.name) ? x.name : 'Network Connection';
+      if (clean(x.role)) { mRole.textContent = x.role; mRole.classList.remove('empty'); }
+      else { mRole.textContent = 'Part of Fazal’s Web3 network'; mRole.classList.add('empty'); }
+      mCount.textContent = (cur + 1) + ' / ' + people.length;
+    }
+    function openAt(i) { show(i); modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    stage.addEventListener('click', function (e) { var b = e.target.closest('.nt-node'); if (b) openAt(+b.dataset.i); });
+    wall.addEventListener('click', function (e) { var b = e.target.closest('.nt-chip'); if (b) openAt(+b.dataset.i); });
+    document.getElementById('ntMClose').addEventListener('click', close);
+    document.getElementById('ntMPrev').addEventListener('click', function () { show(cur - 1); });
+    document.getElementById('ntMNext').addEventListener('click', function () { show(cur + 1); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function (e) {
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') show(cur - 1);
+      else if (e.key === 'ArrowRight') show(cur + 1);
+    });
+  })();
+
   /* ---------- Work With Me (services) ---------- */
   var SVC_ICON = {
     kol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -611,13 +693,28 @@
      =================================================================== */
   // Nav scroll + scroll spy
   var nav = document.getElementById('nav');
-  var sections = document.querySelectorAll('main section');
   var navLinks = document.querySelectorAll('.nav-links a');
+  // Only track sections that have a matching nav tab, so the active tab stays
+  // lit while scrolling through in-between sections that have no tab of their own.
+  var navTargets = {};
+  navLinks.forEach(function (a) {
+    var id = (a.getAttribute('href') || '').replace('#', '');
+    if (id) navTargets[id] = true;
+  });
+  var sections = Array.prototype.filter.call(
+    document.querySelectorAll('main section'),
+    function (s) { return navTargets[s.id]; }
+  );
   window.addEventListener('scroll', function () {
     nav.classList.toggle('scrolled', window.scrollY > 40);
     document.getElementById('progress').style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
     var cur = '';
     sections.forEach(function (s) { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+    // Near the bottom of the page, force the last section active (short final
+    // sections may never cross the -120 threshold).
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4 && sections.length) {
+      cur = sections[sections.length - 1].id;
+    }
     navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + cur); });
   }, { passive: true });
 
@@ -642,7 +739,7 @@
   (function applySectionVisibility() {
     var vis = Store.get('fazal_sections') || {};
     var toggleable = ['roles','stats','about','content','community','regional','experience',
-      'kol','cases','services','events','affiliates','social','testimonials'];
+      'kol','network-tree','cases','services','events','affiliates','social','testimonials'];
     toggleable.forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.style.display = (vis[id] === false) ? 'none' : '';
