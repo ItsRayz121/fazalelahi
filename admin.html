@@ -80,6 +80,12 @@ textarea{min-height:90px;resize:vertical}
 .hidden{display:none!important}
 .hamburger{display:none}
 .field-help{font-size:11px;color:var(--muted);margin-top:3px}
+/* card header with inline show/hide toggle (Content channels, Community cards) */
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.card-head h3{margin:0}
+.hid-badge{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--red);
+  border:1px solid rgba(255,59,59,.35);background:rgba(255,59,59,.12);padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.sec-toggle-wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 /* ---- MEDIA UPLOAD FIELD ---- */
 .media-field{margin-bottom:8px}
 .media-tools{display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap}
@@ -146,7 +152,10 @@ textarea{min-height:90px;resize:vertical}
         <h2 id="pageTitle">Dashboard</h2>
         <p class="page-desc" id="pageDesc"></p>
       </div>
-      <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">👁 Preview Site</a>
+      <div class="sec-toggle-wrap">
+        <button class="btn btn-ghost hidden" id="sectionToggle" type="button"></button>
+        <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">👁 Preview Site</a>
+      </div>
     </div>
     <div id="content"></div>
   </main>
@@ -289,9 +298,35 @@ textarea{min-height:90px;resize:vertical}
     document.getElementById('pageDesc').textContent = meta[r] || '';
   }
 
+  /* Maps an admin page to its public-site section id (fazal_sections key) so the
+     top-of-page toggle can show/hide that whole section on the live website.
+     Note: admin route 'regions' → public section 'regional'. Pages with no single
+     matching section (profile, keywords, inquiries, settings…) show no toggle. */
+  var ROUTE_SECTION = { roles:'roles', experience:'experience', cases:'cases', events:'events',
+    kol:'kol', community:'community', regions:'regional', services:'services', social:'social',
+    affiliates:'affiliates', testimonials:'testimonials', content:'content' };
+  function updateSectionToggle(r) {
+    var btn = document.getElementById('sectionToggle');
+    var sid = ROUTE_SECTION[r];
+    if (!sid) { btn.classList.add('hidden'); btn.onclick = null; return; }
+    var vis = Store.get('fazal_sections') || {};
+    var isHidden = vis[sid] === false;
+    btn.className = 'btn ' + (isHidden ? 'btn-red' : 'btn-ghost');
+    btn.innerHTML = isHidden ? '🙈 Section Hidden' : '👁 Section Shown';
+    btn.title = isHidden
+      ? 'This whole section is hidden from the live site — click to show it'
+      : 'Hide this entire section from the live site';
+    btn.onclick = function () {
+      var v = Store.get('fazal_sections') || {};
+      v[sid] = (v[sid] === false); // flip: hidden→shown, shown→hidden
+      save('fazal_sections', v, v[sid] ? 'Section shown ✓' : 'Section hidden ✓');
+      updateSectionToggle(r);
+    };
+  }
+
   /* ============ ROUTER ============ */
   function route(r) {
-    setActive(r); pageHead(r);
+    setActive(r); pageHead(r); updateSectionToggle(r);
     var c = document.getElementById('content');
     ({
       dashboard: renderDashboard, profile: renderProfile, roles: renderRoles,
@@ -625,7 +660,9 @@ textarea{min-height:90px;resize:vertical}
   function renderCommunity(c) {
     var cm = Store.get('fazal_community');
     c.innerHTML = cm.cards.map(function (card, i) {
-      return '<div class="card"><h3>Card ' + (i + 1) + ' — ' + esc(card.platform) + '</h3>' +
+      var hid = card.visible === false;
+      return '<div class="card"><div class="card-head"><h3>Card ' + (i + 1) + ' — ' + esc(card.platform) + (hid ? ' <span class="hid-badge">Hidden</span>' : '') + '</h3>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-vismc="' + i + '" title="Show / hide this card on the live site">' + (hid ? '🙈' : '👁️') + '</button></div>' +
         f('Name','cm_name' + i,card.name) + f('URL','cm_url' + i,card.url) + f('Count','cm_cnt' + i,card.count) +
         ta('Description','cm_desc' + i,card.desc) + f('CTA Text','cm_cta' + i,card.cta) +
         '<label><input type="checkbox" id="cm_vis' + i + '" ' + (card.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label></div>';
@@ -639,6 +676,15 @@ textarea{min-height:90px;resize:vertical}
       });
       cm.features = list(val('cm_feat')); save('fazal_community', cm, 'Saved ✓');
     });
+    // Inline show/hide per card — capture any unsaved field edits first so they aren't lost on rerender.
+    c.querySelectorAll('[data-vismc]').forEach(function (b) { b.addEventListener('click', function () {
+      var i = +b.dataset.vismc;
+      cm.cards = cm.cards.map(function (card, j) { return { platform: card.platform, name: san(val('cm_name' + j)), url: san(val('cm_url' + j)), count: san(val('cm_cnt' + j)), desc: san(val('cm_desc' + j)), cta: san(val('cm_cta' + j)), visible: document.getElementById('cm_vis' + j).checked }; });
+      cm.features = list(val('cm_feat'));
+      cm.cards[i].visible = cm.cards[i].visible === false;
+      save('fazal_community', cm, cm.cards[i].visible ? 'Card shown ✓' : 'Card hidden ✓');
+      renderCommunity(c);
+    }); });
   }
 
   /* ============ REGIONAL LEADERSHIP ============ */
@@ -800,7 +846,10 @@ textarea{min-height:90px;resize:vertical}
   function renderContent(c) {
     var ct = Store.get('fazal_content');
     c.innerHTML = ct.channels.map(function (ch, i) {
-      return '<div class="card"><h3>Channel ' + (i + 1) + '</h3>' + f('Name','ct_name' + i,ch.name) + f('URL','ct_url' + i,ch.url) +
+      var hid = ch.visible === false;
+      return '<div class="card"><div class="card-head"><h3>Channel ' + (i + 1) + (hid ? ' <span class="hid-badge">Hidden</span>' : '') + '</h3>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-visc="' + i + '" title="Show / hide this channel on the live site">' + (hid ? '🙈' : '👁️') + '</button></div>' +
+        f('Name','ct_name' + i,ch.name) + f('URL','ct_url' + i,ch.url) +
         ta('Description','ct_desc' + i,ch.desc) + f('Subscribers','ct_subs' + i,ch.subs) +
         '<label><input type="checkbox" id="ct_vis' + i + '" ' + (ch.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible on site</label></div>';
     }).join('') +
@@ -816,6 +865,16 @@ textarea{min-height:90px;resize:vertical}
       ct.pillars = list(val('ct_pillars')); ct.hashtags = list(val('ct_hash')); ct.frequency = san(val('ct_freq'));
       save('fazal_content', ct, 'Saved ✓');
     });
+    // Inline show/hide per channel — capture any unsaved field edits first so they aren't lost on rerender.
+    c.querySelectorAll('[data-visc]').forEach(function (b) { b.addEventListener('click', function () {
+      var i = +b.dataset.visc;
+      ct.channels = ct.channels.map(function (ch, j) { return { name: san(val('ct_name' + j)), url: san(val('ct_url' + j)), desc: san(val('ct_desc' + j)), subs: san(val('ct_subs' + j)), visible: document.getElementById('ct_vis' + j).checked }; });
+      ct.videos = ct.videos.map(function (v, j) { return san(val('ct_vid' + j)); });
+      ct.pillars = list(val('ct_pillars')); ct.hashtags = list(val('ct_hash')); ct.frequency = san(val('ct_freq'));
+      ct.channels[i].visible = ct.channels[i].visible === false;
+      save('fazal_content', ct, ct.channels[i].visible ? 'Channel shown ✓' : 'Channel hidden ✓');
+      renderContent(c);
+    }); });
   }
 
   /* ============ KEYWORDS ============ */
