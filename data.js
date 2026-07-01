@@ -492,11 +492,19 @@
   });
 
   // Load shared content from the cloud into the local cache, then defaults fill gaps.
+  // CRITICAL: this must NEVER block the first paint. The public site renders from
+  // local defaults (data.js) instantly; the cloud read is a best-effort cache
+  // refresh, capped by a short timeout so a slow/asleep Supabase project can never
+  // hang the page (previously caused 20–30s blank loads).
   Store.bootstrap = async function () {
     Store.init();
     if (!cloudEnabled) return;
     try {
-      var res = await sb.from('site_content').select('key,value');
+      var timeout = new Promise(function (resolve) {
+        setTimeout(function () { resolve({ __timedOut: true }); }, 2000);
+      });
+      var res = await Promise.race([sb.from('site_content').select('key,value'), timeout]);
+      if (res.__timedOut) { console.warn('Cloud slow — rendered from local, will refresh next load'); return; }
       if (res.error) throw res.error;
       (res.data || []).forEach(function (row) {
         localStorage.setItem(row.key, JSON.stringify(row.value));
