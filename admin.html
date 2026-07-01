@@ -361,10 +361,12 @@ textarea{min-height:90px;resize:vertical}
 
   /* ============ Generic CRUD list builder ============ */
   function crudList(items, opts) {
-    // opts: {title(item), sub(item)}
+    // opts: {title(item), sub(item), vis} — set vis:true to show an inline show/hide toggle
     return items.map(function (it, i) {
-      return '<div class="row-item"><div class="info"><strong>' + esc(opts.title(it)) + '</strong><small>' + esc(opts.sub(it)) + '</small></div>' +
+      var hidden = opts.vis && it.visible === false;
+      return '<div class="row-item"' + (hidden ? ' style="opacity:.5"' : '') + '><div class="info"><strong>' + esc(opts.title(it)) + '</strong><small>' + esc(opts.sub(it)) + '</small></div>' +
         '<div class="row-actions">' +
+        (opts.vis ? '<button class="btn btn-ghost btn-sm" data-act="vis" data-i="' + i + '" title="' + (hidden ? 'Hidden — click to show' : 'Visible — click to hide') + ' on site">' + (hidden ? '🙈' : '👁️') + '</button>' : '') +
         (i > 0 ? '<button class="btn btn-ghost btn-sm" data-act="up" data-i="' + i + '">↑</button>' : '') +
         '<button class="btn btn-ghost btn-sm" data-act="edit" data-i="' + i + '">✏️</button>' +
         '<button class="btn btn-red btn-sm" data-act="del" data-i="' + i + '">🗑</button></div></div>';
@@ -383,6 +385,8 @@ textarea{min-height:90px;resize:vertical}
           });
         } else if (b.dataset.act === 'up') {
           var t = arr[i]; arr[i] = arr[i - 1]; arr[i - 1] = t; save(key, arr, 'Reordered ✓'); opts.rerender();
+        } else if (b.dataset.act === 'vis') {
+          arr[i].visible = arr[i].visible === false; save(key, arr, arr[i].visible ? 'Shown ✓' : 'Hidden ✓'); opts.rerender();
         } else if (b.dataset.act === 'edit') { opts.form(arr[i], i); }
       });
     });
@@ -392,7 +396,7 @@ textarea{min-height:90px;resize:vertical}
   function renderRoles(c) {
     var roles = Store.get('fazal_roles');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Role</button>' +
-      crudList(roles, { title: function (r) { return r.icon + ' ' + r.title; }, sub: function (r) { return r.desc; } });
+      crudList(roles, { title: function (r) { return r.icon + ' ' + r.title; }, sub: function (r) { return r.desc; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { roleForm({ icon:'⭐', title:'', color:'gold', desc:'', visible:true }, -1); });
     wireCrud(c, 'fazal_roles', { rerender: function () { renderRoles(c); }, form: roleForm });
   }
@@ -416,7 +420,7 @@ textarea{min-height:90px;resize:vertical}
   function renderExperience(c) {
     var arr = Store.get('fazal_experience');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Experience</button>' +
-      crudList(arr, { title: function (e) { return e.company + ' — ' + e.role; }, sub: function (e) { return e.start + ' – ' + e.end + ' · ' + e.status; } });
+      crudList(arr, { title: function (e) { return e.company + ' — ' + e.role; }, sub: function (e) { return e.start + ' – ' + e.end + ' · ' + e.status; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { expForm({ company:'', role:'', status:'Active', start:'', end:'', accent:'gold', desc:'', metrics:[], skills:[], featured:false }, -1); });
     wireCrud(c, 'fazal_experience', { rerender: function () { renderExperience(c); }, form: expForm });
   }
@@ -447,7 +451,7 @@ textarea{min-height:90px;resize:vertical}
   function renderCases(c) {
     var arr = Store.get('fazal_casestudies');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Case Study</button>' +
-      crudList(arr, { title: function (x) { return x.title; }, sub: function (x) { return x.badge; } });
+      crudList(arr, { title: function (x) { return x.title; }, sub: function (x) { return x.badge; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { caseForm({ title:'', badge:'', challenge:'', strategy:'', results:'', metrics:[], tags:[], proofUrl:'' }, -1); });
     wireCrud(c, 'fazal_casestudies', { rerender: function () { renderCases(c); }, form: caseForm });
   }
@@ -483,7 +487,7 @@ textarea{min-height:90px;resize:vertical}
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Event</button>' +
       '<p class="muted" style="margin-bottom:12px">' + arr.length + ' events · click ✏️ to edit photos, captions, videos &amp; date</p>' +
       crudList(arr, { title: function (e) { return (e.milestone ? '🏆 ' : '') + e.title; },
-        sub: function (e) { return [e.category, e.role, e.date, galCounts(e)].filter(Boolean).join(' · '); } });
+        sub: function (e) { return [e.category, e.role, e.date, galCounts(e)].filter(Boolean).join(' · '); }, vis: true });
     document.getElementById('add').addEventListener('click', function () {
       editGallery(-1, { title:'', category:'Speaker', role:'Speaker', location:'', date:'', milestone:false, media:[] });
     });
@@ -641,7 +645,7 @@ textarea{min-height:90px;resize:vertical}
   function renderRegions(c) {
     var arr = Store.get('fazal_regions');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Region</button>' +
-      crudList(arr, { title: function (r) { return r.flag + ' ' + r.name; }, sub: function (r) { return (r.tier || '') + ' · ' + (r.reach || ''); } });
+      crudList(arr, { title: function (r) { return r.flag + ' ' + r.name; }, sub: function (r) { return (r.tier || '') + ' · ' + (r.reach || ''); }, vis: true });
     document.getElementById('add').addEventListener('click', function () { regionForm({ flag:'🌍', name:'', tier:'Primary Market', reach:'', communities:'', languages:'', activity:'', visible:true }, -1); });
     wireCrud(c, 'fazal_regions', { rerender: function () { renderRegions(c); }, form: regionForm });
   }
@@ -672,7 +676,7 @@ textarea{min-height:90px;resize:vertical}
         '<button class="btn btn-gold btn-sm" id="saveSvcIntro" style="align-self:flex-start">Save Intro</button></div>' +
       '<h4 style="margin:20px 0 8px">Service Offerings</h4>' +
       '<button class="btn btn-gold" id="addSvc" style="margin-bottom:14px">+ Add Service</button>' +
-      '<div id="svcItems">' + crudList(svc.items, { title: function (s) { return s.title; }, sub: function (s) { return s.tagline; } }) + '</div>' +
+      '<div id="svcItems">' + crudList(svc.items, { title: function (s) { return s.title; }, sub: function (s) { return s.tagline; }, vis: true }) + '</div>' +
       '<h4 style="margin:24px 0 8px">Process Steps</h4>' +
       '<button class="btn btn-gold" id="addStep" style="margin-bottom:14px">+ Add Step</button>' +
       '<div id="svcSteps">' + crudList(svc.steps, { title: function (s) { return s.step + ' · ' + s.title; }, sub: function (s) { return s.desc; } }) + '</div>';
@@ -689,6 +693,7 @@ textarea{min-height:90px;resize:vertical}
         var i = +b.dataset.i, s = Store.get('fazal_services');
         if (b.dataset.act === 'del') { s[prop].splice(i, 1); save('fazal_services', s, 'Deleted ✓'); renderServices(c); }
         else if (b.dataset.act === 'up') { var t = s[prop][i]; s[prop][i] = s[prop][i - 1]; s[prop][i - 1] = t; save('fazal_services', s, 'Reordered ✓'); renderServices(c); }
+        else if (b.dataset.act === 'vis') { s[prop][i].visible = s[prop][i].visible === false; save('fazal_services', s, s[prop][i].visible ? 'Shown ✓' : 'Hidden ✓'); renderServices(c); }
         else if (b.dataset.act === 'edit') { form(s[prop][i], i); }
       });
     });
@@ -727,7 +732,7 @@ textarea{min-height:90px;resize:vertical}
   function renderSocial(c) {
     var arr = Store.get('fazal_social');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Platform</button>' +
-      crudList(arr, { title: function (s) { return s.platform; }, sub: function (s) { return s.handle + ' · ' + s.url; } });
+      crudList(arr, { title: function (s) { return s.platform; }, sub: function (s) { return s.handle + ' · ' + s.url; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { socialForm({ platform:'', url:'', handle:'', color:'#F2A900', count:'', visible:true }, -1); });
     wireCrud(c, 'fazal_social', { rerender: function () { renderSocial(c); }, form: socialForm });
   }
@@ -750,7 +755,7 @@ textarea{min-height:90px;resize:vertical}
   function renderAffiliates(c) {
     var arr = Store.get('fazal_affiliates');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Affiliate</button>' +
-      crudList(arr, { title: function (a) { return a.name; }, sub: function (a) { return a.url; } });
+      crudList(arr, { title: function (a) { return a.name; }, sub: function (a) { return a.url; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { affForm({ name:'', logo:'', color:'#F2A900', desc:'', offer:'', url:'', cta:'Open Account', visible:true }, -1); });
     wireCrud(c, 'fazal_affiliates', { rerender: function () { renderAffiliates(c); }, form: affForm });
   }
@@ -773,7 +778,7 @@ textarea{min-height:90px;resize:vertical}
   function renderTestimonials(c) {
     var arr = Store.get('fazal_testimonials');
     c.innerHTML = '<button class="btn btn-gold" id="add" style="margin-bottom:14px">+ Add Testimonial</button>' +
-      crudList(arr, { title: function (t) { return t.name + ' — ' + t.title; }, sub: function (t) { return t.quote; } });
+      crudList(arr, { title: function (t) { return t.name + ' — ' + t.title; }, sub: function (t) { return t.quote; }, vis: true });
     document.getElementById('add').addEventListener('click', function () { testForm({ quote:'', name:'', title:'', avatar:'', featured:true }, -1); });
     wireCrud(c, 'fazal_testimonials', { rerender: function () { renderTestimonials(c); }, form: testForm });
   }
