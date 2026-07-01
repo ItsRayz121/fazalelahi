@@ -237,10 +237,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @media (max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
 
 /* ===================== ABOUT ===================== */
-.about-grid{display:grid;grid-template-columns:45% 55%;gap:46px;align-items:start}
-.about-photo{position:relative}
-.about-photo img{border-radius:18px;border:1px solid var(--border)}
-.cred{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+/* Photo column STRETCHES to match the text column height so the picture and the
+   text beside it are the same length; the image crops (object-fit:cover) instead
+   of leaving dead space. Credentials sit under the text, in a horizontal row. */
+.about-grid{display:grid;grid-template-columns:44% 56%;gap:46px;align-items:stretch}
+.about-photo{position:relative;min-height:100%}
+.about-photo img{width:100%;height:100%;object-fit:cover;display:block;border-radius:18px;border:1px solid var(--border)}
+.about-text{display:flex;flex-direction:column}
+.cred{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
 .cred .pill{justify-content:flex-start}
 .pullquote{font-family:var(--head);font-style:italic;font-size:clamp(20px,2.6vw,30px);color:var(--white);
   border-left:3px solid var(--gold);padding-left:20px;margin-bottom:30px;line-height:1.3}
@@ -248,7 +252,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .tag-cloud{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
 .tag{font-family:var(--mono);font-size:12px;padding:6px 13px;border-radius:8px;background:var(--glass);
   border:1px solid var(--border);color:var(--silver)}
-@media (max-width:900px){.about-grid{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .about-grid{grid-template-columns:1fr}
+  .about-photo img{height:auto;max-height:560px;object-fit:cover}
+}
 
 /* ===================== CONTENT / YT ===================== */
 .channels{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:34px}
@@ -531,6 +538,34 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
 .tl-body{padding:18px 20px;display:flex;flex-direction:column;justify-content:center}
 .tl-date{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:1px;margin-bottom:6px}
 .tl-body h4{font-family:var(--head);font-size:20px;font-weight:700;margin-bottom:10px}
+
+/* ---- Desktop: "tree" timeline — one central trunk, events branch left & right ---- */
+@media (min-width:901px){
+  .timeline{padding-left:0}
+  /* central trunk runs down the middle */
+  .timeline::before{left:50%;transform:translateX(-50%)}
+  /* each event is a branch that takes half the width and alternates side */
+  .tl-item{width:calc(50% - 46px);margin-bottom:52px}
+  .tl-item:nth-child(odd){margin-right:auto;text-align:left}
+  .tl-item:nth-child(even){margin-left:auto}
+  /* the branch line joining the card to the central trunk */
+  .tl-item::before{content:'';position:absolute;top:30px;width:46px;height:2px;z-index:1;
+    background:linear-gradient(90deg,rgba(242,169,0,.15),var(--gold))}
+  .tl-item:nth-child(odd)::before{right:-46px;background:linear-gradient(90deg,var(--gold),rgba(242,169,0,.15))}
+  .tl-item:nth-child(even)::before{left:-46px}
+  /* the node dot sits on the central trunk */
+  .tl-dot{top:24px}
+  .tl-item:nth-child(odd) .tl-dot{left:auto;right:-54px}
+  .tl-item:nth-child(even) .tl-dot{left:-54px;right:auto}
+  .tl-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;
+    border:1px solid rgba(242,169,0,.35);animation:tlpulse 2.6s ease-out infinite}
+  @keyframes tlpulse{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+  /* branches swing in from their own side as you scroll */
+  .tl-item.reveal{opacity:0}
+  .tl-item:nth-child(odd).reveal{transform:translateX(-52px)}
+  .tl-item:nth-child(even).reveal{transform:translateX(52px)}
+  .tl-item.reveal.in{opacity:1;transform:none}
+}
 @media (max-width:680px){
   .tl-card{grid-template-columns:1fr}
   .tl-cover{aspect-ratio:16/9}
@@ -674,7 +709,7 @@ html,body{max-width:100%}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
-  .reveal{opacity:1;transform:none}
+  .reveal,.tl-item.reveal{opacity:1;transform:none}
 }
 </style>
 </head>
@@ -745,9 +780,9 @@ html,body{max-width:100%}
 <!-- ============ ROLES ============ -->
 <section id="roles" class="diag">
   <div class="wrap">
-    <span class="eyebrow reveal">Identity</span>
+    <span class="eyebrow reveal" data-block="roles.intro">Identity</span>
     <h2 class="sec-title reveal">WHAT I DO<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Seven roles. One mission. Building Web3 from Pakistan to the world.</p>
+    <p class="sec-sub reveal" data-block="roles.intro">Seven roles. One mission. Building Web3 from Pakistan to the world.</p>
     <div class="roles-grid" id="rolesGrid"></div>
   </div>
 </section>
@@ -769,12 +804,12 @@ html,body{max-width:100%}
     <div class="about-grid">
       <div class="about-photo reveal">
         <img id="aboutPhoto" alt="Fazal Elahi at work in Web3" loading="lazy">
-        <div class="cred" id="aboutCred"></div>
-        <a class="btn btn-glass" id="cvBtn" style="margin-top:14px" target="_blank" rel="noopener noreferrer">⬇ Download CV</a>
       </div>
       <div class="about-text reveal">
         <p id="bio1"></p><p id="bio2"></p><p id="bio3"></p>
         <div class="tag-cloud" id="tagCloud"></div>
+        <div class="cred" id="aboutCred"></div>
+        <a class="btn btn-glass" id="cvBtn" style="margin-top:16px" target="_blank" rel="noopener noreferrer">⬇ Download CV</a>
       </div>
     </div>
   </div>
@@ -788,9 +823,9 @@ html,body{max-width:100%}
     <p class="sec-sub reveal" id="contentSub"></p>
     <div class="channels" id="channels"></div>
     <div class="videos" id="videos"></div>
-    <span class="eyebrow reveal">Content Pillars</span>
-    <div class="chip-row" id="pillars"></div>
-    <div class="chip-row" id="hashtags"></div>
+    <span class="eyebrow reveal" data-block="content.pillars">Content Pillars</span>
+    <div class="chip-row" id="pillars" data-block="content.pillars"></div>
+    <div class="chip-row" id="hashtags" data-block="content.pillars"></div>
   </div>
 </section>
 
@@ -852,9 +887,9 @@ html,body{max-width:100%}
     <p class="sec-sub reveal">Building high-performance creator ecosystems — matching the right creators with the right audiences to turn reach into real, sticky growth.</p>
     <p class="reveal" id="kolIntro" style="max-width:780px;margin-bottom:8px"></p>
     <div class="kol-services" id="kolServices"></div>
-    <span class="eyebrow reveal">In The Network</span>
-    <div class="kol-partners" id="kolPartners"></div>
-    <div class="flag-row reveal" id="kolMarkets" style="justify-content:flex-start"></div>
+    <span class="eyebrow reveal" data-block="kol.network">In The Network</span>
+    <div class="kol-partners" id="kolPartners" data-block="kol.network"></div>
+    <div class="flag-row reveal" id="kolMarkets" data-block="kol.network" style="justify-content:flex-start"></div>
     <p class="reveal" id="kolSynd" style="max-width:760px;margin-top:14px"></p>
     <div class="reveal" style="margin-top:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
       <span class="pill">✅ Direct Access Enabled</span>
@@ -868,7 +903,7 @@ html,body{max-width:100%}
   <div class="wrap">
     <span class="eyebrow reveal">Proof Of Work</span>
     <h2 class="sec-title reveal">PROOF OF WORK<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Numbers don't lie. Execution over theory.</p>
+    <p class="sec-sub reveal" data-block="cases.sub">Numbers don't lie. Execution over theory.</p>
     <div id="caseList"></div>
   </div>
 </section>
@@ -932,9 +967,9 @@ html,body{max-width:100%}
 <!-- ============ TESTIMONIALS ============ -->
 <section id="testimonials" class="diag">
   <div class="wrap">
-    <span class="eyebrow reveal">Reputation</span>
-    <h2 class="sec-title reveal">REPUTATION<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Word on the street.</p>
+    <span class="eyebrow reveal" data-block="testimonials.head">Reputation</span>
+    <h2 class="sec-title reveal" data-block="testimonials.head">REPUTATION<span class="dot">.</span></h2>
+    <p class="sec-sub reveal" data-block="testimonials.head">Word on the street.</p>
     <div class="test-grid" id="testGrid"></div>
   </div>
 </section>

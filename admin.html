@@ -243,13 +243,17 @@ textarea{min-height:90px;resize:vertical}
   })();
 
   /* ============ NAV CONFIG ============ */
+  /* Sidebar labels intentionally mirror the exact wording shown on the public
+     website (the section "eyebrow"/title), so the admin and the live site never
+     disagree. The public-site name is in the label; a short (…) hint after it
+     names what you actually edit here. */
   var SECTIONS = [
-    ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Roles Manager'],
-    ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events & Gallery'],
-    ['projects','🗂️ Projects'], ['kol','🎯 KOL Network'], ['community','🏘️ Community'],
+    ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Identity — What I Do'],
+    ['experience','💼 Battle Tested (Experience)'], ['cases','📋 Proof Of Work'], ['events','🎪 In The Room (Events)'],
+    ['projects','🗂️ Projects'], ['kol','🎯 The KOL Network'], ['community','🏘️ The Community'],
     ['regions','🌍 Regional Leadership'], ['services','🤝 Work With Me'],
-    ['social','🌐 Social Links'], ['affiliates','🤝 Affiliates'], ['testimonials','💬 Testimonials'],
-    ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
+    ['social','🌐 Find Me Everywhere'], ['affiliates','🤝 Trusted Exchanges'], ['testimonials','💬 Reputation'],
+    ['content','🎥 Learn With Me'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
     ['visibility','👁️ Show / Hide'], ['settings','⚙️ Site Settings'], ['security','🔒 Security']
   ];
   function inqList() { return CLOUD ? inquiriesCache : Store.get('fazal_inquiries'); }
@@ -284,14 +288,14 @@ textarea{min-height:90px;resize:vertical}
   function pageHead(r) {
     var meta = {
       dashboard:'Overview of all content and quick actions', profile:'Edit identity, hero stats, bio and contact info',
-      roles:'The seven role cards on the public site', experience:'Work history (full CRUD)',
-      cases:'Proof-of-work case studies', events:'Events with photo & video galleries — captions, dates, full control',
-      projects:'Additional projects', kol:'KOL partners, services and markets',
-      community:'Community platform cards and features', regions:'Premium region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', services:'Service offerings & engagement process — the "Work With Me" section', social:'All social platform links',
-      affiliates:'Affiliate partner cards', testimonials:'Client testimonials',
-      content:'YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags',
-      inquiries:'Contact form submissions', settings:'SEO, maintenance, backup/restore',
-      visibility:'Show or hide whole sections of the public site',
+      roles:'"Identity → What I Do" — the seven role cards on the public site', experience:'"Battle Tested" — work history (full CRUD)',
+      cases:'"Proof Of Work" — case studies', events:'"In The Room" — events with photo & video galleries (captions, dates, full control)',
+      projects:'Additional projects (not shown on the public site)', kol:'"The KOL Network" — partners, services and markets',
+      community:'"The Community" — platform cards and features', regions:'"Regional Leadership" — region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', services:'"Work With Me" — service offerings & engagement process', social:'"Find Me Everywhere" — all social platform links',
+      affiliates:'"Trusted Exchanges" — affiliate partner cards', testimonials:'"Reputation" — client testimonials',
+      content:'"Learn With Me" — YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags (not shown on the public site)',
+      inquiries:'Contact form submissions from the website', settings:'SEO, maintenance, backup/restore',
+      visibility:'Show or hide whole sections — and individual parts — of the public site',
       security:'Password, sessions and login log'
     };
     document.getElementById('pageTitle').textContent = SECTIONS.find(function (s) { return s[0] === r; })[1].replace(/^[^ ]+ /, '');
@@ -955,11 +959,11 @@ textarea{min-height:90px;resize:vertical}
 
   /* ============ SHOW / HIDE SECTIONS ============ */
   var PUBLIC_SECTIONS = [
-    ['roles','🎭 What I Do (Roles)'], ['stats','📊 Real Numbers (Stats)'], ['about','📖 My Story'],
-    ['content','🎥 Learn With Me / Content'], ['community','🏘️ The Community'], ['regional','🌍 Regional Leadership'],
-    ['experience','💼 Battle Tested (Experience)'], ['kol','🎯 KOL Network'], ['cases','📋 Case Studies'],
-    ['services','🤝 Work With Me'], ['events','🎪 Events & Gallery'], ['affiliates','🤝 Affiliates'],
-    ['social','🌐 Social Links'], ['testimonials','💬 Testimonials']
+    ['roles','🎭 Identity — What I Do'], ['stats','📊 Real Numbers, Real Impact'], ['about','📖 My Story'],
+    ['content','🎥 Learn With Me'], ['community','🏘️ The Community'], ['regional','🌍 Regional Leadership'],
+    ['experience','💼 Battle Tested'], ['kol','🎯 The KOL Network'], ['cases','📋 Proof Of Work'],
+    ['services','🤝 Work With Me'], ['events','🎪 In The Room'], ['affiliates','🤝 Trusted Exchanges'],
+    ['social','🌐 Find Me Everywhere'], ['testimonials','💬 Reputation']
   ];
   // Tag collections that render as chips on the public site — each tag can be
   // individually shown/hidden without deleting it from its list.
@@ -968,8 +972,19 @@ textarea{min-height:90px;resize:vertical}
     ['pillars','📚 Content Pillars', function () { return (Store.get('fazal_content').pillars) || []; }],
     ['hashtags','#️⃣ Hashtags', function () { return (Store.get('fazal_content').hashtags) || []; }]
   ];
+  // Individual PARTS inside a section (a heading, a tagline, a chip group) that
+  // can be hidden on their own without removing the whole section. Each id maps
+  // to a data-block="<id>" element in index.html. Wording mirrors the public site.
+  var BLOCK_PARTS = [
+    ['roles.intro',       '🪪 "Identity" label + "Seven roles…" tagline', 'Identity — What I Do'],
+    ['content.pillars',   '📚 "Content Pillars" heading + pillar/hashtag chips', 'Learn With Me'],
+    ['kol.network',       '🕸️ "In The Network" — partner logos, markets & "+Dozens More"', 'The KOL Network'],
+    ['cases.sub',         '💬 "Numbers don\'t lie. Execution over theory." tagline', 'Proof Of Work'],
+    ['testimonials.head', '⭐ "Reputation" heading + "Word on the street." tagline', 'Reputation']
+  ];
   function renderVisibility(c) {
     var vis = Store.get('fazal_sections') || {};
+    var blocks = Store.get('fazal_blocks') || {};
     var hidden = Store.get('fazal_hidden') || {};
     var sectionsCard = '<div class="card"><h3>Show / Hide Public Sections</h3>' +
       '<p class="field-help">Turn a section OFF to remove it from the live website. It collapses cleanly — the next section moves up, no empty gap. Hero and Contact are always shown.</p>' +
@@ -979,6 +994,16 @@ textarea{min-height:90px;resize:vertical}
           '<span style="color:#fff">' + s[1] + '</span></label>';
       }).join('') +
       '<button class="btn btn-gold" id="saveVis" style="margin-top:14px">💾 Save Visibility</button></div>';
+
+    var partsCard = '<div class="card"><h3>Show / Hide Section Parts</h3>' +
+      '<p class="field-help">Finer control than whole sections: turn OFF just one piece inside a section — a heading, a tagline, or a chip group — while the rest stays live. Flip it back on anytime; nothing is deleted.</p>' +
+      BLOCK_PARTS.map(function (b) {
+        return '<label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);cursor:pointer">' +
+          '<input type="checkbox" class="blkvis" data-id="' + b[0] + '" ' + (blocks[b[0]] === false ? '' : 'checked') + ' style="width:auto">' +
+          '<span style="color:#fff">' + b[1] + '</span>' +
+          '<span style="margin-left:auto;color:var(--muted);font-size:12px">' + b[2] + '</span></label>';
+      }).join('') +
+      '<button class="btn btn-gold" id="saveParts" style="margin-top:14px">💾 Save Section Parts</button></div>';
 
     var tagsCard = '<div class="card"><h3>Show / Hide Individual Tags</h3>' +
       '<p class="field-help">Uncheck any tag to remove just that chip from the live site. The tag stays in your list here — flip it back on anytime. To add or rename tags, use the Profile / Content sections.</p>' +
@@ -998,11 +1023,16 @@ textarea{min-height:90px;resize:vertical}
       }).join('') +
       '<button class="btn btn-gold" id="saveTags" style="margin-top:16px">💾 Save Tag Visibility</button></div>';
 
-    c.innerHTML = sectionsCard + tagsCard;
+    c.innerHTML = sectionsCard + partsCard + tagsCard;
     document.getElementById('saveVis').addEventListener('click', function () {
       var out = {};
       c.querySelectorAll('.secvis').forEach(function (cb) { out[cb.dataset.id] = cb.checked; });
       save('fazal_sections', out, 'Visibility saved ✓');
+    });
+    document.getElementById('saveParts').addEventListener('click', function () {
+      var out = {};
+      c.querySelectorAll('.blkvis').forEach(function (cb) { out[cb.dataset.id] = cb.checked; });
+      save('fazal_blocks', out, 'Section parts saved ✓');
     });
     document.getElementById('saveTags').addEventListener('click', function () {
       var out = {};

@@ -554,35 +554,55 @@
       '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
   }).join('');
 
-  /* ---------- Contact form → inquiries ---------- */
+  /* ---------- Contact form → inquiries ----------
+     Delivery order:
+       1) Save the message straight into the admin "Inquiries" panel (Supabase).
+          This is the always-on path — Fazal reads every submission in the admin,
+          with full details (name, email, company, type, message, date, status).
+       2) If an email-notification service is configured (FAZAL.CONTACT_ENDPOINT,
+          e.g. Formspree), ping it too so an email also lands in his inbox.
+       3) Only if neither is available, fall back to opening the visitor's mail app. */
   document.getElementById('contactForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var fd = new FormData(e.target), san = FAZAL.Util.sanitize;
+    var form = e.target, fd = new FormData(form), san = FAZAL.Util.sanitize;
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
-      type: san(fd.get('type')), message: san(fd.get('message')) };
+      type: san(fd.get('type')), message: san(fd.get('message')),
+      status: 'New', ts: new Date().toISOString() };
     var msg = document.getElementById('formMsg');
+    var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
+
     function openMail() {
       var body = encodeURIComponent('Name: ' + entry.name + '\nEmail: ' + entry.email + '\nCompany: ' +
         entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
       window.location.href = 'mailto:' + p.email + '?subject=' +
         encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
     }
-    var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
-    if (endpoint) { // Formspree (or similar) — visitor stays on the page
-      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
-      var body = new FormData();
-      Object.keys(entry).forEach(function (k) { body.append(k, entry[k]); });
-      fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
-        .then(function (r) {
-          if (!r.ok) throw new Error('bad status');
-          msg.style.color = 'var(--emerald)';
-          msg.textContent = "✅ Message sent! I'll get back to you soon.";
-          e.target.reset();
-        })
-        .catch(function () { msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…'; openMail(); });
-    } else { // no service configured — open the visitor's email app
+    function saved() {
+      msg.style.color = 'var(--emerald)';
+      msg.textContent = "✅ Message sent! It's saved to Fazal's inbox — he'll get back to you soon.";
+      form.reset();
+    }
+    function fallbackMail() {
       msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…';
-      openMail(); e.target.reset();
+      openMail(); form.reset();
+    }
+
+    if (Store.cloudEnabled || endpoint) {
+      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
+      var jobs = [];
+      if (Store.cloudEnabled) jobs.push(Promise.resolve(Store.submitInquiry(entry)));
+      if (endpoint) {
+        var body = new FormData();
+        Object.keys(entry).forEach(function (k) { if (k !== 'status' && k !== 'ts') body.append(k, entry[k]); });
+        jobs.push(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
+          .then(function (r) { if (!r.ok) throw new Error('bad status'); }));
+      }
+      Promise.allSettled(jobs).then(function (res) {
+        if (res.some(function (r) { return r.status === 'fulfilled'; })) saved();
+        else fallbackMail();
+      });
+    } else {
+      fallbackMail();
     }
   });
 
@@ -626,6 +646,17 @@
     toggleable.forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.style.display = (vis[id] === false) ? 'none' : '';
+    });
+  })();
+
+  // Part-level show/hide. Individual pieces INSIDE a section (a heading, a
+  // tagline, a chip group) can be hidden without removing the whole section.
+  // Any element carrying data-block="<id>" is hidden when fazal_blocks[id]===false.
+  // Managed in admin → "Show / Hide" (Section Parts).
+  (function applyBlockVisibility() {
+    var blocks = Store.get('fazal_blocks') || {};
+    document.querySelectorAll('[data-block]').forEach(function (el) {
+      if (blocks[el.getAttribute('data-block')] === false) el.style.display = 'none';
     });
   })();
 

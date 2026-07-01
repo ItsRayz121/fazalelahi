@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-01-tag-visibility';
+  var DATA_VERSION = '2026-07-01-block-visibility';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -434,8 +434,16 @@
 
     /* Whole-section show/hide. Any id set to false hides that <section> on the
        public site (it collapses out of flow — the next section moves up, no gap).
-       Missing / true = visible. Managed in admin → "Show / Hide Sections". */
-    fazal_sections: {},
+       Missing / true = visible. Managed in admin → "Show / Hide Sections".
+       Defaults below hide "Learn With Me" (content) and "Reputation"
+       (testimonials) per client request 2026-07-01 — flip back on in admin. */
+    fazal_sections: { content: false, testimonials: false },
+
+    /* Part-level show/hide (pieces INSIDE a section). Map of block id → boolean.
+       false = that piece is hidden on the public site. Managed in admin →
+       "Show / Hide" (Section Parts). Defaults hide the pieces the client asked
+       to remove 2026-07-01; flip back on anytime in admin. */
+    fazal_blocks: { 'roles.intro': false, 'kol.network': false, 'cases.sub': false },
 
     /* Per-tag show/hide. Map of category → array of hidden tag VALUES, e.g.
        { expertise:['DeFi'], pillars:[], hashtags:['#blockchain'] }. A tag whose
