@@ -27,6 +27,18 @@
   // Leave blank to open the visitor's own email app via mailto instead.
   var CONTACT_ENDPOINT = '';
 
+  /* =====================================================================
+     CONTENT VERSION
+     localStorage is a per-browser cache of the content below. Because
+     Store.get() reads that cache first and Store.init() never overwrites an
+     existing key, a returning visitor keeps whatever they cached on their
+     FIRST visit — new content shipped in DEFAULTS (e.g. added event videos)
+     would otherwise never reach them. BUMP THIS STRING whenever DEFAULTS
+     content changes; on load, a version mismatch re-seeds the cached content
+     keys from DEFAULTS so everyone picks up the update. Format: date + note.
+     ===================================================================== */
+  var DATA_VERSION = '2026-07-01-event-videos';
+
   var sb = null, cloudEnabled = false;
   try {
     if (global.supabase && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
@@ -450,12 +462,21 @@
     },
 
     // Initialise any missing keys with defaults (call once on load).
+    // When DATA_VERSION changed since the last visit, also re-seed the shared
+    // content keys from DEFAULTS so returning visitors pick up new content
+    // (added videos, edited events, etc.) instead of a stale cached copy.
+    // Local-only keys (auth hash, inquiries) are never touched.
     init() {
+      var storedVer = null;
+      try { storedVer = localStorage.getItem('fazal_data_version'); } catch (e) {}
+      var stale = storedVer !== DATA_VERSION;
       Object.keys(DEFAULTS).forEach(function (k) {
-        if (localStorage.getItem(k) === null) {
+        var missing = localStorage.getItem(k) === null;
+        if (missing || (stale && CONTENT_KEYS.indexOf(k) > -1)) {
           localStorage.setItem(k, JSON.stringify(DEFAULTS[k]));
         }
       });
+      try { localStorage.setItem('fazal_data_version', DATA_VERSION); } catch (e) {}
     },
 
     resetAll() {
