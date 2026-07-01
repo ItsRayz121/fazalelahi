@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-01-event-videos';
+  var DATA_VERSION = '2026-07-01-banner-video-tabs';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -156,14 +156,16 @@
     fazal_gallery: [
       {
         title: "Organized Pakistan's First Web3 Physical Event — Lahore", category: 'Milestone', role: 'Organizer & Host', location: 'Lahore, Pakistan', date: '', milestone: true,
+        bannerVideo: true, bannerLabel: 'First Web3 — Lahore', hideCard: true,
         media: [
-        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', orient: 'portrait', caption: '' }
+        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', orient: 'landscape', caption: '' }
         ]
       },
       {
         title: 'CreatorX Third Event — Multan', category: 'CreatorX', role: 'Organizer & Host', location: 'Multan, Pakistan', date: '', milestone: false,
+        bannerVideo: true, bannerLabel: 'CreatorX Multan',
         media: [
-        { type: 'video', src: 'https://drive.google.com/file/d/1_OD30Rj_7VRh0wnRMjiWVHiSYJm3rMbK/view?usp=sharing', orient: 'portrait', caption: '' },
+        { type: 'video', src: 'https://drive.google.com/file/d/1_OD30Rj_7VRh0wnRMjiWVHiSYJm3rMbK/view?usp=sharing', orient: 'landscape', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-3.jpg', caption: '' },
@@ -173,8 +175,9 @@
       },
       {
         title: 'CreatorX Second Event — Sukkur', category: 'CreatorX', role: 'Organizer & Host', location: 'Sukkur, Pakistan', date: '', milestone: false,
+        bannerVideo: true, bannerLabel: 'CreatorX Sukkur',
         media: [
-        { type: 'video', src: 'https://drive.google.com/file/d/1ucERO5DvapdEHHkk5am_JuZgiGvLv8nr/view?usp=sharing', orient: 'portrait', caption: '' },
+        { type: 'video', src: 'https://drive.google.com/file/d/1ucERO5DvapdEHHkk5am_JuZgiGvLv8nr/view?usp=sharing', orient: 'landscape', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-3.jpg', caption: '' },
@@ -185,7 +188,7 @@
       {
         title: 'CreatorX First Event — Lahore', category: 'CreatorX', role: 'Organizer & Host', location: 'Lahore, Pakistan', date: '', milestone: false,
         media: [
-        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', orient: 'portrait', caption: '' },
+        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', orient: 'landscape', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-3.jpg', caption: '' },
@@ -194,8 +197,9 @@
       },
       {
         title: 'CreatorX & CBS', category: 'CreatorX', role: 'Partner / Host', location: 'Pakistan', date: '', milestone: false,
+        bannerVideo: true, bannerLabel: 'CreatorX & CBS',
         media: [
-        { type: 'video', src: 'https://drive.google.com/file/d/1LoKL07Wy6x6sTvW2rIJwCXV2qDF1BDGN/view?usp=sharing', orient: 'portrait', caption: '' },
+        { type: 'video', src: 'https://drive.google.com/file/d/1LoKL07Wy6x6sTvW2rIJwCXV2qDF1BDGN/view?usp=sharing', orient: 'landscape', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-3.jpg', caption: '' },

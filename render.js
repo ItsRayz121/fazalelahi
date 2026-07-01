@@ -269,6 +269,60 @@
       (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
   }).join('');
 
+  /* ---------- Milestone banner: tabbed horizontal video player ----------
+     Videos flagged `bannerVideo` in fazal_gallery render as tabs inside the
+     milestone box. Each tab shows a poster + play icon; clicking loads the
+     embed (Drive/YouTube iframe or direct <video>) and plays. */
+  (function () {
+    var host = document.getElementById('milestoneVideos');
+    if (!host) return;
+    var vids = (Store.get('fazal_gallery') || []).filter(function (g) {
+      return g && g.visible !== false && g.bannerVideo;
+    }).map(function (g) {
+      var vm = (g.media || []).filter(function (m) { return m.type === 'video'; })[0];
+      if (!vm) return null;
+      var embed = Util.videoEmbed(vm.src);
+      if (embed.type === 'none') return null;
+      return { label: g.bannerLabel || g.title, title: g.title, embed: embed, poster: Util.videoPoster(embed) };
+    }).filter(Boolean);
+
+    if (!vids.length) { host.style.display = 'none'; return; }
+
+    var tabsHTML = vids.length > 1
+      ? '<div class="mv-tabs">' + vids.map(function (v, i) {
+          return '<button class="mv-tab' + (i === 0 ? ' active' : '') + '" data-i="' + i + '">' + esc(v.label) + '</button>';
+        }).join('') + '</div>'
+      : '';
+    host.innerHTML = tabsHTML + '<div class="mv-stage" id="mvStage"></div>';
+    var stage = document.getElementById('mvStage');
+    var active = 0;
+
+    function facade(v) {
+      var poster = v.poster ? '<img src="' + esc(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
+      return '<button class="mv-facade" aria-label="Play ' + esc(v.title) + '">' + poster +
+        '<span class="mv-play"></span><span class="mv-cap">' + esc(v.label) + '</span></button>';
+    }
+    function playing(v) {
+      if (v.embed.type === 'iframe')
+        return '<iframe src="' + esc(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      return '<video src="' + esc(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
+    }
+    function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
+
+    stage.addEventListener('click', function (e) {
+      if (e.target.closest('.mv-facade')) stage.innerHTML = playing(vids[active]);
+    });
+    if (vids.length > 1) {
+      host.addEventListener('click', function (e) {
+        var t = e.target.closest('.mv-tab'); if (!t) return;
+        var tabs = host.querySelectorAll('.mv-tab');
+        for (var k = 0; k < tabs.length; k++) tabs[k].classList.toggle('active', tabs[k] === t);
+        showFacade(parseInt(t.dataset.i, 10));
+      });
+    }
+    showFacade(0);
+  })();
+
   /* ---------- Events & Gallery (timeline + lightbox) ---------- */
   (function () {
     var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
@@ -299,6 +353,7 @@
     }
     grid.className = 'timeline';
     grid.innerHTML = gallery.map(function (g, gi) {
+      if (g.hideCard) return ''; // shown in the milestone banner player instead of the timeline
       var col = badgeColor(catColors[g.category] || 'gold');
       var c = counts(g), media = mediaOf(g);
       // Cover slideshow uses only the images (videos play in the lightbox on click).
@@ -376,7 +431,7 @@
     // Filters from the categories actually present.
     if (filtersEl) {
       var cats = ['All'];
-      gallery.forEach(function (g) { if (g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
+      gallery.forEach(function (g) { if (!g.hideCard && g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
       filtersEl.innerHTML = cats.map(function (f, i) {
         return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
       }).join('');
