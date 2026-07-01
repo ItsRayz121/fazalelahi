@@ -134,7 +134,7 @@
     }).join('');
 
   /* ---------- Stats ---------- */
-  document.getElementById('statsGrid').innerHTML = p.stats.map(function (s) {
+  document.getElementById('statsGrid').innerHTML = p.stats.filter(function (s) { return s.visible !== false; }).map(function (s) {
     return '<div class="stat reveal"><div class="num c-' + ({gold:'gold',emerald:'em',blue:'blue'}[s.accent] || 'gold') +
       '" data-count="' + esc(s.value) + '">0</div><div class="lbl">' + esc(s.label) + '</div></div>';
   }).join('');
@@ -142,7 +142,7 @@
   /* ---------- Content / YouTube ---------- */
   var content = Store.get('fazal_content');
   document.getElementById('contentSub').textContent = content.frequency;
-  document.getElementById('channels').innerHTML = content.channels.map(function (c) {
+  document.getElementById('channels').innerHTML = content.channels.filter(function (c) { return c.visible !== false; }).map(function (c) {
     var subs = clean(c.subs);
     return '<div class="card channel-card reveal"><div class="yt c-red">' + ICON.youtube + '</div>' +
       '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
@@ -198,7 +198,7 @@
   }
 
   /* ---------- Experience ---------- */
-  document.getElementById('expList').innerHTML = Store.get('fazal_experience').map(function (e) {
+  document.getElementById('expList').innerHTML = Store.get('fazal_experience').filter(function (e) { return e.visible !== false; }).map(function (e) {
     return '<div class="card exp-card reveal ' + (e.accent === 'emerald' ? 'em' : '') + '">' +
       '<div class="exp-head"><div><h3>' + esc(e.company) + '</h3><span class="role">' + esc(e.role) + '</span></div>' +
       '<div style="text-align:right"><div class="status-badge status-' + esc(e.status) + '">' +
@@ -215,7 +215,7 @@
   document.getElementById('kolServices').innerHTML = kol.services.map(function (s) {
     return '<div class="card reveal tilt"><div class="ico">' + esc(s.icon) + '</div><h4>' + esc(s.title) + '</h4><p>' + esc(s.desc) + '</p></div>';
   }).join('');
-  document.getElementById('kolPartners').innerHTML = kol.partners.map(function (k) {
+  document.getElementById('kolPartners').innerHTML = kol.partners.filter(function (k) { return k.visible !== false; }).map(function (k) {
     var initial = (String(k.name || '').replace(/^@/, '').charAt(0) || '?').toUpperCase();
     var avatar = clean(k.avatar)
       ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
@@ -228,7 +228,7 @@
       '<span class="kp-meta">' + (followers ? '<span>👥 ' + esc(followers) + '</span>' : '') +
         (country ? '<span>' + esc(country) + '</span>' : '') + '</span></span></a>';
   }).join('') + '<div class="kol-partner kp-more reveal">+ Dozens More<span class="kp-plat">in the Network</span></div>';
-  document.getElementById('kolMarkets').innerHTML = kol.markets.map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
+  document.getElementById('kolMarkets').innerHTML = kol.markets.filter(function (m) { return m.visible !== false; }).map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
   /* ---------- Work With Me (services) ---------- */

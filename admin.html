@@ -317,7 +317,9 @@ textarea{min-height:90px;resize:vertical}
     var p = Store.get('fazal_profile');
     var statFields = p.stats.map(function (s, i) {
       return '<div class="grid2"><input id="sv' + i + '" value="' + esc(s.value) + '" placeholder="Value">' +
-        '<input id="sl' + i + '" value="' + esc(s.label) + '" placeholder="Label"></div>';
+        '<input id="sl' + i + '" value="' + esc(s.label) + '" placeholder="Label"></div>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin:-4px 0 12px;font-size:13px;color:var(--muted)">' +
+        '<input type="checkbox" id="sc' + i + '" ' + (s.visible !== false ? 'checked' : '') + ' style="width:auto"> Show this stat on site</label>';
     }).join('');
     c.innerHTML = '<div class="card">' +
       f('Name','pf_name',p.name) + f('Hero Tagline','pf_tagline',p.tagline) +
@@ -337,7 +339,7 @@ textarea{min-height:90px;resize:vertical}
       p.linkedin = san(val('pf_li')); p.cvUrl = san(val('pf_cv'));
       p.bio1 = san(val('pf_bio1')); p.bio2 = san(val('pf_bio2')); p.bio3 = san(val('pf_bio3'));
       p.expertise = list(val('pf_exp'));
-      p.stats = p.stats.map(function (s, i) { return { value: san(val('sv' + i)), label: san(val('sl' + i)), accent: s.accent }; });
+      p.stats = p.stats.map(function (s, i) { return { value: san(val('sv' + i)), label: san(val('sl' + i)), accent: s.accent, visible: document.getElementById('sc' + i).checked }; });
       save('fazal_profile', p, 'Profile saved ✓');
     });
   }
@@ -413,12 +415,14 @@ textarea{min-height:90px;resize:vertical}
       ta('Description','e_desc',e.desc) +
       ta('Metrics (comma-separated)','e_metrics',(e.metrics||[]).join(', ')) +
       ta('Skills (comma-separated)','e_skills',(e.skills||[]).join(', ')) +
+      '<label><input type="checkbox" id="e_vis" ' + (e.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible on site</label>' +
       modalActions('saveExp'));
     document.getElementById('saveExp').addEventListener('click', function () {
       var arr = Store.get('fazal_experience');
       var obj = { company: san(val('e_co')), role: san(val('e_role')), status: val('e_status'), accent: val('e_accent'),
         start: san(val('e_start')), end: san(val('e_end')), desc: san(val('e_desc')),
-        metrics: list(val('e_metrics')), skills: list(val('e_skills')), featured: true };
+        metrics: list(val('e_metrics')), skills: list(val('e_skills')), featured: true,
+        visible: document.getElementById('e_vis').checked };
       if (i < 0) arr.push(obj); else arr[i] = obj;
       save('fazal_experience', arr, 'Saved ✓'); closeModal(); renderExperience(document.getElementById('content'));
     });
@@ -568,10 +572,13 @@ textarea{min-height:90px;resize:vertical}
       ta('Syndicates Text','k_synd',k.syndicates) +
       '<button class="btn btn-gold" id="saveKolText" style="margin-top:10px">💾 Save Text</button></div>' +
       '<div class="card"><h3>KOL Partners</h3><button class="btn btn-gold btn-sm" id="addPartner" style="margin:10px 0">+ Add Partner</button>' +
-      k.partners.map(function (pn, i) { return '<div class="row-item"><div class="info"><strong>' + esc(pn.name) + '</strong><small>' + esc(pn.platform) + '</small></div>' +
-        '<div class="row-actions"><button class="btn btn-red btn-sm" data-delp="' + i + '">🗑</button></div></div>'; }).join('') + '</div>' +
+      k.partners.map(function (pn, i) { return '<div class="row-item"' + (pn.visible === false ? ' style="opacity:.5"' : '') + '><div class="info"><strong>' + esc(pn.name) + '</strong><small>' + esc(pn.platform) + '</small></div>' +
+        '<div class="row-actions"><button class="btn btn-ghost btn-sm" data-visp="' + i + '" title="Show / hide on site">' + (pn.visible !== false ? '👁️' : '🙈') + '</button>' +
+        '<button class="btn btn-red btn-sm" data-delp="' + i + '">🗑</button></div></div>'; }).join('') + '</div>' +
       '<div class="card"><h3>Markets</h3><button class="btn btn-gold btn-sm" id="addMarket" style="margin:10px 0">+ Add Market</button>' +
-      k.markets.map(function (m, i) { return '<span class="tag">' + esc(m.flag) + ' ' + esc(m.name) + ' <a href="#" data-delm="' + i + '" style="color:var(--red)">×</a></span>'; }).join('') + '</div>';
+      k.markets.map(function (m, i) { return '<span class="tag"' + (m.visible === false ? ' style="opacity:.5"' : '') + '>' + esc(m.flag) + ' ' + esc(m.name) +
+        ' <a href="#" data-vism="' + i + '" title="Show / hide on site" style="text-decoration:none">' + (m.visible !== false ? '👁️' : '🙈') + '</a>' +
+        ' <a href="#" data-delm="' + i + '" style="color:var(--red)">×</a></span>'; }).join('') + '</div>';
     document.getElementById('saveKolText').addEventListener('click', function () { k.intro = san(val('k_intro')); k.syndicates = san(val('k_synd')); save('fazal_kol_network', k, 'Saved ✓'); });
     document.getElementById('addPartner').addEventListener('click', function () {
       modal('<h3>Add KOL Partner</h3>' + f('Name','kp_name','') + f('Platform','kp_plat','YouTube Partner') + f('URL','kp_url','') +
@@ -591,6 +598,8 @@ textarea{min-height:90px;resize:vertical}
     });
     c.querySelectorAll('[data-delp]').forEach(function (b) { b.addEventListener('click', function () { k.partners.splice(+b.dataset.delp, 1); save('fazal_kol_network', k, 'Deleted ✓'); renderKOL(c); }); });
     c.querySelectorAll('[data-delm]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); k.markets.splice(+b.dataset.delm, 1); save('fazal_kol_network', k, 'Deleted ✓'); renderKOL(c); }); });
+    c.querySelectorAll('[data-visp]').forEach(function (b) { b.addEventListener('click', function () { var i = +b.dataset.visp; k.partners[i].visible = k.partners[i].visible === false; save('fazal_kol_network', k, k.partners[i].visible ? 'Shown ✓' : 'Hidden ✓'); renderKOL(c); }); });
+    c.querySelectorAll('[data-vism]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); var i = +b.dataset.vism; k.markets[i].visible = k.markets[i].visible === false; save('fazal_kol_network', k, k.markets[i].visible ? 'Shown ✓' : 'Hidden ✓'); renderKOL(c); }); });
   }
 
   /* ============ COMMUNITY ============ */
@@ -772,7 +781,8 @@ textarea{min-height:90px;resize:vertical}
     var ct = Store.get('fazal_content');
     c.innerHTML = ct.channels.map(function (ch, i) {
       return '<div class="card"><h3>Channel ' + (i + 1) + '</h3>' + f('Name','ct_name' + i,ch.name) + f('URL','ct_url' + i,ch.url) +
-        ta('Description','ct_desc' + i,ch.desc) + f('Subscribers','ct_subs' + i,ch.subs) + '</div>';
+        ta('Description','ct_desc' + i,ch.desc) + f('Subscribers','ct_subs' + i,ch.subs) +
+        '<label><input type="checkbox" id="ct_vis' + i + '" ' + (ch.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible on site</label></div>';
     }).join('') +
       '<div class="card"><h3>Featured Videos</h3><p class="field-help">Paste a YouTube or Google Drive link (or the full URL), or upload a video file from your device. The progress bar shows while it uploads.</p>' +
       ct.videos.map(function (v, i) { return mf('Video ' + (i + 1) + ' (link or upload)','ct_vid' + i,v,'video'); }).join('') + '</div>' +
@@ -781,7 +791,7 @@ textarea{min-height:90px;resize:vertical}
       f('Frequency / Section Sub','ct_freq',ct.frequency) +
       '<button class="btn btn-gold" id="saveContent" style="margin-top:10px">💾 Save Content</button></div>';
     document.getElementById('saveContent').addEventListener('click', function () {
-      ct.channels = ct.channels.map(function (ch, i) { return { name: san(val('ct_name' + i)), url: san(val('ct_url' + i)), desc: san(val('ct_desc' + i)), subs: san(val('ct_subs' + i)) }; });
+      ct.channels = ct.channels.map(function (ch, i) { return { name: san(val('ct_name' + i)), url: san(val('ct_url' + i)), desc: san(val('ct_desc' + i)), subs: san(val('ct_subs' + i)), visible: document.getElementById('ct_vis' + i).checked }; });
       ct.videos = ct.videos.map(function (v, i) { return san(val('ct_vid' + i)); });
       ct.pillars = list(val('ct_pillars')); ct.hashtags = list(val('ct_hash')); ct.frequency = san(val('ct_freq'));
       save('fazal_content', ct, 'Saved ✓');
