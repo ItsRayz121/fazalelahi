@@ -134,8 +134,15 @@
        Managed in admin → "Events & Gallery". `date` (e.g. 'Mar 2026') powers the timeline order. */
     fazal_gallery: [
       {
+        title: "Organized Pakistan's First Web3 Physical Event — Lahore", category: 'Milestone', role: 'Organizer & Host', location: 'Lahore, Pakistan', date: '', milestone: true,
+        media: [
+        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', caption: '' }
+        ]
+      },
+      {
         title: 'CreatorX Third Event — Multan', category: 'CreatorX', role: 'Organizer & Host', location: 'Multan, Pakistan', date: '', milestone: false,
         media: [
+        { type: 'video', src: 'https://drive.google.com/file/d/1_OD30Rj_7VRh0wnRMjiWVHiSYJm3rMbK/view?usp=sharing', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-multan/creatorx-multan-3.jpg', caption: '' },
@@ -146,6 +153,7 @@
       {
         title: 'CreatorX Second Event — Sukkur', category: 'CreatorX', role: 'Organizer & Host', location: 'Sukkur, Pakistan', date: '', milestone: false,
         media: [
+        { type: 'video', src: 'https://drive.google.com/file/d/1ucERO5DvapdEHHkk5am_JuZgiGvLv8nr/view?usp=sharing', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-sukkur/creatorx-sukkur-3.jpg', caption: '' },
@@ -156,6 +164,7 @@
       {
         title: 'CreatorX First Event — Lahore', category: 'CreatorX', role: 'Organizer & Host', location: 'Lahore, Pakistan', date: '', milestone: false,
         media: [
+        { type: 'video', src: 'https://drive.google.com/file/d/1gFsqBR4O1W8FJYmVLuNrufD0jyQANsG9/view?usp=sharing', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-lahore/creatorx-lahore-3.jpg', caption: '' },
@@ -165,6 +174,7 @@
       {
         title: 'CreatorX & CBS', category: 'CreatorX', role: 'Partner / Host', location: 'Pakistan', date: '', milestone: false,
         media: [
+        { type: 'video', src: 'https://drive.google.com/file/d/1LoKL07Wy6x6sTvW2rIJwCXV2qDF1BDGN/view?usp=sharing', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-1.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-2.jpg', caption: '' },
         { type: 'image', src: 'assets/events/creatorx-cbs/creatorx-cbs-3.jpg', caption: '' },
@@ -319,6 +329,25 @@
       { flag: '🇮🇩', name: 'Indonesia', tier: 'Secondary Market', reach: 'Emerging SEA market', communities: 'Telegram', languages: 'Bahasa · English', activity: 'KOL network expansion', visible: true },
       { flag: '🇳🇬', name: 'Nigeria', tier: 'Secondary Market', reach: 'West Africa gateway', communities: 'Telegram · Twitter/X', languages: 'English', activity: 'Creator partnerships', visible: true }
     ],
+
+    /* ---- Work With Me (services / engagement offerings) ----
+       The conversion bridge between proof-of-work and the contact form.
+       Managed in admin → "Work With Me". icon = kol|growth|region|ambassador. */
+    fazal_services: {
+      intro: "Whether you're launching a token, entering the South Asian market, or scaling a Web3 community — here's how we can work together. Every engagement starts with your goals, not a template.",
+      items: [
+        { icon: 'kol', title: 'KOL Campaign Management', tagline: 'End-to-end creator campaigns that convert reach into real, sticky users.', points: ['Creator vetting & deal negotiation', 'Multi-platform briefs & delivery tracking', 'Full analytics & conversion attribution'], ideal: 'Projects launching a token, airdrop, or testnet that need genuine reach — not Sybil farming.', cta: 'Start a Campaign', visible: true },
+        { icon: 'growth', title: 'Web3 Growth & GTM Strategy', tagline: 'Go-to-market architecture, tokenomics input, and growth loops built to last.', points: ['Airdrop & incentive mechanics design', 'Community architecture & growth loops', 'GTM roadmap with measurable KPIs'], ideal: 'Early-stage protocols that need a growth strategy grounded in real on-the-ground experience.', cta: 'Build a Growth Plan', visible: true },
+        { icon: 'region', title: 'Regional Market Entry — South Asia', tagline: 'Your gateway to Pakistan, India & Bangladesh — localized, not translated.', points: ['Localized community operations', 'Regional KOL & ambassador programs', 'Market-entry strategy across 5 markets'], ideal: 'Global projects that want authentic traction in the high-engagement South Asian Web3 market.', cta: 'Enter the SA Market', visible: true },
+        { icon: 'ambassador', title: 'Brand Ambassadorship & Education', tagline: 'A trusted regional face and educator for your protocol or exchange.', points: ['Long-term ambassador partnerships', 'Educational content & YouTube features', 'Event hosting & community AMAs'], ideal: 'Exchanges and protocols that want a credible, long-term voice in the region.', cta: 'Discuss a Partnership', visible: true }
+      ],
+      steps: [
+        { step: '01', title: 'Discovery Call', desc: 'We map your goals, timeline, and target markets — no generic pitch.' },
+        { step: '02', title: 'Tailored Proposal', desc: 'A clear scope, deliverables, and KPIs built around your launch.' },
+        { step: '03', title: 'Execution', desc: 'Hands-on campaign management with weekly progress visibility.' },
+        { step: '04', title: 'Report & Scale', desc: 'Transparent reporting, then we double down on what works.' }
+      ]
+    },
 
     fazal_social: [
       { platform: 'YouTube (Main)', url: 'https://www.youtube.com/@LearningHubByFazal', handle: '@LearningHubByFazal', color: '#FF0000', count: '[YT_SUBSCRIBERS]', visible: true },
@@ -643,6 +672,16 @@
       }
       if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(s)) return { type: 'video', src: s };
       return { type: 'iframe', src: s };
+    },
+    // Best-effort cover thumbnail for a video embed (YouTube / Google Drive).
+    videoPoster: function (embed) {
+      if (!embed || embed.type !== 'iframe') return '';
+      var s = embed.src || '';
+      var yt = s.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+      if (yt) return 'https://img.youtube.com/vi/' + yt[1] + '/hqdefault.jpg';
+      var dr = s.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/preview/);
+      if (dr) return 'https://drive.google.com/thumbnail?id=' + dr[1] + '&sz=w1000';
+      return '';
     }
   };
 

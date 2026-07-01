@@ -223,6 +223,41 @@
   document.getElementById('kolMarkets').innerHTML = kol.markets.map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
+  /* ---------- Work With Me (services) ---------- */
+  var SVC_ICON = {
+    kol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    growth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    region: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    ambassador: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"/></svg>',
+    generic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 7V5h6v2"/></svg>'
+  };
+  (function () {
+    var svc = Store.get('fazal_services'); if (!svc) return;
+    var introEl = document.getElementById('servicesIntro');
+    if (introEl) introEl.textContent = svc.intro || '';
+    var grid = document.getElementById('servicesGrid');
+    if (grid) {
+      grid.innerHTML = (svc.items || []).filter(function (s) { return s.visible !== false; }).map(function (s) {
+        var pts = (s.points || []).map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('');
+        return '<div class="svc-card card reveal tilt">' +
+          '<div class="svc-ico">' + (SVC_ICON[s.icon] || SVC_ICON.generic) + '</div>' +
+          '<h3>' + esc(s.title) + '</h3>' +
+          '<p class="svc-tag">' + esc(s.tagline) + '</p>' +
+          (pts ? '<ul class="svc-points">' + pts + '</ul>' : '') +
+          (clean(s.ideal) ? '<p class="svc-ideal"><span>Ideal for</span> ' + esc(s.ideal) + '</p>' : '') +
+          '<a class="btn btn-emerald svc-cta" href="#contact">' + esc(s.cta || 'Get in Touch') + ' →</a>' +
+          '</div>';
+      }).join('');
+    }
+    var steps = document.getElementById('servicesSteps');
+    if (steps) {
+      steps.innerHTML = (svc.steps || []).map(function (st) {
+        return '<div class="svc-step reveal"><span class="svc-step-n">' + esc(st.step) + '</span>' +
+          '<h4>' + esc(st.title) + '</h4><p>' + esc(st.desc) + '</p></div>';
+      }).join('');
+    }
+  })();
+
   /* ---------- Case studies ---------- */
   document.getElementById('caseList').innerHTML = Store.get('fazal_casestudies').map(function (c) {
     return '<div class="card case-card reveal"><span class="badge">' + esc(c.badge) + '</span><h3>' + esc(c.title) + '</h3>' +
@@ -269,10 +304,19 @@
       // Cover slideshow uses only the images (videos play in the lightbox on click).
       var imgSlides = [];
       media.forEach(function (m, k) { if (m.kind === 'image') imgSlides.push({ src: m.src, mi: k }); });
+      // Video-only events have no photo cover — fall back to the first video's thumbnail.
+      if (!imgSlides.length) {
+        for (var vp = 0; vp < media.length; vp++) {
+          if (media[vp].kind === 'video') {
+            var poster = Util.videoPoster(media[vp].embed);
+            if (poster) { imgSlides.push({ src: poster, mi: vp, poster: true }); break; }
+          }
+        }
+      }
       var slidesHTML = imgSlides.length
         ? '<div class="tl-slides">' + imgSlides.map(function (o, si) {
             return '<div class="tl-slide' + (si === 0 ? ' active' : '') + '" data-mi="' + o.mi + '">' +
-              '<img src="' + esc(Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
+              '<img src="' + esc(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
           }).join('') + '</div>'
         : '';
       var navHTML = imgSlides.length > 1
@@ -282,7 +326,7 @@
             return '<span class="tl-cdot' + (si === 0 ? ' active' : '') + '" data-si="' + si + '"></span>';
           }).join('') + '</div>'
         : '';
-      var tags = '<span class="cat-badge" style="background:rgba(7,7,15,.7);color:#fff">📷 ' + c.imgs + '</span>' +
+      var tags = (c.imgs ? '<span class="cat-badge" style="background:rgba(7,7,15,.7);color:#fff">📷 ' + c.imgs + '</span>' : '') +
         (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
       return '<div class="tl-item reveal" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
         '<div class="tl-dot"></div>' +
