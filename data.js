@@ -15,11 +15,12 @@
      `service_role` or `sb_secret_` key here.
      To disable cloud and run pure-localStorage, blank out SUPABASE_URL.
      ===================================================================== */
-  // Supabase removed — the site is now fully static (content lives in this file,
-  // deployed via git/Vercel). Nothing to pause, nothing to wait on. To ever
-  // re-enable cloud, put the project URL + anon key back here.
-  var SUPABASE_URL = '';
-  var SUPABASE_ANON_KEY = '';
+  // Supabase runs as a NON-BLOCKING backup/overlay only. The site always renders
+  // instantly from the static DEFAULTS below; the cloud read is capped at 2s (see
+  // Store.bootstrap) so a slow/asleep project can never delay the page. Admin edits
+  // (incl. show/hide toggles) save to cloud and become the live overlay.
+  var SUPABASE_URL = 'https://dnprmvvjxbbxbnixjfye.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRucHJtdnZqeGJieGJuaXhqZnllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjQyNzEsImV4cCI6MjA5NjI0MDI3MX0.eKFF69rTGa2nRiRgP0XijITaPEcCjvaSMWOuhBrxbAo';
 
   // Contact form delivery. Paste a Formspree endpoint (free, https://formspree.io)
   // to receive submissions by email, e.g. 'https://formspree.io/f/abcdwxyz'.
@@ -414,6 +415,11 @@
     },
 
     fazal_customcss: '',
+
+    /* Whole-section show/hide. Any id set to false hides that <section> on the
+       public site (it collapses out of flow — the next section moves up, no gap).
+       Missing / true = visible. Managed in admin → "Show / Hide Sections". */
+    fazal_sections: {},
 
     // SHA-256 of "fazal2026" — CHANGE THIS in admin Security before deploy.
     fazal_admin_hash: '5e9c0a3f1c2c3e7e0a3b8d8b9f8b6f4a1d2c3e4f5a6b7c8d9e0f1a2b3c4d5e6f'

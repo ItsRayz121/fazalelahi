@@ -223,10 +223,10 @@ textarea{min-height:90px;resize:vertical}
     ['dashboard','🏠 Dashboard'], ['profile','👤 Profile & Stats'], ['roles','🎭 Roles Manager'],
     ['experience','💼 Experience'], ['cases','📋 Case Studies'], ['events','🎪 Events & Gallery'],
     ['projects','🗂️ Projects'], ['kol','🎯 KOL Network'], ['community','🏘️ Community'],
-    ['regions','🌍 Regional Leadership'],
+    ['regions','🌍 Regional Leadership'], ['services','🤝 Work With Me'],
     ['social','🌐 Social Links'], ['affiliates','🤝 Affiliates'], ['testimonials','💬 Testimonials'],
     ['content','🎥 Content / YouTube'], ['keywords','🔑 Keywords'], ['inquiries','📧 Inquiries'],
-    ['settings','⚙️ Site Settings'], ['security','🔒 Security']
+    ['visibility','👁️ Show / Hide'], ['settings','⚙️ Site Settings'], ['security','🔒 Security']
   ];
   function inqList() { return CLOUD ? inquiriesCache : Store.get('fazal_inquiries'); }
   function buildNav() {
@@ -263,10 +263,11 @@ textarea{min-height:90px;resize:vertical}
       roles:'The seven role cards on the public site', experience:'Work history (full CRUD)',
       cases:'Proof-of-work case studies', events:'Events with photo & video galleries — captions, dates, full control',
       projects:'Additional projects', kol:'KOL partners, services and markets',
-      community:'Community platform cards and features', regions:'Premium region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', social:'All social platform links',
+      community:'Community platform cards and features', regions:'Premium region cards (Pakistan, India, Bangladesh, Indonesia, Nigeria)', services:'Service offerings & engagement process — the "Work With Me" section', social:'All social platform links',
       affiliates:'Affiliate partner cards', testimonials:'Client testimonials',
       content:'YouTube channels, videos, pillars and hashtags', keywords:'Keywords and hashtags',
       inquiries:'Contact form submissions', settings:'SEO, maintenance, backup/restore',
+      visibility:'Show or hide whole sections of the public site',
       security:'Password, sessions and login log'
     };
     document.getElementById('pageTitle').textContent = SECTIONS.find(function (s) { return s[0] === r; })[1].replace(/^[^ ]+ /, '');
@@ -281,10 +282,10 @@ textarea{min-height:90px;resize:vertical}
       dashboard: renderDashboard, profile: renderProfile, roles: renderRoles,
       experience: renderExperience, cases: renderCases, events: renderEvents,
       projects: renderProjects, kol: renderKOL, community: renderCommunity,
-      regions: renderRegions,
+      regions: renderRegions, services: renderServices,
       social: renderSocial, affiliates: renderAffiliates, testimonials: renderTestimonials,
       content: renderContent, keywords: renderKeywords, inquiries: renderInquiries,
-      settings: renderSettings, security: renderSecurity
+      visibility: renderVisibility, settings: renderSettings, security: renderSecurity
     }[r])(c);
   }
 
@@ -437,11 +438,14 @@ textarea{min-height:90px;resize:vertical}
       ta('Challenge','c_ch',x.challenge) + ta('Strategy','c_st',x.strategy) + ta('Results','c_re',x.results) +
       ta('Metrics (comma-separated)','c_met',(x.metrics||[]).join(', ')) +
       ta('Tags (comma-separated)','c_tags',(x.tags||[]).join(', ')) +
-      f('Live Proof URL','c_proof',x.proofUrl) + modalActions('saveCase'));
+      f('Live Proof URL','c_proof',x.proofUrl) +
+      '<label><input type="checkbox" id="c_vis" ' + (x.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible on site</label>' +
+      modalActions('saveCase'));
     document.getElementById('saveCase').addEventListener('click', function () {
       var arr = Store.get('fazal_casestudies');
       var obj = { title: san(val('c_title')), badge: san(val('c_badge')), challenge: san(val('c_ch')),
-        strategy: san(val('c_st')), results: san(val('c_re')), metrics: list(val('c_met')), tags: list(val('c_tags')), proofUrl: san(val('c_proof')) };
+        strategy: san(val('c_st')), results: san(val('c_re')), metrics: list(val('c_met')), tags: list(val('c_tags')), proofUrl: san(val('c_proof')),
+        visible: document.getElementById('c_vis').checked };
       if (i < 0) arr.push(obj); else arr[i] = obj;
       save('fazal_casestudies', arr, 'Saved ✓'); closeModal(); renderCases(document.getElementById('content'));
     });
@@ -474,8 +478,11 @@ textarea{min-height:90px;resize:vertical}
       draft.title = san(val('gg_title')); draft.category = val('gg_cat'); draft.role = san(val('gg_role'));
       draft.location = san(val('gg_loc')); draft.date = san(val('gg_date'));
       draft.milestone = document.getElementById('gg_mile').checked;
+      draft.visible = document.getElementById('gg_vis').checked;
       draft.media = (draft.media || []).map(function (m, j) {
-        return { type: m.type, src: san(val('gm_src' + j)), caption: san(val('gm_cap' + j)) };
+        var mm = { type: m.type, src: san(val('gm_src' + j)), caption: san(val('gm_cap' + j)) };
+        if (m.orient) mm.orient = m.orient; // keep portrait/landscape flag through edits
+        return mm;
       });
     }
     var mediaHTML = (draft.media || []).map(function (m, j) {
@@ -499,6 +506,7 @@ textarea{min-height:90px;resize:vertical}
         '<div>' + f('My Role','gg_role',draft.role) + '</div></div>' +
       '<div class="grid2">' + f('Location','gg_loc',draft.location) + f('Date (e.g. Mar 2026 — drives timeline)','gg_date',draft.date) + '</div>' +
       '<label><input type="checkbox" id="gg_mile" ' + (draft.milestone ? 'checked' : '') + ' style="width:auto"> 🏆 Milestone (gold highlight)</label>' +
+      '<label><input type="checkbox" id="gg_vis" ' + (draft.visible !== false ? 'checked' : '') + ' style="width:auto"> 👁️ Visible on site</label>' +
       '</div>' +
       '<div class="card"><h3>Photos &amp; Videos</h3>' +
         '<p class="field-help">Each item shows a caption under it in the gallery lightbox. Upload from device or paste a link.</p>' +
@@ -631,6 +639,66 @@ textarea{min-height:90px;resize:vertical}
     });
   }
 
+  /* ============ WORK WITH ME (services) ============ */
+  function renderServices(c) {
+    var svc = Store.get('fazal_services');
+    c.innerHTML =
+      '<div class="row-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
+        ta('Intro paragraph', 'sv_intro', svc.intro) +
+        '<button class="btn btn-gold btn-sm" id="saveSvcIntro" style="align-self:flex-start">Save Intro</button></div>' +
+      '<h4 style="margin:20px 0 8px">Service Offerings</h4>' +
+      '<button class="btn btn-gold" id="addSvc" style="margin-bottom:14px">+ Add Service</button>' +
+      '<div id="svcItems">' + crudList(svc.items, { title: function (s) { return s.title; }, sub: function (s) { return s.tagline; } }) + '</div>' +
+      '<h4 style="margin:24px 0 8px">Process Steps</h4>' +
+      '<button class="btn btn-gold" id="addStep" style="margin-bottom:14px">+ Add Step</button>' +
+      '<div id="svcSteps">' + crudList(svc.steps, { title: function (s) { return s.step + ' · ' + s.title; }, sub: function (s) { return s.desc; } }) + '</div>';
+    document.getElementById('saveSvcIntro').addEventListener('click', function () { svc.intro = san(val('sv_intro')); save('fazal_services', svc, 'Saved ✓'); });
+    document.getElementById('addSvc').addEventListener('click', function () { svcForm({ icon:'kol', title:'', tagline:'', points:[], ideal:'', cta:'Get in Touch', visible:true }, -1); });
+    document.getElementById('addStep').addEventListener('click', function () { stepForm({ step:'', title:'', desc:'' }, -1); });
+    wireNested(c, 'svcItems', 'items', svcForm);
+    wireNested(c, 'svcSteps', 'steps', stepForm);
+  }
+  // CRUD wiring for an array nested inside the fazal_services object.
+  function wireNested(c, containerId, prop, form) {
+    document.getElementById(containerId).querySelectorAll('[data-act]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = +b.dataset.i, s = Store.get('fazal_services');
+        if (b.dataset.act === 'del') { s[prop].splice(i, 1); save('fazal_services', s, 'Deleted ✓'); renderServices(c); }
+        else if (b.dataset.act === 'up') { var t = s[prop][i]; s[prop][i] = s[prop][i - 1]; s[prop][i - 1] = t; save('fazal_services', s, 'Reordered ✓'); renderServices(c); }
+        else if (b.dataset.act === 'edit') { form(s[prop][i], i); }
+      });
+    });
+  }
+  function svcForm(s, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Service</h3>' +
+      '<label>Icon</label><select id="sv_icon">' +
+        ['kol','growth','region','ambassador','generic'].map(function (x) { return '<option' + (x === s.icon ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
+      f('Title','sv_title',s.title) + f('Tagline','sv_tag',s.tagline) +
+      ta('Key points (one per line)','sv_points',(s.points || []).join('\n')) +
+      ta('Ideal for','sv_ideal',s.ideal) + f('Button text','sv_cta',s.cta) +
+      '<label><input type="checkbox" id="sv_vis" ' + (s.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
+      modalActions('saveSvc'));
+    document.getElementById('saveSvc').addEventListener('click', function () {
+      var svc = Store.get('fazal_services');
+      var pts = val('sv_points').split('\n').map(function (x) { return san(x); }).filter(Boolean);
+      var obj = { icon: val('sv_icon'), title: san(val('sv_title')), tagline: san(val('sv_tag')), points: pts,
+        ideal: san(val('sv_ideal')), cta: san(val('sv_cta')), visible: document.getElementById('sv_vis').checked };
+      if (i < 0) svc.items.push(obj); else svc.items[i] = obj;
+      save('fazal_services', svc, 'Saved ✓'); closeModal(); renderServices(document.getElementById('content'));
+    });
+  }
+  function stepForm(s, i) {
+    modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Step</h3>' +
+      f('Number (e.g. 01)','st_num',s.step) + f('Title','st_title',s.title) + ta('Description','st_desc',s.desc) +
+      modalActions('saveStep'));
+    document.getElementById('saveStep').addEventListener('click', function () {
+      var svc = Store.get('fazal_services');
+      var obj = { step: san(val('st_num')), title: san(val('st_title')), desc: san(val('st_desc')) };
+      if (i < 0) svc.steps.push(obj); else svc.steps[i] = obj;
+      save('fazal_services', svc, 'Saved ✓'); closeModal(); renderServices(document.getElementById('content'));
+    });
+  }
+
   /* ============ SOCIAL ============ */
   function renderSocial(c) {
     var arr = Store.get('fazal_social');
@@ -688,10 +756,12 @@ textarea{min-height:90px;resize:vertical}
   function testForm(t, i) {
     modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Testimonial</h3>' +
       ta('Quote','t_quote',t.quote) + f('Name','t_name',t.name) + f('Company / Role','t_title',t.title) + mf('Avatar / Photo','t_av',t.avatar,'image') +
+      '<label><input type="checkbox" id="t_vis" ' + (t.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible on site</label>' +
       modalActions('saveTest'));
     document.getElementById('saveTest').addEventListener('click', function () {
       var arr = Store.get('fazal_testimonials');
-      var obj = { quote: san(val('t_quote')), name: san(val('t_name')), title: san(val('t_title')), avatar: san(val('t_av')), featured: true };
+      var obj = { quote: san(val('t_quote')), name: san(val('t_name')), title: san(val('t_title')), avatar: san(val('t_av')), featured: true,
+        visible: document.getElementById('t_vis').checked };
       if (i < 0) arr.push(obj); else arr[i] = obj;
       save('fazal_testimonials', arr, 'Saved ✓'); closeModal(); renderTestimonials(document.getElementById('content'));
     });
@@ -777,6 +847,31 @@ textarea{min-height:90px;resize:vertical}
         return [q.name, q.email, q.company, q.type, q.status, q.ts, q.message].map(function (v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',');
       }).join('\n');
       download('inquiries.csv', csv);
+    });
+  }
+
+  /* ============ SHOW / HIDE SECTIONS ============ */
+  var PUBLIC_SECTIONS = [
+    ['roles','🎭 What I Do (Roles)'], ['stats','📊 Real Numbers (Stats)'], ['about','📖 My Story'],
+    ['content','🎥 Learn With Me / Content'], ['community','🏘️ The Community'], ['regional','🌍 Regional Leadership'],
+    ['experience','💼 Battle Tested (Experience)'], ['kol','🎯 KOL Network'], ['cases','📋 Case Studies'],
+    ['services','🤝 Work With Me'], ['events','🎪 Events & Gallery'], ['affiliates','🤝 Affiliates'],
+    ['social','🌐 Social Links'], ['testimonials','💬 Testimonials']
+  ];
+  function renderVisibility(c) {
+    var vis = Store.get('fazal_sections') || {};
+    c.innerHTML = '<div class="card"><h3>Show / Hide Public Sections</h3>' +
+      '<p class="field-help">Turn a section OFF to remove it from the live website. It collapses cleanly — the next section moves up, no empty gap. Hero and Contact are always shown.</p>' +
+      PUBLIC_SECTIONS.map(function (s) {
+        return '<label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);cursor:pointer">' +
+          '<input type="checkbox" class="secvis" data-id="' + s[0] + '" ' + (vis[s[0]] === false ? '' : 'checked') + ' style="width:auto">' +
+          '<span style="color:#fff">' + s[1] + '</span></label>';
+      }).join('') +
+      '<button class="btn btn-gold" id="saveVis" style="margin-top:14px">💾 Save Visibility</button></div>';
+    document.getElementById('saveVis').addEventListener('click', function () {
+      var out = {};
+      c.querySelectorAll('.secvis').forEach(function (cb) { out[cb.dataset.id] = cb.checked; });
+      save('fazal_sections', out, 'Visibility saved ✓');
     });
   }
 

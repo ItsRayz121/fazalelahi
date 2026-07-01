@@ -259,7 +259,7 @@
   })();
 
   /* ---------- Case studies ---------- */
-  document.getElementById('caseList').innerHTML = Store.get('fazal_casestudies').map(function (c) {
+  document.getElementById('caseList').innerHTML = Store.get('fazal_casestudies').filter(function (c) { return c.visible !== false; }).map(function (c) {
     return '<div class="card case-card reveal"><span class="badge">' + esc(c.badge) + '</span><h3>' + esc(c.title) + '</h3>' +
       '<div class="case-block"><strong>Challenge:</strong> ' + esc(c.challenge) + '</div>' +
       '<div class="case-block"><strong>Strategy:</strong> ' + esc(c.strategy) + '</div>' +
@@ -272,7 +272,7 @@
   /* ---------- Events & Gallery (timeline + lightbox) ---------- */
   (function () {
     var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
-      return g && (g.media && g.media.length);
+      return g && g.visible !== false && (g.media && g.media.length);
     });
     var grid = document.getElementById('eventsGrid');
     var filtersEl = document.getElementById('eventFilters');
@@ -484,7 +484,7 @@
   }).join('');
 
   /* ---------- Testimonials ---------- */
-  document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').map(function (t) {
+  document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').filter(function (t) { return t.visible !== false; }).map(function (t) {
     return '<div class="card test-card reveal"><p class="q">"' + esc(t.quote) + '"</p>' +
       '<div class="test-author"><div class="test-avatar"' + (t.avatar ? ' style="background:none;overflow:hidden"' : '') + '>' +
       (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
@@ -552,6 +552,19 @@
     document.addEventListener('mouseover', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.add('big'); });
     document.addEventListener('mouseout', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.remove('big'); });
   }
+
+  // Whole-section show/hide. Hidden sections are removed from flow (display:none),
+  // so the next section moves up naturally with no empty gap. Hero + contact are
+  // always shown (core); everything else is toggle-able from the admin.
+  (function applySectionVisibility() {
+    var vis = Store.get('fazal_sections') || {};
+    var toggleable = ['roles','stats','about','content','community','regional','experience',
+      'kol','cases','services','events','affiliates','social','testimonials'];
+    toggleable.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = (vis[id] === false) ? 'none' : '';
+    });
+  })();
 
   // Reveal on scroll
   var io = new IntersectionObserver(function (entries) {
