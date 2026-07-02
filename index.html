@@ -669,6 +669,10 @@ html,body{max-width:100%}
   .stat{padding:22px 12px}
   .milestone-banner h3{font-size:clamp(22px,7vw,30px)}
 
+  /* event video tabs: even 2-up grid (equal-width, max 2 lines) instead of ragged wrap */
+  .mv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mv-tab{text-align:center;font-size:12.5px;white-space:nowrap}
+
   /* stacked CTA/track buttons go full width */
   .track .btn{width:100%;margin-right:0}
   .track .btn+.btn{margin-top:2px}
@@ -682,6 +686,7 @@ html,body{max-width:100%}
 @media (max-width:380px){
   section{padding:34px 13px}
   .sec-title{font-size:32px}
+  .mv-tab{font-size:11.5px;padding:10px 6px}
   .hero h1{font-size:clamp(40px,13vw,52px)}
   .hero-badges .pill{font-size:10px;padding:6px 11px}
   .stat .num{font-size:26px}
@@ -696,7 +701,8 @@ html,body{max-width:100%}
   .mini-social a{width:44px;height:44px}
   .foot-social a{width:40px;height:40px}
   .nav-links a{padding:8px 0}
-  .filter-btn,.mv-tab{padding:10px 16px}
+  .filter-btn{padding:10px 16px}
+  .mv-tab{padding:11px 10px}
 }
 
 /* ---- Landscape phones (short viewports) ---- */

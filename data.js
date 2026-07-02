@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-01-network-tree';
+  var DATA_VERSION = '2026-07-02-hide-kol';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -511,9 +511,10 @@
     /* Whole-section show/hide. Any id set to false hides that <section> on the
        public site (it collapses out of flow — the next section moves up, no gap).
        Missing / true = visible. Managed in admin → "Show / Hide Sections".
-       Defaults below hide "Learn With Me" (content) and "Reputation"
-       (testimonials) per client request 2026-07-01 — flip back on in admin. */
-    fazal_sections: { content: false, testimonials: false },
+       Defaults below hide "Learn With Me" (content), "Reputation"
+       (testimonials) per client request 2026-07-01, and "The KOL Network"
+       (kol) per client request 2026-07-02 — flip back on in admin. */
+    fazal_sections: { content: false, testimonials: false, kol: false },
 
     /* Part-level show/hide (pieces INSIDE a section). Map of block id → boolean.
        false = that piece is hidden on the public site. Managed in admin →

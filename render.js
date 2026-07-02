@@ -741,8 +741,16 @@
     var toggleable = ['roles','stats','about','content','community','regional','experience',
       'kol','network-tree','cases','services','events','affiliates','social','testimonials'];
     toggleable.forEach(function (id) {
+      var hidden = vis[id] === false;
       var el = document.getElementById(id);
-      if (el) el.style.display = (vis[id] === false) ? 'none' : '';
+      if (el) el.style.display = hidden ? 'none' : '';
+      // Also hide any nav link (desktop + mobile menu) pointing at a hidden
+      // section, so it doesn't become a dead link that scrolls nowhere.
+      document.querySelectorAll('.nav-links a[href="#' + id + '"], #mobileNav a[href="#' + id + '"]')
+        .forEach(function (a) {
+          var li = a.closest('li');
+          (li || a).style.display = hidden ? 'none' : '';
+        });
     });
   })();
 
