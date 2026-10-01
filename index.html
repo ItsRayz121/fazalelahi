@@ -872,6 +872,36 @@ footer{background:var(--void)}
   .marq-track{font-size:26px;gap:40px}
 }
 
+
+/* ---- LESS TEXT: visual-first. Long copy is collapsed behind "Read more" or hidden. ---- */
+.sec-sub{display:none}
+#hero .hero-body{display:none}
+#hero h1 .hl{color:var(--gold)}
+.hero-sub{font-size:clamp(15px,1.5vw,19px)}
+.role-card p,.comm-card>p,.aff-card>p:not(.aff-offer),.track>p,.milestone-banner>p{display:none}
+.roles-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+.role-card{padding:22px}
+.role-card h3{font-size:26px}
+.role-card .ico{margin-bottom:12px}
+@media (max-width:900px){.roles-grid{grid-template-columns:repeat(2,1fr)}}
+.region-card .rc-row{display:none}
+.svc-tag,.svc-ideal,.svc-step p{display:none}
+.svc-points li{font-size:13.5px}
+.exp-card .skills,.case-card .skills{display:none}
+#ntIntro,.nt-intro{display:none}
+.foot-grid>div:not(.foot-brand){display:none}
+.foot-grid{grid-template-columns:1fr}
+.disclaimer{font-size:11.5px;opacity:.7}
+.case-stat{font-family:var(--disp);font-size:clamp(54px,7vw,96px);line-height:.95;color:var(--gold);margin:6px 0 16px;letter-spacing:1px}
+.case-card h3{margin-bottom:0}
+details.more{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+details.more summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:14px;list-style:none;display:inline-flex;gap:8px;align-items:center}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:'+';font-size:18px;line-height:1}
+details.more[open] summary::after{content:'–'}
+details.more p,details.more .case-block{margin-top:12px;font-size:15px}
+.about-text details.more{border:0;padding:0;margin:4px 0 16px}
+#tagCloud{display:none}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .reveal,.tl-item.reveal{opacity:1;transform:none}
@@ -926,7 +956,6 @@ footer{background:var(--void)}
       <p class="hero-body" id="heroBody"></p>
       <div class="hero-cta">
         <a class="btn btn-gold shimmer" href="https://www.youtube.com/@LearningHubByFazal" target="_blank" rel="noopener noreferrer">📺 Start Learning</a>
-        <a class="btn btn-emerald" href="https://t.me/cryptowithfazal" target="_blank" rel="noopener noreferrer">💬 Join Community</a>
         <a class="btn btn-glass" href="#services">🤝 Work With Me</a>
       </div>
       <div class="mini-social" id="heroSocial" aria-label="Social links"></div>
@@ -974,7 +1003,7 @@ footer{background:var(--void)}
         <img id="aboutPhoto" alt="Fazal Elahi at work in Web3" loading="lazy">
       </div>
       <div class="about-text reveal">
-        <p id="bio1"></p><p id="bio2"></p><p id="bio3"></p>
+        <p id="bio1"></p><details class="more"><summary>Read more of my story</summary><p id="bio2"></p><p id="bio3"></p></details>
         <div class="tag-cloud" id="tagCloud"></div>
         <div class="cred" id="aboutCred"></div>
         <a class="btn btn-glass" id="cvBtn" style="margin-top:16px" target="_blank" rel="noopener noreferrer">⬇ Download CV</a>
@@ -1046,13 +1075,13 @@ footer{background:var(--void)}
       <div class="card reveal">
         <div style="font-size:30px">🇵🇰</div>
         <h3>Pakistan Ambassador &amp; Regional Manager</h3>
-        <p>Official Pakistan representative for global Web3 projects entering South Asia — local team building, regional event organization, local-language content, and grassroots adoption campaigns.</p>
+        <p>Official Pakistan representative for global Web3 projects entering South Asia.</p>
         <div class="milestone-badge">🏆 Organized Pakistan's First Web3 Physical Event — Lahore</div>
       </div>
       <div class="card reveal">
         <div style="font-size:30px">💼</div>
         <h3>Business Developer</h3>
-        <p>Connecting Web3 projects with the high-engagement South Asian market — market-entry strategy, KOL &amp; creator deal negotiation, GTM planning, tokenomics/airdrop consulting, and campaign analytics across five markets.</p>
+        <p>Connecting Web3 projects with the South Asian market — GTM, KOL deals, airdrops.</p>
       </div>
     </div>
 

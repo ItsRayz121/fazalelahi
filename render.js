@@ -60,9 +60,9 @@
 
   /* ---------- Profile / hero / about ---------- */
   var p = Store.get('fazal_profile');
-  var headline = (settings.heroHeadline || p.tagline || '');
+  var headline = 'I SCALE WEB3 COMMUNITIES.';
   document.getElementById('heroHeadline').innerHTML = headline.split(' ').map(function (w, i) {
-    return '<span style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
+    return '<span' + (/WEB3/.test(w) ? ' class="hl"' : '') + ' style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
@@ -204,8 +204,8 @@
       '<div style="text-align:right"><div class="status-badge status-' + esc(e.status) + '">' +
         (e.status === 'Active' ? '🟢 ' : '✅ ') + esc(e.status) + '</div>' +
         '<div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px">' + esc(e.start) + ' – ' + esc(e.end) + '</div></div></div>' +
-      '<p>' + esc(e.desc) + '</p>' +
       '<div class="metrics">' + e.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
+      '<details class="more"><summary>Read the story</summary><p>' + esc(e.desc) + '</p></details>' +
       '<div class="skills">' + e.skills.map(function (s) { return '<span class="tag">' + esc(s) + '</span>'; }).join('') + '</div></div>';
   }).join('');
 
@@ -350,12 +350,15 @@
 
   /* ---------- Case studies ---------- */
   document.getElementById('caseList').innerHTML = Store.get('fazal_casestudies').filter(function (c) { return c.visible !== false; }).map(function (c) {
-    return '<div class="card case-card reveal"><span class="badge">' + esc(c.badge) + '</span><h3>' + esc(c.title) + '</h3>' +
+    var tp = String(c.title || '').split(/\s+[—–-]\s+/), cname = tp[0], cstat = tp.slice(1).join(' — ');
+    var cm = cstat.match(/^[\d.,]+\s*[KMB]?\+?\s*(?:→|->|to)\s*[\d.,]+\s*[KMB]?\+?/i); if (cm) cstat = cm[0];
+    return '<div class="card case-card reveal"><span class="badge">' + esc(c.badge) + '</span><h3>' + esc(cname) + '</h3>' +
+      (cstat ? '<div class="case-stat">' + esc(cstat) + '</div>' : '') +
+      '<div class="metrics">' + c.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
+      '<details class="more"><summary>Read the story</summary>' +
       '<div class="case-block"><strong>Challenge:</strong> ' + esc(c.challenge) + '</div>' +
       '<div class="case-block"><strong>Strategy:</strong> ' + esc(c.strategy) + '</div>' +
-      '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div>' +
-      '<div class="metrics">' + c.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
-      '<div class="skills" style="margin:14px 0">' + c.tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' +
+      '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div></details>' +
       (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
   }).join('');
 
