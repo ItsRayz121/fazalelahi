@@ -60,7 +60,7 @@
       email: 'fazalelahi5577@gmail.com',
       phone: '+92 309 8336810',
       whatsapp: 'https://wa.me/923098336810',
-      linkedin: 'https://linkedin.com/in/fazal-elahi',
+      linkedin: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       location: 'Pakistan (UTC+5)',
       availability: '50–60 hrs/week',
       cvUrl: '[CV_DOWNLOAD_URL]',
@@ -383,7 +383,7 @@
       { platform: 'Facebook', url: 'https://web.facebook.com/profile.php?id=61577253396008', handle: 'Fazal Elahi', color: '#1877F2', count: '', visible: true },
       { platform: 'WhatsApp Channel', url: 'https://whatsapp.com/channel/0029VbBen9b6rsQjOXrL1a18', handle: 'Fazal Crypto Lab', color: '#25D366', count: '[WA_CHANNEL_FOLLOWERS]', visible: true },
       { platform: 'Linktree', url: 'https://linktr.ee/LearningHubByFazal_1', handle: 'LearningHubByFazal_1', color: '#43E55E', count: '', visible: true },
-      { platform: 'LinkedIn', url: 'https://linkedin.com/in/fazal-elahi', handle: 'fazal-elahi', color: '#0A66C2', count: '', visible: true }
+      { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android', handle: 'fazal-elahi', color: '#0A66C2', count: '', visible: true }
     ],
 
     fazal_affiliates: [

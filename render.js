@@ -98,7 +98,7 @@
   document.getElementById('contactCards').innerHTML =
     contactIcon('mailto:' + p.email, '<span class="ci-emoji">✉️</span>', 'Email', 'Tap to email') +
     contactIcon(liveUrl(p.whatsapp) ? clean(p.whatsapp) : 'https://wa.me/', ICON.whatsapp, 'WhatsApp', 'Chat on WhatsApp') +
-    contactIcon(liveUrl(p.linkedin) ? clean(p.linkedin) : 'https://linkedin.com/in/fazal-elahi', ICON.linkedin, 'LinkedIn', 'Connect') +
+    contactIcon(liveUrl(p.linkedin) ? clean(p.linkedin) : 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android', ICON.linkedin, 'LinkedIn', 'Connect') +
     '<div class="card contact-icon reveal"><span class="ci-ic"><span class="ci-emoji">🌍</span></span>' +
       '<span class="ci-tx"><span class="ci-nm">' + esc(p.location) + '</span><span class="ci-hd">' + esc(p.availability) + '</span></span></div>';
 
