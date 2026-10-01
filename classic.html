@@ -546,24 +546,24 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
   .timeline::before{left:50%;transform:translateX(-50%)}
   /* each event is a branch that takes half the width and alternates side */
   .tl-item{width:calc(50% - 46px);margin-bottom:52px}
-  .tl-item.tl-l{margin-right:auto;text-align:left}
-  .tl-item.tl-r{margin-left:auto}
+  .tl-item:nth-child(odd){margin-right:auto;text-align:left}
+  .tl-item:nth-child(even){margin-left:auto}
   /* the branch line joining the card to the central trunk */
   .tl-item::before{content:'';position:absolute;top:30px;width:46px;height:2px;z-index:1;
     background:linear-gradient(90deg,rgba(242,169,0,.15),var(--gold))}
-  .tl-item.tl-l::before{right:-46px;background:linear-gradient(90deg,var(--gold),rgba(242,169,0,.15))}
-  .tl-item.tl-r::before{left:-46px}
+  .tl-item:nth-child(odd)::before{right:-46px;background:linear-gradient(90deg,var(--gold),rgba(242,169,0,.15))}
+  .tl-item:nth-child(even)::before{left:-46px}
   /* the node dot sits on the central trunk */
   .tl-dot{top:24px}
-  .tl-item.tl-l .tl-dot{left:auto;right:-54px}
-  .tl-item.tl-r .tl-dot{left:-54px;right:auto}
+  .tl-item:nth-child(odd) .tl-dot{left:auto;right:-54px}
+  .tl-item:nth-child(even) .tl-dot{left:-54px;right:auto}
   .tl-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;
     border:1px solid rgba(242,169,0,.35);animation:tlpulse 2.6s ease-out infinite}
   @keyframes tlpulse{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.9);opacity:0}}
   /* branches swing in from their own side as you scroll */
   .tl-item.reveal{opacity:0}
-  .tl-item.tl-l.reveal{transform:translateX(-52px)}
-  .tl-item.tl-r.reveal{transform:translateX(52px)}
+  .tl-item:nth-child(odd).reveal{transform:translateX(-52px)}
+  .tl-item:nth-child(even).reveal{transform:translateX(52px)}
   .tl-item.reveal.in{opacity:1;transform:none}
 }
 @media (max-width:680px){
@@ -785,93 +785,6 @@ html,body{max-width:100%}
   .nt-node .nt-tip{display:none}
 }
 
-/* ============================================================
-   REDESIGN v2 — "Dark Bold" look layered on the existing site.
-   Everything above still applies; this block only restyles.
-   (Remove this block + the group labels in render.js to revert,
-   or `git revert` the redesign commit / checkout tag before-redesign.)
-   ============================================================ */
-:root{--line:rgba(242,169,0,.14);--r:22px}
-#cursor,#particles,.hero-grid,.ring{display:none!important}
-section{padding:clamp(54px,7.5vw,104px) clamp(18px,5vw,80px)}
-#stats,#experience,#events,#regional,#community,#affiliates,#contact,#kol{background:var(--deep)}
-#network-tree,#about,#cases,#roles,#services,#content,#social,#testimonials{background:var(--void)}
-.sec-title{font-size:clamp(48px,8vw,104px);line-height:.92;margin-bottom:14px}
-.sec-sub{font-size:clamp(16px,1.8vw,21px);color:var(--silver);max-width:640px;margin-bottom:38px}
-.eyebrow{font-size:12px;letter-spacing:3px}
-.card{background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:var(--r);padding:30px;backdrop-filter:none}
-.card:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 20px 44px rgba(0,0,0,.4)}
-.btn{border-radius:12px;font-size:16px;padding:15px 28px}
-.btn-glass{border:1.5px solid rgba(255,255,255,.2)}
-.btn-glass:hover{border-color:var(--gold);color:var(--gold)}
-/* nav */
-#nav{background:rgba(7,7,15,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);padding:14px clamp(18px,5vw,60px)}
-.brand .flag{display:none}
-.nav-links{gap:22px}
-/* hero */
-#hero{min-height:100vh;padding-top:120px;position:relative}
-#hero::before{content:'';position:absolute;right:-12%;top:-12%;width:62vw;height:62vw;background:radial-gradient(circle,rgba(242,169,0,.17),transparent 65%);pointer-events:none}
-@media (min-width:981px){.hero-inner{grid-template-columns:1.15fr .85fr}}
-#hero h1{font-family:var(--disp);font-weight:400;font-size:clamp(60px,9.5vw,136px);line-height:.9;margin-bottom:20px}
-.hero-sub{font-size:clamp(16px,1.7vw,21px);font-weight:600;color:var(--gold);max-width:560px}
-.hero-body{font-size:16px;max-width:520px;color:var(--silver);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.hero-badges .pill{color:#fff;font-weight:700;border-color:var(--line);padding:9px 15px}
-.hero-photo{width:min(400px,80vw);aspect-ratio:4/5;border-radius:28px;border:2px solid var(--gold);object-position:center top}
-.float-stat{border-radius:14px}
-.float-stat .v{font-size:22px}
-.fs3{display:none}
-.hero-cta .btn-emerald{border-color:rgba(255,255,255,.2);color:#fff}
-/* logo marquee */
-.marq{border-block:1px solid var(--line);background:var(--deep);overflow:hidden;padding:20px 0}
-.marq-track{display:flex;gap:64px;width:max-content;animation:marqMove 32s linear infinite;font-family:var(--disp);font-size:34px;letter-spacing:2px;color:#fff;opacity:.55}
-@keyframes marqMove{to{transform:translateX(-50%)}}
-/* stats */
-.stats-grid{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
-.stat{padding:36px 18px;border-color:var(--line)}
-.stat .num{font-size:clamp(34px,4.6vw,58px)}
-.stat .lbl{font-size:12.5px;letter-spacing:1.5px}
-/* roles — compact icon cards */
-.role-card .ico{width:60px;height:60px;border-radius:16px;font-size:28px}
-.role-card h3{font-family:var(--disp);font-weight:400;font-size:32px;letter-spacing:.5px;line-height:1}
-.role-card p{font-size:14.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.role-card .badge{display:none}
-/* about / experience / cases */
-.about-photo img{border-radius:var(--r);border:2px solid var(--gold)}
-.pullquote{font-size:clamp(22px,3vw,34px)}
-.exp-card,.case-card{border-radius:var(--r)}
-.case-card h3,.exp-head h3{font-family:var(--disp);font-weight:400;font-size:clamp(30px,3.4vw,42px);letter-spacing:.5px}
-.metric{font-weight:700;color:var(--gold)}
-/* events tree */
-.milestone-banner{border-radius:26px;padding:clamp(24px,4vw,44px)}
-.milestone-banner h3{font-size:clamp(32px,5vw,58px)}
-.filter-btn.active,.filter-btn:hover{background:var(--gold);color:#000}
-.tl-group{width:100%;text-align:center;margin:8px 0 34px;position:relative;z-index:3}
-.tl-group span{display:inline-block;font-family:var(--disp);font-size:clamp(24px,3vw,34px);letter-spacing:2px;color:#fff;
-  background:var(--deep);border:1.5px solid var(--gold);border-radius:40px;padding:6px 26px 4px}
-.tl-group span i{font-style:normal;color:var(--gold);margin-right:8px}
-.tl-card{border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line)}
-@media (max-width:900px){.tl-group{text-align:left;padding-left:0;margin-bottom:22px}}
-/* network tree */
-.nt-core{border-radius:50%}
-/* services, affiliates, social */
-.svc-card h3,.aff-card h3{font-family:var(--disp);font-weight:400;font-size:30px;letter-spacing:.5px}
-.svc-points li{font-size:14px}
-.aff-logo{border-radius:18px}
-.social-card{border-radius:18px}
-/* contact */
-#contact .sec-title{font-size:clamp(54px,9vw,120px)}
-.cform input,.cform select,.cform textarea{border-radius:12px;background:rgba(255,255,255,.04)}
-footer{background:var(--void)}
-/* mobile sticky CTA */
-.sticky-cta{display:none;position:fixed;left:14px;right:14px;bottom:14px;z-index:900;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-@media (max-width:700px){
-  .sticky-cta{display:inline-flex}
-  footer{padding-bottom:96px}
-  #hero h1{font-size:clamp(54px,16vw,84px)}
-  #hero{padding-top:100px}
-  .marq-track{font-size:26px;gap:40px}
-}
-
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .reveal,.tl-item.reveal{opacity:1;transform:none}
@@ -887,13 +800,14 @@ footer{background:var(--void)}
 <nav id="nav" aria-label="Primary">
   <a href="#hero" class="brand">FAZAL ELAHI<span class="c-gold">.</span><span class="flag">PK 🇵🇰</span></a>
   <ul class="nav-links">
+    <li><a href="#content">Education</a></li>
     <li><a href="#about">About</a></li>
     <li><a href="#experience">Experience</a></li>
-    <li><a href="#events">Events</a></li>
-    <li><a href="#network-tree">Network</a></li>
     <li><a href="#community">Community</a></li>
-    <li><a href="#content">Content</a></li>
-    <li><a href="#affiliates">Exchanges</a></li>
+    <li><a href="#affiliates">Affiliates</a></li>
+    <li><a href="#network-tree">Network</a></li>
+    <li><a href="#events">Events</a></li>
+    <li><a href="#social">Socials</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <div class="nav-right nav-desktop-cta">
@@ -903,8 +817,8 @@ footer{background:var(--void)}
 </nav>
 <div id="mobileNav" aria-hidden="true">
   <button class="close" id="mobileClose" aria-label="Close menu">×</button>
-  <a href="#about">About</a><a href="#experience">Experience</a><a href="#events">Events</a><a href="#network-tree">Network</a>
-  <a href="#community">Community</a><a href="#content">Content</a><a href="#affiliates">Exchanges</a><a href="#services">Work With Me</a>
+  <a href="#content">Education</a><a href="#about">About</a><a href="#experience">Experience</a>
+  <a href="#community">Community</a><a href="#services">Work With Me</a><a href="#affiliates">Affiliates</a><a href="#network-tree">Network</a><a href="#events">Events</a>
   <a href="#social">Socials</a><a href="#contact">Contact</a>
 </div>
 
@@ -917,9 +831,9 @@ footer{background:var(--void)}
   <div class="hero-inner">
     <div class="hero-left">
       <div class="hero-badges">
-        <span class="pill">💼 Business Development</span>
-        <span class="pill">🎬 Content Creator</span>
-        <span class="pill">🚀 Project Growth</span>
+        <span class="pill"><span class="dot-live"></span> LIVE · CREATING CONTENT</span>
+        <span class="pill">🇵🇰 Pakistan Ambassador</span>
+        <span class="pill">🌍 5 Global Markets</span>
       </div>
       <h1 id="heroHeadline"></h1>
       <p class="hero-sub" id="heroSub"></p>
@@ -942,8 +856,15 @@ footer{background:var(--void)}
   </div>
 </section>
 
-<!-- ============ MARQUEE ============ -->
-<div class="marq" aria-label="Exchanges and partners I work with"><div class="marq-track"><span>CREATORX</span><span>BINANCE</span><span>OKX</span><span>MEXC</span><span>BINGX</span><span>BITGET</span><span>BYBIT</span><span>EDVERSITY</span><span>LUMS</span><span>EFSANE</span><span>CREATORX</span><span>BINANCE</span><span>OKX</span><span>MEXC</span><span>BINGX</span><span>BITGET</span><span>BYBIT</span><span>EDVERSITY</span><span>LUMS</span><span>EFSANE</span></div></div>
+<!-- ============ ROLES ============ -->
+<section id="roles" class="diag">
+  <div class="wrap">
+    <span class="eyebrow reveal" data-block="roles.intro">Identity</span>
+    <h2 class="sec-title reveal">WHAT I DO<span class="dot">.</span></h2>
+    <p class="sec-sub reveal" data-block="roles.intro">Seven roles. One mission. Building Web3 from Pakistan to the world.</p>
+    <div class="roles-grid" id="rolesGrid"></div>
+  </div>
+</section>
 
 <!-- ============ STATS ============ -->
 <section id="stats">
@@ -953,18 +874,8 @@ footer{background:var(--void)}
   </div>
 </section>
 
-<!-- ============ ROLES ============ -->
-<section id="roles">
-  <div class="wrap">
-    <span class="eyebrow reveal" data-block="roles.intro">Identity</span>
-    <h2 class="sec-title reveal">WHAT I DO<span class="dot">.</span></h2>
-    <p class="sec-sub reveal" data-block="roles.intro">Seven roles. One mission. Building Web3 from Pakistan to the world.</p>
-    <div class="roles-grid" id="rolesGrid"></div>
-  </div>
-</section>
-
 <!-- ============ ABOUT ============ -->
-<section id="about">
+<section id="about" class="diag">
   <div class="wrap">
     <span class="eyebrow reveal">My Story</span>
     <h2 class="sec-title reveal">MY STORY<span class="dot">.</span></h2>
@@ -983,56 +894,28 @@ footer{background:var(--void)}
   </div>
 </section>
 
-<!-- ============ EXPERIENCE ============ -->
-<section id="experience">
+<!-- ============ CONTENT / YT ============ -->
+<section id="content">
   <div class="wrap">
-    <span class="eyebrow reveal">Battle Tested</span>
-    <h2 class="sec-title reveal">BATTLE TESTED<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Operational history. Real projects. Real results.</p>
-    <div id="expList"></div>
+    <span class="eyebrow reveal">Learn With Me</span>
+    <h2 class="sec-title reveal">LEARN WITH ME<span class="dot">.</span></h2>
+    <p class="sec-sub reveal" id="contentSub"></p>
+    <div class="channels" id="channels"></div>
+    <div class="videos" id="videos"></div>
+    <span class="eyebrow reveal" data-block="content.pillars">Content Pillars</span>
+    <div class="chip-row" id="pillars" data-block="content.pillars"></div>
+    <div class="chip-row" id="hashtags" data-block="content.pillars"></div>
   </div>
 </section>
 
-<!-- ============ CASE STUDIES ============ -->
-<section id="cases">
+<!-- ============ COMMUNITY ============ -->
+<section id="community" class="diag">
   <div class="wrap">
-    <span class="eyebrow reveal">Proof Of Work</span>
-    <h2 class="sec-title reveal">PROOF OF WORK<span class="dot">.</span></h2>
-    <p class="sec-sub reveal" data-block="cases.sub">Numbers don't lie. Execution over theory.</p>
-    <div id="caseList"></div>
-  </div>
-</section>
-
-<!-- ============ EVENTS ============ -->
-<section id="events">
-  <div class="wrap">
-    <span class="eyebrow reveal">In The Room</span>
-    <h2 class="sec-title reveal">IN THE ROOM<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">Organized first, then exchanges, universities and industry. Tap any event for its photos &amp; videos.</p>
-    <div class="milestone-banner reveal">
-      <span class="tag">🏆 MILESTONE ACHIEVEMENT</span>
-      <h3>Organized Pakistan's First Web3 Physical Event — Lahore</h3>
-      <p>Brought together top Web3 creators from across Pakistan. A first-of-its-kind community gathering that put Pakistani Web3 on the map.</p>
-      <!-- Tabbed horizontal video player — populated by render.js from gallery items flagged bannerVideo -->
-      <div class="mv-player" id="milestoneVideos"></div>
-    </div>
-    <div class="filters" id="eventFilters"></div>
-    <div class="events-grid" id="eventsGrid"></div>
-  </div>
-</section>
-
-<!-- ============ THE NETWORK TREE ============ -->
-<section id="network-tree">
-  <div class="wrap">
-    <span class="eyebrow reveal">The Network Tree</span>
-    <h2 class="sec-title reveal">THE NETWORK TREE<span class="dot">.</span></h2>
-    <p class="sec-sub reveal nt-intro" id="ntIntro"></p>
-    <div class="nt-stage reveal" id="ntStage" aria-hidden="true"></div>
-    <div class="nt-wall-head reveal">
-      <span class="eyebrow">The Full Network</span>
-      <span class="nt-count" id="ntCount"></span>
-    </div>
-    <div class="nt-wall reveal" id="ntWall"></div>
+    <span class="eyebrow reveal">The Community</span>
+    <h2 class="sec-title reveal">THE COMMUNITY<span class="dot">.</span></h2>
+    <p class="sec-sub reveal">460,000+ people learning, earning, and growing together in Web3.</p>
+    <div class="comm-grid" id="commGrid"></div>
+    <div class="feat-strip reveal" id="featStrip"></div>
   </div>
 </section>
 
@@ -1065,44 +948,13 @@ footer{background:var(--void)}
   </div>
 </section>
 
-<!-- ============ WORK WITH ME ============ -->
-<section id="services">
+<!-- ============ EXPERIENCE ============ -->
+<section id="experience" class="diag">
   <div class="wrap">
-    <span class="eyebrow reveal">Engagements</span>
-    <h2 class="sec-title reveal">WORK WITH ME<span class="dot">.</span></h2>
-    <p class="sec-sub reveal" id="servicesIntro"></p>
-    <div class="svc-grid" id="servicesGrid"></div>
-    <span class="eyebrow reveal" style="margin-top:8px">How We'll Work Together</span>
-    <div class="svc-steps" id="servicesSteps"></div>
-    <div class="svc-foot reveal">
-      <span class="pill"><span class="dot-live"></span> Currently Taking New Projects</span>
-      <a class="btn btn-gold shimmer" href="#contact">🤝 Start the Conversation</a>
-    </div>
-  </div>
-</section>
-
-<!-- ============ COMMUNITY ============ -->
-<section id="community">
-  <div class="wrap">
-    <span class="eyebrow reveal">The Community</span>
-    <h2 class="sec-title reveal">THE COMMUNITY<span class="dot">.</span></h2>
-    <p class="sec-sub reveal">460,000+ people learning, earning, and growing together in Web3.</p>
-    <div class="comm-grid" id="commGrid"></div>
-    <div class="feat-strip reveal" id="featStrip"></div>
-  </div>
-</section>
-
-<!-- ============ CONTENT / YT ============ -->
-<section id="content">
-  <div class="wrap">
-    <span class="eyebrow reveal">Learn With Me</span>
-    <h2 class="sec-title reveal">LEARN WITH ME<span class="dot">.</span></h2>
-    <p class="sec-sub reveal" id="contentSub"></p>
-    <div class="channels" id="channels"></div>
-    <div class="videos" id="videos"></div>
-    <span class="eyebrow reveal" data-block="content.pillars">Content Pillars</span>
-    <div class="chip-row" id="pillars" data-block="content.pillars"></div>
-    <div class="chip-row" id="hashtags" data-block="content.pillars"></div>
+    <span class="eyebrow reveal">Battle Tested</span>
+    <h2 class="sec-title reveal">BATTLE TESTED<span class="dot">.</span></h2>
+    <p class="sec-sub reveal">Operational history. Real projects. Real results.</p>
+    <div id="expList"></div>
   </div>
 </section>
 
@@ -1125,8 +977,67 @@ footer{background:var(--void)}
   </div>
 </section>
 
+<!-- ============ THE NETWORK TREE ============ -->
+<section id="network-tree">
+  <div class="wrap">
+    <span class="eyebrow reveal">The Network Tree</span>
+    <h2 class="sec-title reveal">THE NETWORK TREE<span class="dot">.</span></h2>
+    <p class="sec-sub reveal nt-intro" id="ntIntro"></p>
+    <div class="nt-stage reveal" id="ntStage" aria-hidden="true"></div>
+    <div class="nt-wall-head reveal">
+      <span class="eyebrow">The Full Network</span>
+      <span class="nt-count" id="ntCount"></span>
+    </div>
+    <div class="nt-wall reveal" id="ntWall"></div>
+  </div>
+</section>
+
+<!-- ============ CASE STUDIES ============ -->
+<section id="cases" class="diag">
+  <div class="wrap">
+    <span class="eyebrow reveal">Proof Of Work</span>
+    <h2 class="sec-title reveal">PROOF OF WORK<span class="dot">.</span></h2>
+    <p class="sec-sub reveal" data-block="cases.sub">Numbers don't lie. Execution over theory.</p>
+    <div id="caseList"></div>
+  </div>
+</section>
+
+<!-- ============ WORK WITH ME ============ -->
+<section id="services" class="diag">
+  <div class="wrap">
+    <span class="eyebrow reveal">Engagements</span>
+    <h2 class="sec-title reveal">WORK WITH ME<span class="dot">.</span></h2>
+    <p class="sec-sub reveal" id="servicesIntro"></p>
+    <div class="svc-grid" id="servicesGrid"></div>
+    <span class="eyebrow reveal" style="margin-top:8px">How We'll Work Together</span>
+    <div class="svc-steps" id="servicesSteps"></div>
+    <div class="svc-foot reveal">
+      <span class="pill"><span class="dot-live"></span> Currently Taking New Projects</span>
+      <a class="btn btn-gold shimmer" href="#contact">🤝 Start the Conversation</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EVENTS ============ -->
+<section id="events">
+  <div class="wrap">
+    <span class="eyebrow reveal">In The Room</span>
+    <h2 class="sec-title reveal">IN THE ROOM<span class="dot">.</span></h2>
+    <p class="sec-sub reveal">Real events. Real rooms. Real impact. Filter by type, then tap any event to open its photo &amp; video gallery.</p>
+    <div class="milestone-banner reveal">
+      <span class="tag">🏆 MILESTONE ACHIEVEMENT</span>
+      <h3>Organized Pakistan's First Web3 Physical Event — Lahore</h3>
+      <p>Brought together top Web3 creators from across Pakistan. A first-of-its-kind community gathering that put Pakistani Web3 on the map.</p>
+      <!-- Tabbed horizontal video player — populated by render.js from gallery items flagged bannerVideo -->
+      <div class="mv-player" id="milestoneVideos"></div>
+    </div>
+    <div class="filters" id="eventFilters"></div>
+    <div class="events-grid" id="eventsGrid"></div>
+  </div>
+</section>
+
 <!-- ============ AFFILIATES ============ -->
-<section id="affiliates">
+<section id="affiliates" class="diag">
   <div class="wrap">
     <span class="eyebrow reveal">Trusted Exchanges</span>
     <h2 class="sec-title reveal">TRUSTED EXCHANGES<span class="dot">.</span></h2>
@@ -1148,7 +1059,7 @@ footer{background:var(--void)}
 </section>
 
 <!-- ============ TESTIMONIALS ============ -->
-<section id="testimonials">
+<section id="testimonials" class="diag">
   <div class="wrap">
     <span class="eyebrow reveal" data-block="testimonials.head">Reputation</span>
     <h2 class="sec-title reveal" data-block="testimonials.head">REPUTATION<span class="dot">.</span></h2>
@@ -1197,7 +1108,6 @@ footer{background:var(--void)}
     </form>
   </div>
 </section>
-
 
 </main>
 
@@ -1261,7 +1171,6 @@ footer{background:var(--void)}
   </div>
 </div>
 
-<a href="#contact" class="sticky-cta btn btn-gold">🤝 Work With Me</a>
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <!-- GSAP -->

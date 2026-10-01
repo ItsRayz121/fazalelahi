@@ -422,6 +422,15 @@
     var filtersEl = document.getElementById('eventFilters');
     if (!grid) return;
 
+    // Tree order: organized (CreatorX / milestone) -> exchanges -> universities -> industry -> speaking -> rest.
+    // Stable sort, so the admin's order is kept within each group.
+    var groupRank = { Milestone:0, CreatorX:0, Exchange:1, University:2, 'Industry Event':3, Speaker:4 };
+    gallery = gallery.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) {
+      var ra = groupRank[a.g.category] != null ? groupRank[a.g.category] : 9;
+      var rb = groupRank[b.g.category] != null ? groupRank[b.g.category] : 9;
+      return ra - rb || a.i - b.i;
+    }).map(function (o) { return o.g; });
+
     var catColors = { CreatorX:'gold', Exchange:'emerald', University:'blue', 'Industry Event':'purple',
       Speaker:'red', Partnership:'purple', Campaign:'orange', Community:'emerald', Network:'emerald',
       Education:'blue', Milestone:'gold' };
@@ -442,8 +451,18 @@
       return { imgs: imgs, vids: vids };
     }
     grid.className = 'timeline';
+    // Tree grouping: each change of category group gets a centred label, and cards
+    // alternate left/right by their own counter (labels don't disturb the alternation).
+    var groupOf = { CreatorX:['🏆','Organized · CreatorX'], Milestone:['🏆','Organized'], Exchange:['💱','Exchanges'],
+      University:['🎓','Universities'], 'Industry Event':['🏢','Industry'], Speaker:['🎤','Speaking'],
+      Partnership:['🤝','Partnerships'], Campaign:['📣','Campaigns'] };
+    var lastGroup = null, side = 0;
     grid.innerHTML = gallery.map(function (g, gi) {
       if (g.hideCard) return ''; // shown in the milestone banner player instead of the timeline
+      var grp = groupOf[g.category] || ['✨', g.category || 'Events'];
+      var groupHTML = '';
+      if (grp[1] !== lastGroup) { lastGroup = grp[1]; groupHTML = '<div class="tl-group" data-group="' + esc(grp[1]) + '"><span><i>' + grp[0] + '</i>' + esc(grp[1]) + '</span></div>'; }
+      var sideCls = (side++ % 2 === 0) ? 'tl-l' : 'tl-r';
       var col = badgeColor(catColors[g.category] || 'gold');
       var c = counts(g), media = mediaOf(g);
       // Cover slideshow uses only the images (videos play in the lightbox on click).
@@ -473,7 +492,7 @@
         : '';
       var tags = (c.imgs ? '<span class="cat-badge" style="background:rgba(7,7,15,.7);color:#fff">📷 ' + c.imgs + '</span>' : '') +
         (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
-      return '<div class="tl-item reveal" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
+      return groupHTML + '<div class="tl-item reveal ' + sideCls + '" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
         '<div class="tl-dot"></div>' +
         '<div class="tl-card gcard" data-gi="' + gi + '" role="button" tabindex="0" aria-label="Open gallery for ' + esc(g.title) + '">' +
           '<div class="tl-cover">' + slidesHTML + navHTML +
@@ -535,6 +554,7 @@
             (item.dataset.role || '').indexOf(f) > -1;
           item.style.display = match ? '' : 'none';
         });
+        grid.querySelectorAll('.tl-group').forEach(function (gl) { gl.style.display = f === 'all' ? '' : 'none'; });
       });
     }
 
