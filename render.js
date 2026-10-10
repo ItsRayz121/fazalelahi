@@ -106,7 +106,7 @@
   var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
   function socialIconHTML(s) {
     return '<a href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
-      '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
+      '" title="' + esc(s.platform) + '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
   }
   document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
   document.getElementById('footSocial').innerHTML = social.map(socialIconHTML).join('');
@@ -539,6 +539,24 @@
       cover._activeMi = function () { var s = slides[idx]; return s ? +s.getAttribute('data-mi') : 0; };
       setTimeout(start, 500 + gi * 500); // stagger so cards don't flip in unison
     });
+
+    // Mobile: show only the first few events until "Show all" is tapped (CSS only applies <=700px).
+    var MOBILE_EVENTS = 4;
+    var evItems = grid.querySelectorAll('.tl-item');
+    if (evItems.length > MOBILE_EVENTS + 1) {
+      var seen = 0;
+      Array.prototype.forEach.call(grid.children, function (el) {
+        if (el.classList.contains('tl-item')) { if (seen++ >= MOBILE_EVENTS) el.classList.add('ev-extra'); }
+        else if (el.classList.contains('tl-group') && seen >= MOBILE_EVENTS) el.classList.add('ev-extra'); // heading of a hidden section
+      });
+      grid.classList.add('ev-collapsed');
+      var moreBtn = document.createElement('button');
+      moreBtn.type = 'button'; moreBtn.className = 'btn btn-glass ev-more';
+      moreBtn.textContent = 'Show all ' + evItems.length + ' events';
+      grid.parentNode.insertBefore(moreBtn, grid.nextSibling);
+      moreBtn.addEventListener('click', function () { grid.classList.remove('ev-collapsed'); moreBtn.remove(); });
+      if (filtersEl) filtersEl.addEventListener('click', function () { grid.classList.remove('ev-collapsed'); moreBtn.remove(); });
+    }
 
     // Filters from the categories actually present.
     if (filtersEl) {
