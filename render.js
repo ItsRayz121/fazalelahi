@@ -272,7 +272,7 @@
       var pt = positions[i], gi = people.indexOf(x);
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
       return '<button class="nt-node" style="left:' + pt.x.toFixed(1) + '%;top:' + pt.y.toFixed(1) +
-        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" aria-label="' + esc(nameOf(x)) + '">' +
+        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" tabindex="-1" aria-label="' + esc(nameOf(x)) + '">' +
         '<img src="' + url(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
     }).join('');
     stage.innerHTML = '<svg class="nt-links" viewBox="0 0 100 100" preserveAspectRatio="none">' + svgLines + '</svg>' + core + nodes;
@@ -497,13 +497,13 @@
         (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
       return groupHTML + '<div class="tl-item reveal ' + sideCls + '" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
         '<div class="tl-dot"></div>' +
-        '<div class="tl-card gcard" data-gi="' + gi + '" role="button" tabindex="0" aria-label="Open gallery for ' + esc(g.title) + '">' +
+        '<div class="tl-card gcard" data-gi="' + gi + '">' +
           '<div class="tl-cover">' + slidesHTML + navHTML +
             '<div class="tl-tags">' + tags + '</div>' +
             (g.milestone ? '<span class="tl-mile">🏆 Milestone</span>' : '') + '</div>' +
           '<div class="tl-body">' +
             (g.date ? '<div class="tl-date">' + esc(g.date) + '</div>' : '') +
-            '<h4>' + esc(g.title) + '</h4>' +
+            '<h4><button type="button" class="tl-open" aria-label="Open gallery for ' + esc(g.title) + '">' + esc(g.title) + '</button></h4>' +
             '<div class="event-meta">' +
               '<span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(g.category) + '</span>' +
               (g.role ? '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + esc(g.role) + '</span>' : '') +
@@ -614,10 +614,15 @@
       }).join('');
       lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden'; renderStage();
+      lbOpener = document.activeElement;            // restore focus here on close
+      var lbc = document.getElementById('lbClose'); if (lbc) lbc.focus();
     }
+    var lbOpener = null;
     function closeLightbox() {
       lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true');
       lbStage.innerHTML = ''; document.body.style.overflow = '';
+      if (lbOpener && document.contains(lbOpener) && lbOpener.focus) lbOpener.focus();
+      lbOpener = null;
     }
     function step(d) { if (!curMedia.length) return; curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); }
 
@@ -627,10 +632,6 @@
       var cover = card.querySelector('.tl-cover');
       var start = (cover && cover._activeMi) ? cover._activeMi() : 0;
       openLightbox(parseInt(card.dataset.gi, 10), start);
-    });
-    grid.addEventListener('keydown', function (e) {
-      var card = e.target.closest('.gcard'); if (!card) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(parseInt(card.dataset.gi, 10)); }
     });
     document.getElementById('lbClose').addEventListener('click', closeLightbox);
     document.getElementById('lbPrev').addEventListener('click', function () { step(-1); });
