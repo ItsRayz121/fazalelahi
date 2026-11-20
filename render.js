@@ -4,7 +4,7 @@
    ===================================================================== */
 (async function () {
   'use strict';
-  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, clean = Util.clean;
+  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, url = Util.safeUrl, clean = Util.clean;
   // True when a URL is real (not empty and not an unfilled [TOKEN]).
   function liveUrl(u) { return !!clean(u); }
   await Store.bootstrap(); // load shared cloud content (or seed local defaults)
@@ -66,8 +66,8 @@
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
-  document.getElementById('heroPhoto').src = Util.imageUrl(p.photo);
-  document.getElementById('aboutPhoto').src = Util.imageUrl(p.photo);
+  document.getElementById('heroPhoto').src = Util.safeUrlRaw(Util.imageUrl(p.photo));
+  document.getElementById('aboutPhoto').src = Util.safeUrlRaw(Util.imageUrl(p.photo));
   document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
   document.getElementById('bio1').textContent = p.bio1;
   document.getElementById('bio2').textContent = p.bio2;
@@ -75,7 +75,7 @@
   document.getElementById('emailBtn').href = 'mailto:' + p.email;
   // Only show the Download CV button when a real file URL is set.
   var cvBtn = document.getElementById('cvBtn');
-  if (liveUrl(p.cvUrl)) { cvBtn.href = clean(p.cvUrl); }
+  if (liveUrl(p.cvUrl)) { cvBtn.href = Util.safeUrlRaw(clean(p.cvUrl)); }
   else { cvBtn.style.display = 'none'; }
 
   document.getElementById('aboutCred').innerHTML = [
@@ -91,7 +91,7 @@
   // Icon-only contact — raw email/number live in href only (privacy), never shown as text.
   function contactIcon(href, iconHTML, label, hd) {
     var isLink = href.indexOf('http') === 0;
-    return '<a class="card contact-icon reveal" href="' + esc(href) + '" ' + (isLink ? ext + ' ' : '') +
+    return '<a class="card contact-icon reveal" href="' + url(href) + '" ' + (isLink ? ext + ' ' : '') +
       'aria-label="' + esc(label) + '"><span class="ci-ic">' + iconHTML + '</span>' +
       '<span class="ci-tx"><span class="ci-nm">' + esc(label) + '</span><span class="ci-hd">' + esc(hd) + '</span></span></a>';
   }
@@ -105,7 +105,7 @@
   /* ---------- Mini + footer social ---------- */
   var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
   function socialIconHTML(s) {
-    return '<a href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
+    return '<a href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
       '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
   }
   document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
@@ -147,7 +147,7 @@
     return '<div class="card channel-card reveal"><div class="yt c-red">' + ICON.youtube + '</div>' +
       '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
       (subs ? '<div class="metric">📺 ' + esc(subs) + ' subscribers</div>' : '') +
-      '<a class="btn btn-gold shimmer" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
+      '<a class="btn btn-gold shimmer" href="' + url(c.url) + '" ' + ext + '>Subscribe</a></div>';
   }).join('');
   // Only render videos that resolve to a real embed — never show empty "add a
   // link" frames on the public site (admin still manages them in Content).
@@ -158,8 +158,8 @@
   if (liveVideos.length) {
     videosWrap.innerHTML = liveVideos.map(function (em, i) {
       var inner = em.type === 'iframe'
-        ? '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
-        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
+        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
+        : '<video src="' + url(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
       return '<div class="video-card reveal"><div class="frame">' + inner +
         '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
     }).join('');
@@ -177,7 +177,7 @@
     var cnt = clean(c.count);
     return '<div class="card comm-card reveal"><div class="ico" style="background:' + col + '22;color:' + col + '">' + ic + '</div>' +
       '<h3>' + esc(c.name) + '</h3>' + (cnt ? '<div class="cnt">' + esc(cnt) + '</div>' : '') + '<p>' + esc(c.desc) + '</p>' +
-      '<a class="btn btn-glass" href="' + esc(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
+      '<a class="btn btn-glass" href="' + url(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
   }).join('');
   document.getElementById('featStrip').innerHTML = comm.features.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('');
 
@@ -218,11 +218,11 @@
   document.getElementById('kolPartners').innerHTML = kol.partners.filter(function (k) { return k.visible !== false; }).map(function (k) {
     var initial = (String(k.name || '').replace(/^@/, '').charAt(0) || '?').toUpperCase();
     var avatar = clean(k.avatar)
-      ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
+      ? '<span class="kp-avatar"><img src="' + url(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
       : '<span class="kp-avatar kp-initial">' + esc(initial) + '</span>';
     var followers = clean(k.followers);
     var country = clean(k.country);
-    return '<a class="kol-partner reveal" href="' + esc(k.url) + '" ' + ext + '>' + avatar +
+    return '<a class="kol-partner reveal" href="' + url(k.url) + '" ' + ext + '>' + avatar +
       '<span class="kp-body"><span class="kp-name">' + esc(k.name) + '</span>' +
       '<span class="kp-plat">' + esc(k.platform) + '</span>' +
       '<span class="kp-meta">' + (followers ? '<span>👥 ' + esc(followers) + '</span>' : '') +
@@ -266,14 +266,14 @@
       return '<line x1="50" y1="50" x2="' + pt.x.toFixed(1) + '" y2="' + pt.y.toFixed(1) + '"/>';
     }).join('');
     var coreName = prof.name || 'Fazal Elahi';
-    var core = '<div class="nt-core"><img src="' + esc(Util.imageUrl(prof.photo || fullOf(people[0]))) +
+    var core = '<div class="nt-core"><img src="' + url(Util.imageUrl(prof.photo || fullOf(people[0]))) +
       '" alt="' + esc(coreName) + '"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
     var nodes = featured.map(function (x, i) {
       var pt = positions[i], gi = people.indexOf(x);
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
       return '<button class="nt-node" style="left:' + pt.x.toFixed(1) + '%;top:' + pt.y.toFixed(1) +
         '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+        '<img src="' + url(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
     }).join('');
     stage.innerHTML = '<svg class="nt-links" viewBox="0 0 100 100" preserveAspectRatio="none">' + svgLines + '</svg>' + core + nodes;
 
@@ -281,7 +281,7 @@
     wall.innerHTML = people.map(function (x, i) {
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
       return '<button class="nt-chip" data-i="' + i + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+        '<img src="' + url(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
     }).join('');
 
     // Popup viewer.
@@ -291,7 +291,7 @@
     var cur = 0;
     function show(i) {
       cur = (i + people.length) % people.length; var x = people[cur];
-      mPhoto.src = fullOf(x); mPhoto.alt = nameOf(x);
+      mPhoto.src = Util.safeUrlRaw(fullOf(x)); mPhoto.alt = nameOf(x);
       mName.textContent = clean(x.name) ? x.name : 'Network Connection';
       if (clean(x.role)) { mRole.textContent = x.role; mRole.classList.remove('empty'); }
       else { mRole.textContent = 'Part of Fazal’s Web3 network'; mRole.classList.add('empty'); }
@@ -359,7 +359,7 @@
       '<div class="case-block"><strong>Challenge:</strong> ' + esc(c.challenge) + '</div>' +
       '<div class="case-block"><strong>Strategy:</strong> ' + esc(c.strategy) + '</div>' +
       '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div></details>' +
-      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
+      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + url(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
   }).join('');
 
   /* ---------- Milestone banner: tabbed horizontal video player ----------
@@ -391,14 +391,14 @@
     var active = 0;
 
     function facade(v) {
-      var poster = v.poster ? '<img src="' + esc(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
+      var poster = v.poster ? '<img src="' + url(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
       return '<button class="mv-facade" aria-label="Play ' + esc(v.title) + '">' + poster +
         '<span class="mv-play"></span><span class="mv-cap">' + esc(v.label) + '</span></button>';
     }
     function playing(v) {
       if (v.embed.type === 'iframe')
-        return '<iframe src="' + esc(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      return '<video src="' + esc(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
+        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      return '<video src="' + url(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
     }
     function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
 
@@ -483,7 +483,7 @@
       var slidesHTML = imgSlides.length
         ? '<div class="tl-slides">' + imgSlides.map(function (o, si) {
             return '<div class="tl-slide' + (si === 0 ? ' active' : '') + '" data-mi="' + o.mi + '">' +
-              '<img src="' + esc(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
+              '<img src="' + url(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
           }).join('') + '</div>'
         : '';
       var navHTML = imgSlides.length > 1
@@ -575,9 +575,9 @@
       var item = curMedia[curIdx]; if (!item) return;
       var html;
       var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
-      if (item.kind === 'image') html = '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      else html = '<video' + pc + ' src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
+      if (item.kind === 'image') html = '<img src="' + url(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
+      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      else html = '<video' + pc + ' src="' + url(item.embed.src) + '" controls autoplay playsinline></video>';
       lbStage.innerHTML = html;
       lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
       if (lbCaption) { lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none'; }
@@ -591,7 +591,7 @@
       curIdx = (start && start < curMedia.length) ? start : 0; curTitle = g.title;
       lbTitle.textContent = g.title + (g.location ? ' — ' + g.location : '');
       lbThumbs.innerHTML = curMedia.map(function (m, i) {
-        var inner = m.kind === 'image' ? '<img src="' + esc(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
+        var inner = m.kind === 'image' ? '<img src="' + url(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
         return '<button data-i="' + i + '" aria-label="Item ' + (i + 1) + '">' + inner + '</button>';
       }).join('');
       lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
@@ -633,10 +633,10 @@
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
     var affLogo = a.logo
-      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
+      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + url(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
       : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
     var affCta = liveUrl(a.url)
-      ? '<a class="btn btn-gold shimmer" href="' + esc(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
+      ? '<a class="btn btn-gold shimmer" href="' + url(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
       : '<span class="btn btn-glass" style="opacity:.55;cursor:default" aria-disabled="true">Link Coming Soon</span>';
     return '<div class="card aff-card reveal tilt">' + affLogo +
       '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p><p class="aff-offer">' + esc(a.offer) + '</p>' +
@@ -646,7 +646,7 @@
   /* ---------- Social hub ---------- */
   document.getElementById('socialGrid').innerHTML = social.map(function (s) {
     var scount = clean(s.count);
-    return '<a class="card social-card reveal" href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
+    return '<a class="card social-card reveal" href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
       '<span style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</span>' +
       '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (scount ? ' · ' + esc(scount) : '') + '</span></span></a>';
   }).join('');
@@ -655,7 +655,7 @@
   document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').filter(function (t) { return t.visible !== false; }).map(function (t) {
     return '<div class="card test-card reveal"><p class="q">"' + esc(t.quote) + '"</p>' +
       '<div class="test-author"><div class="test-avatar"' + (t.avatar ? ' style="background:none;overflow:hidden"' : '') + '>' +
-      (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
+      (t.avatar ? '<img src="' + url(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
       '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
   }).join('');
 

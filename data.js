@@ -772,6 +772,23 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
+    // For href/src attributes: HTML-escape AND allow only safe URL schemes, so an
+    // admin-entered (or tampered) "javascript:" / "data:text/html" value can never
+    // become a clickable script or iframe source. Relative URLs are allowed.
+    safeUrlRaw: function (str) {
+      var s = String(str == null ? '' : str).trim();
+      // Browsers ignore tab/newline/control chars inside a scheme ("java	script:").
+      var probe = s.replace(/[ - -]+/g, '');
+      var m = probe.match(/^([a-z][a-z0-9+.\-]*):/i);
+      if (m) {
+        var scheme = m[1].toLowerCase();
+        var ok = scheme === 'http' || scheme === 'https' || scheme === 'mailto' || scheme === 'tel' ||
+          (scheme === 'data' && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(probe));
+        if (!ok) return 'about:blank';
+      }
+      return s;
+    },
+    safeUrl: function (str) { return Util.escape(Util.safeUrlRaw(str)); },
     async sha256(text) {
       const data = new TextEncoder().encode(text);
       const buf = await crypto.subtle.digest('SHA-256', data);
