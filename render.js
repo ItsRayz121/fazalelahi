@@ -688,6 +688,8 @@
   document.getElementById('contactForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var form = e.target, fd = new FormData(form), san = FAZAL.Util.sanitize;
+    // Honeypot: real visitors never see/fill this. Bots get a silent no-op (nothing is stored or sent).
+    if (fd.get('website')) { form.reset(); return; }
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
       type: san(fd.get('type')), message: san(fd.get('message')),
       status: 'New', ts: new Date().toISOString() };

@@ -1277,10 +1277,10 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
     <div class="contact-cards" id="contactCards"></div>
     <form class="cform reveal" id="contactForm">
       <div class="row">
-        <input name="name" placeholder="Your Name" required aria-label="Name">
-        <input name="email" type="email" placeholder="Your Email" required aria-label="Email">
+        <input name="name" placeholder="Your Name" required maxlength="120" autocomplete="name" aria-label="Name">
+        <input name="email" type="email" placeholder="Your Email" required maxlength="254" autocomplete="email" aria-label="Email">
       </div>
-      <input name="company" placeholder="Company / Project Name" aria-label="Company or project">
+      <input name="company" placeholder="Company / Project Name" maxlength="200" autocomplete="organization" aria-label="Company or project">
       <select name="type" aria-label="Inquiry type" required>
         <option value="">Inquiry Type…</option>
         <option>I Want to Learn Crypto</option><option>Join Community</option>
@@ -1288,7 +1288,8 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
         <option>Business Development</option><option>Pakistan Regional Partnership</option>
         <option>Content Collaboration</option><option>Other</option>
       </select>
-      <textarea name="message" placeholder="Your Message" required aria-label="Message"></textarea>
+      <textarea name="message" placeholder="Your Message" required maxlength="5000" aria-label="Message"></textarea>
+      <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>Leave this field empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
       <button type="submit" class="btn btn-gold shimmer">Send Message →</button>
       <p id="formMsg" role="status" aria-live="polite" style="font-size:13px;color:var(--emerald)"></p>
     </form>
@@ -1365,7 +1366,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha384-d+vyQ0dYcymoP8ndq2hW7FGC50nqGdXUEgoOUGxbbkAJwZqL7h+jKN0GGgn9hFDS" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" integrity="sha384-poC0r6usQOX2Ayt/VGA+t81H6V3iN9L+Irz9iO8o+s0X20tLpzc9DOOtnKxhaQSE" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261120d" defer></script>
-<script src="render.js?v=20261120d" defer></script>
+<script src="data.js?v=20261120e" defer></script>
+<script src="render.js?v=20261120e" defer></script>
 </body>
 </html>
