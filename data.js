@@ -426,8 +426,8 @@
       footerTagline: 'Educating. Building. Scaling. From Pakistan to the World.',
       maintenance: false,
       showDisclaimer: true,
-      siteUrl: 'https://fazalelahi.vercel.app/',
-      ogImage: 'https://fazalelahi.vercel.app/fazal.jpg'
+      siteUrl: 'https://fazalelahi.xyz/',
+      ogImage: 'https://fazalelahi.xyz/fazal.jpg'
     },
 
     fazal_customcss: '',
