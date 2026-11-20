@@ -688,8 +688,12 @@
       form.reset();
     }
     function fallbackMail() {
-      msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…';
-      openMail(); form.reset();
+      // Not confirmed delivery: the message was NOT saved, and a mail draft is only
+      // a draft until the visitor presses Send. Keep the form contents in case no
+      // mail app opens.
+      msg.style.color = 'var(--gold, #f5b800)';
+      msg.textContent = "We couldn't save your message online. Opening your email app with a draft — it isn't sent until you press Send there. Your text is kept below.";
+      openMail();
     }
 
     if (Store.cloudEnabled || endpoint) {
