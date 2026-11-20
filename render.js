@@ -61,7 +61,10 @@
   /* ---------- Profile / hero / about ---------- */
   var p = Store.get('fazal_profile');
   var headline = 'I SCALE WEB3 COMMUNITIES.';
-  document.getElementById('heroHeadline').innerHTML = headline.split(' ').map(function (w, i) {
+  // The headline is a constant and is also in the static HTML (so it paints before JS and
+  // causes no layout shift). Only rebuild if it is missing/different, to avoid restarting the animation.
+  var heroH1 = document.getElementById('heroHeadline');
+  if (heroH1.textContent.trim() !== headline) heroH1.innerHTML = headline.split(' ').map(function (w, i) {
     return '<span' + (/WEB3/.test(w) ? ' class="hl"' : '') + ' style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
@@ -875,10 +878,14 @@
   }, { passive: true });
 
   // GSAP scroll polish (progressive enhancement)
-  if (window.gsap && window.ScrollTrigger) {
+  // GSAP is loaded after this file (deferred, ordered) so it never delays first render;
+  // initialise once everything has loaded.
+  function initGsap() {
+    if (!(window.gsap && window.ScrollTrigger)) return;
     gsap.registerPlugin(ScrollTrigger);
     gsap.utils.toArray('.sec-title').forEach(function (t) {
       gsap.from(t, { scrollTrigger: { trigger: t, start: 'top 85%' }, y: 30, opacity: 0, duration: 0.8 });
     });
   }
+  if (document.readyState === 'complete') initGsap(); else window.addEventListener('load', initGsap);
 })();

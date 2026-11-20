@@ -58,14 +58,19 @@
 
 <style>
 /* ============================ TOKENS ============================ */
+/* Metric-matched local fallbacks (size-adjust measured in Chrome vs the web fonts) so text wraps
+   the same before/after the web fonts load -> no font-swap layout shift. */
+@font-face{font-family:'Outfit Fallback';src:local('Arial'),local('Helvetica');size-adjust:96%}
+@font-face{font-family:'Bebas Neue Fallback';src:local('Arial'),local('Helvetica');size-adjust:58%}
+@font-face{font-family:'Space Mono Fallback';src:local('Courier New'),local('Courier');size-adjust:102%}
 :root{
   --void:#07070F; --deep:#0E0E1C; --surface:rgba(255,255,255,.035);
   --gold:#F2A900; --emerald:#00D4A0; --blue:#3B82F6; --red:#FF3B3B;
   --purple:#9B5DE5; --orange:#FF8A3D; --pkgreen:#01A859;
   --white:#FFFFFF; --silver:#B0B0C8; --muted:#5A5A78;
   --border:rgba(242,169,0,.10); --glass:rgba(255,255,255,.03);
-  --disp:'Bebas Neue',sans-serif; --head:'Outfit',sans-serif;
-  --body:'DM Sans',sans-serif; --mono:'Space Mono',monospace;
+  --disp:'Bebas Neue','Bebas Neue Fallback',sans-serif; --head:'Outfit','Outfit Fallback',sans-serif;
+  --body:'DM Sans',sans-serif; --mono:'Space Mono','Space Mono Fallback',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -568,8 +573,8 @@ footer{background:var(--void);border-top:1px solid var(--border);padding:54px cl
   @keyframes tlpulse{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.9);opacity:0}}
   /* branches swing in from their own side as you scroll */
   .tl-item.reveal{opacity:0}
-  .tl-item.tl-l.reveal{transform:translateX(-52px)}
-  .tl-item.tl-r.reveal{transform:translateX(52px)}
+  .tl-item.tl-l.reveal{transform:translateX(-24px)}
+  .tl-item.tl-r.reveal{transform:translateX(24px)}
   .tl-item.reveal.in{opacity:1;transform:none}
 }
 @media (max-width:680px){
@@ -942,6 +947,14 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 .tl-card .tl-arrow,.tl-card .tl-dots{z-index:3}
 /* A11y: AA contrast (>=4.5:1) for small footer / disclaimer text on the dark background */
 .disclaimer,.foot-bottom p,#disclaimerLine{color:#9a9ab4;opacity:1}
+/* Tablet fit: grids may shrink below content width; stagger columns instead of overflowing */
+.contact-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.social-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.social-card>*,.contact-icon>*{min-width:0}
+.social-card .nm,.social-card .hd,.contact-icon .ci-tx{overflow-wrap:anywhere}
+@media (max-width:1000px){.contact-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.fs2{right:0}}
+@media (max-width:800px){.social-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.contact-cards{grid-template-columns:minmax(0,1fr)}.social-grid{grid-template-columns:minmax(0,1fr)}}
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1026,8 +1039,8 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
         <span class="pill">🎬 Content Creator</span>
         <span class="pill">🚀 Project Growth</span>
       </div>
-      <h1 id="heroHeadline"></h1>
-      <p class="hero-sub" id="heroSub"></p>
+      <h1 id="heroHeadline"><span style="animation-delay:0.3s">I</span> <span style="animation-delay:0.38s">SCALE</span> <span class="hl" style="animation-delay:0.46s">WEB3</span> <span style="animation-delay:0.54s">COMMUNITIES.</span></h1>
+      <p class="hero-sub" id="heroSub">Crypto Educator. Content Creator. Community Builder. Ambassador. BD. KOL Manager. Pakistan Regional Lead.</p>
       <p class="hero-body" id="heroBody"></p>
       <div class="hero-cta">
         <a class="btn btn-gold shimmer" href="https://www.youtube.com/@LearningHubByFazal" target="_blank" rel="noopener noreferrer">📺 Start Learning</a>
@@ -1370,10 +1383,10 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <!-- GSAP -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
+<script src="data.js?v=20261120l" defer></script>
+<script src="render.js?v=20261120l" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha384-d+vyQ0dYcymoP8ndq2hW7FGC50nqGdXUEgoOUGxbbkAJwZqL7h+jKN0GGgn9hFDS" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" integrity="sha384-poC0r6usQOX2Ayt/VGA+t81H6V3iN9L+Irz9iO8o+s0X20tLpzc9DOOtnKxhaQSE" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261120g" defer></script>
-<script src="render.js?v=20261120g" defer></script>
 </body>
 </html>
