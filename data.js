@@ -663,12 +663,17 @@
     var local = Store.get('fazal_inquiries'); local.unshift(entry);
     localStorage.setItem('fazal_inquiries', JSON.stringify(local));
     if (cloudEnabled) {
+      // supabase-js reports failures via { error } instead of throwing, so check it.
+      // Reject on failure so the caller can fall back to email instead of
+      // telling the visitor their message was saved when it was not.
+      var res;
       try {
-        await sb.from('inquiries').insert({
+        res = await sb.from('inquiries').insert({
           name: entry.name, email: entry.email, company: entry.company,
           type: entry.type, message: entry.message, status: 'New'
         });
-      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); }
+      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); throw e; }
+      if (res && res.error) { console.warn('Inquiry cloud insert failed', res.error.message || res.error); throw res.error; }
     }
   };
   Store.getInquiries = async function () {
