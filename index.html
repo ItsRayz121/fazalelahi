@@ -964,6 +964,10 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 /* Stat counters: reserve the FINAL number's width/height while it counts up from 0, so tiles never reflow */
 .stat .num{display:inline-block;white-space:nowrap;font-variant-numeric:tabular-nums}
 .stat .num::after{content:attr(data-count);display:block;height:0;overflow:hidden;visibility:hidden}
+/* Hero: reserve space for content that JS/web fonts add after first paint (it caused ~120px of late layout shift) */
+.mini-social{min-height:44px}
+@media (max-width:470px){.mini-social{min-height:98px}}          /* 9 icons wrap onto two rows on phones */
+@media (max-width:560px){.hero-sub{min-height:3lh}}              /* subtitle re-wraps to 3 lines once Outfit loads */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1394,7 +1398,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261121n" defer></script>
-<script src="render.js?v=20261121n" defer></script>
+<script src="data.js?v=20261121o" defer></script>
+<script src="render.js?v=20261121o" defer></script>
 </body>
 </html>
