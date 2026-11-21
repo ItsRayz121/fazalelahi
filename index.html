@@ -31,7 +31,8 @@
 <link rel="preconnect" href="https://drive.google.com">
 <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap">
+<!-- Web fonts: preloaded above (early fetch) but applied by render.js after first paint so the stylesheet never blocks rendering; metric-matched fallbacks avoid layout shift. -->
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap"></noscript>
 
 <!-- JSON-LD Person Schema -->
 <script type="application/ld+json">
@@ -958,6 +959,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 .btn{transition:transform .15s ease,box-shadow .25s ease,opacity .2s ease}
 .btn:active:not(:disabled){transform:translateY(1px) scale(.985)}
 .btn:disabled{opacity:.6;cursor:progress}
+.hero-pic{display:contents}
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1056,7 +1058,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
     <div class="hero-photo-wrap">
       <div class="ring ring1" aria-hidden="true"></div>
       <div class="ring ring2" aria-hidden="true"></div>
-      <img class="hero-photo" id="heroPhoto" src="fazal.jpg" fetchpriority="high" decoding="async" alt="Portrait of Fazal Elahi, crypto educator">
+      <picture class="hero-pic"><source type="image/webp" srcset="assets/hero/fazal-480.webp 480w, assets/hero/fazal-800.webp 800w" sizes="(max-width:700px) 80vw, 400px"><img class="hero-photo" id="heroPhoto" src="fazal.jpg" fetchpriority="high" decoding="async" width="1025" height="1536" alt="Portrait of Fazal Elahi, crypto educator"></picture>
       <div class="float-stat fs1"><div class="v">460K+</div><div class="l">Users Educated &amp; Scaled</div></div>
       <div class="float-stat fs2"><div class="v">2.5 Yrs</div><div class="l">Daily Web3 Immersion</div></div>
       <div class="float-stat fs3"><div class="v">20K+</div><div class="l">Personal Followers</div></div>
@@ -1388,7 +1390,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261120q" defer></script>
-<script src="render.js?v=20261120q" defer></script>
+<script src="data.js?v=20261121d" defer></script>
+<script src="render.js?v=20261121d" defer></script>
 </body>
 </html>

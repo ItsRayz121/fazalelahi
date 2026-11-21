@@ -626,6 +626,29 @@
   // local defaults (data.js) instantly; the cloud read is a best-effort cache
   // refresh, capped by a short timeout so a slow/asleep Supabase project can never
   // hang the page (previously caused 20–30s blank loads).
+  // Non-blocking variant for the PUBLIC site: render immediately from the local cache/defaults, then
+  // refresh the cache in the background. Resolves true only when the cloud content really differs
+  // (order-insensitive), so the caller can refresh the view once instead of reloading needlessly.
+  function canon(v) {
+    if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + canon(v[k]); }).join(',') + '}';
+    return JSON.stringify(v);
+  }
+  Store.refreshFromCloud = async function (timeoutMs) {
+    if (!cloudEnabled) return false;
+    try {
+      var timeout = new Promise(function (resolve) { setTimeout(function () { resolve({ __timedOut: true }); }, timeoutMs || 8000); });
+      var res = await Promise.race([sb.from('site_content').select('key,value'), timeout]);
+      if (res.__timedOut || res.error) return false;
+      var changed = false;
+      (res.data || []).forEach(function (row) {
+        var cur = null; try { cur = JSON.parse(localStorage.getItem(row.key)); } catch (e) {}
+        if (cur === null || canon(cur) !== canon(row.value)) { changed = true; localStorage.setItem(row.key, JSON.stringify(row.value)); }
+      });
+      return changed;
+    } catch (e) { return false; }
+  };
+
   Store.bootstrap = async function () {
     Store.init();
     if (!cloudEnabled) return;

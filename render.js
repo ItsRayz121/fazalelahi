@@ -7,9 +7,22 @@
   var reducedMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion:reduce)') : { matches: false };
   function prefersReducedMotion() { return !!reducedMQ.matches; }
   var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, url = Util.safeUrl, clean = Util.clean;
+  // Yield to the main thread between big sections so the browser can paint/handle input (keeps long tasks short).
+  function tick() { return (window.scheduler && scheduler.yield) ? scheduler.yield() : new Promise(function (res) { setTimeout(res, 0); }); }
+  // The default profile photo ships as right-sized WebP copies (480w/800w, 36-65KB vs the 251KB original).
+  // Any admin-provided photo is used as-is.
+  function slimPhoto(src, w) { return /^(\.\/)?fazal\.jpg$/.test(String(src || '')) ? 'assets/hero/fazal-' + w + '.webp' : src; }
   // True when a URL is real (not empty and not an unfilled [TOKEN]).
   function liveUrl(u) { return !!clean(u); }
-  await Store.bootstrap(); // load shared cloud content (or seed local defaults)
+  // Paint from the local cache/defaults immediately. (Awaiting the cloud here used to hold the whole page
+  // for up to 2s whenever Supabase was slow or unreachable.) The cloud refresh runs after first render.
+  Store.init();
+  // Apply the web-font stylesheet (already preloaded in <head>) without blocking first paint.
+  (function () {
+    var pre = document.querySelector('link[rel="preload"][as="style"][href*="fonts.googleapis.com"]');
+    if (!pre) return;
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = pre.href; document.head.appendChild(l);
+  })();
 
   // Per-tag show/hide (admin → "Show / Hide"). `shown(cat, arr)` drops any tag
   // whose exact text is listed as hidden under that category in fazal_hidden.
@@ -72,8 +85,13 @@
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
   var heroImg = document.getElementById('heroPhoto'), heroSrc = Util.safeUrlRaw(Util.imageUrl(p.photo));
-  if (heroImg.getAttribute('src') !== heroSrc) heroImg.src = heroSrc;   // static HTML already requested the default; don't restart it
-  document.getElementById('aboutPhoto').src = Util.safeUrlRaw(Util.imageUrl(p.photo));
+  if (heroImg.getAttribute('src') !== heroSrc) {
+    // Admin changed the photo: drop the bundled WebP <source>s so the new image is actually used.
+    var heroPic = heroImg.parentNode;
+    if (heroPic && heroPic.tagName === 'PICTURE') Array.prototype.slice.call(heroPic.querySelectorAll('source')).forEach(function (n) { n.remove(); });
+    heroImg.src = heroSrc;
+  }   // static HTML already requested the default; don't restart it
+  document.getElementById('aboutPhoto').src = Util.safeUrlRaw(slimPhoto(Util.imageUrl(p.photo), 800));
   document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
   document.getElementById('bio1').textContent = p.bio1;
   document.getElementById('bio2').textContent = p.bio2;
@@ -145,6 +163,7 @@
       '" data-count="' + esc(s.value) + '">0</div><div class="lbl">' + esc(s.label) + '</div></div>';
   }).join('');
 
+  await tick();
   /* ---------- Content / YouTube ---------- */
   var content = Store.get('fazal_content');
   document.getElementById('contentSub').textContent = content.frequency;
@@ -203,6 +222,7 @@
       }).join('');
   }
 
+  await tick();
   /* ---------- Experience ---------- */
   document.getElementById('expList').innerHTML = Store.get('fazal_experience').filter(function (e) { return e.visible !== false; }).map(function (e) {
     return '<div class="card exp-card reveal ' + (e.accent === 'emerald' ? 'em' : '') + '">' +
@@ -237,6 +257,7 @@
   document.getElementById('kolMarkets').innerHTML = kol.markets.filter(function (m) { return m.visible !== false; }).map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
+  await tick();
   /* ---------- The Network Tree (constellation) ----------
      A central "Fazal" node with linking lines out to a featured ring of faces,
      plus a full wall of every connection below. Click any face → popup with the
@@ -272,8 +293,8 @@
       return '<line x1="50" y1="50" x2="' + pt.x.toFixed(1) + '" y2="' + pt.y.toFixed(1) + '"/>';
     }).join('');
     var coreName = prof.name || 'Fazal Elahi';
-    var core = '<div class="nt-core"><img src="' + url(Util.imageUrl(prof.photo || fullOf(people[0]))) +
-      '" alt="' + esc(coreName) + '"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
+    var core = '<div class="nt-core"><img src="' + url(slimPhoto(Util.imageUrl(prof.photo || fullOf(people[0])), 480)) +
+      '" alt="' + esc(coreName) + '" loading="lazy" decoding="async"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
     var nodes = featured.map(function (x, i) {
       var pt = positions[i], gi = people.indexOf(x);
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
@@ -319,6 +340,7 @@
     });
   })();
 
+  await tick();
   /* ---------- Work With Me (services) ---------- */
   var SVC_ICON = {
     kol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -422,6 +444,7 @@
     showFacade(0);
   })();
 
+  await tick();
   /* ---------- Events & Gallery (timeline + lightbox) ---------- */
   (function () {
     var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
@@ -655,6 +678,7 @@
     });
   })();
 
+  await tick();
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
     var affLogo = a.logo
@@ -684,6 +708,7 @@
       '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
   }).join('');
 
+  await tick();
   /* ---------- Contact form → inquiries ----------
      Delivery order:
        1) Save the message straight into the admin "Inquiries" panel (Supabase).
@@ -902,4 +927,12 @@
   // Section titles use the shared IntersectionObserver .reveal (same fade + rise the old GSAP/ScrollTrigger
   // block produced) - ScrollTrigger kept a 60fps rAF loop alive for 13 trivial fades.
 
+
+  // Background refresh of shared content. If the cloud content really changed and the visitor has not
+  // started reading yet, refresh once so edits made in the admin go live without waiting for a 2nd visit.
+  Store.refreshFromCloud().then(function (changed) {
+    if (!changed || window.scrollY > 80) return;
+    try { if (sessionStorage.getItem('fazal_cloud_reloaded')) return; sessionStorage.setItem('fazal_cloud_reloaded', '1'); } catch (e) { return; }
+    location.reload();
+  });
 })();
