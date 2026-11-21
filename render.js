@@ -71,7 +71,8 @@
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
-  document.getElementById('heroPhoto').src = Util.safeUrlRaw(Util.imageUrl(p.photo));
+  var heroImg = document.getElementById('heroPhoto'), heroSrc = Util.safeUrlRaw(Util.imageUrl(p.photo));
+  if (heroImg.getAttribute('src') !== heroSrc) heroImg.src = heroSrc;   // static HTML already requested the default; don't restart it
   document.getElementById('aboutPhoto').src = Util.safeUrlRaw(Util.imageUrl(p.photo));
   document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
   document.getElementById('bio1').textContent = p.bio1;
