@@ -543,7 +543,6 @@
     }).join('');
 
     // Auto-rotating cover slideshows (staggered, pause on hover, reduced-motion aware).
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
     Array.prototype.forEach.call(grid.querySelectorAll('.tl-item'), function (item, gi) {
       var cover = item.querySelector('.tl-cover'); if (!cover) return;
       var slides = cover.querySelectorAll('.tl-slide');
