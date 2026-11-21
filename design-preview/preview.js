@@ -97,7 +97,11 @@
   addEventListener('keydown', function (e) {
     if (!dr.classList.contains('open')) return;
     if (e.key === 'Escape') drawer(false);
-    if (e.key === 'Tab') { var f = dr.querySelectorAll('a,button'), first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+    if (e.key === 'Tab') {
+      // Cycle focus manually: Safari/WebKit does not Tab to links by default, so relying on native order would leak focus out of the drawer.
+      var f = Array.prototype.slice.call(dr.querySelectorAll('a,button')), i = f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
   });
 
   /* ---- hero spotlight (fine pointer only; transform-only; throttled to rAF) ---- */

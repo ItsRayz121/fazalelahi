@@ -877,7 +877,11 @@
       requestAnimationFrame(step); counted.unobserve(el);
     });
   }, { threshold: 0.5 });
-  document.querySelectorAll('[data-count]').forEach(function (el) { counted.observe(el); });
+  document.querySelectorAll('[data-count]').forEach(function (el) {
+    // Reduced motion: show the real number straight away (the "0" placeholder is only the start frame of the count-up).
+    if (prefersReducedMotion()) { el.textContent = el.dataset.count; return; }
+    counted.observe(el);
+  });
 
   // 3D tilt
   document.querySelectorAll('.tilt').forEach(function (card) {
