@@ -192,7 +192,7 @@
   if (liveVideos.length) {
     videosWrap.innerHTML = liveVideos.map(function (em, i) {
       var inner = em.type === 'iframe'
-        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
         : '<video src="' + url(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
       return '<div class="video-card reveal"><div class="frame">' + inner +
         '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
@@ -434,7 +434,7 @@
     }
     function playing(v) {
       if (v.embed.type === 'iframe')
-        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
       return '<video src="' + url(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
     }
     function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
@@ -631,7 +631,7 @@
       var html;
       var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
       if (item.kind === 'image') html = '<img src="' + url(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
       else html = '<video' + pc + ' src="' + url(item.embed.src) + '" controls autoplay playsinline></video>';
       lbStage.innerHTML = html;
       lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
@@ -755,24 +755,30 @@
       msg.textContent = "✅ Message sent! It's saved to Fazal's inbox — he'll get back to you soon.";
       form.reset();
     }
+    var timedOut = false;
     function fallbackMail() {
       // Not confirmed delivery: the message was NOT saved, and a mail draft is only
       // a draft until the visitor presses Send. Keep the form contents in case no
       // mail app opens.
       msg.style.color = 'var(--gold, #f5b800)';
-      msg.textContent = "We couldn't save your message online. Opening your email app with a draft — it isn't sent until you press Send there. Your text is kept below.";
+      msg.textContent = (timedOut ? "We couldn't confirm that your message was saved online. " : "We couldn't save your message online. ") +
+        "Opening your email app with a draft — it isn't sent until you press Send there. Your text is kept below.";
       openMail();
     }
 
     if (Store.cloudEnabled || endpoint) {
       msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…'; setBusy(true);
       var jobs = [];
-      if (Store.cloudEnabled) jobs.push(Promise.resolve(Store.submitInquiry(entry)));
+      // A request that neither succeeds nor fails (stalled connection) must not leave the form stuck on 'Sending…'.
+      function withTimeout(p, ms) {
+        return Promise.race([p, new Promise(function (_, reject) { setTimeout(function () { timedOut = true; reject(new Error('timeout')); }, ms); })]);
+      }
+      if (Store.cloudEnabled) jobs.push(withTimeout(Promise.resolve(Store.submitInquiry(entry)), 10000));
       if (endpoint) {
         var body = new FormData();
         Object.keys(entry).forEach(function (k) { if (k !== 'status' && k !== 'ts') body.append(k, entry[k]); });
-        jobs.push(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
-          .then(function (r) { if (!r.ok) throw new Error('bad status'); }));
+        jobs.push(withTimeout(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
+          .then(function (r) { if (!r.ok) throw new Error('bad status'); }), 10000));
       }
       Promise.allSettled(jobs).then(function (res) {
         setBusy(false);
