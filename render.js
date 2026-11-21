@@ -700,6 +700,14 @@
       type: san(fd.get('type')), message: san(fd.get('message')),
       status: 'New', ts: new Date().toISOString() };
     var msg = document.getElementById('formMsg');
+    var submitBtn = form.querySelector('button[type=submit]');
+    if (submitBtn && submitBtn.disabled) return;           // already sending: ignore double submit
+    var idleLabel = submitBtn ? submitBtn.textContent : '';
+    function setBusy(b) {
+      if (!submitBtn) return;
+      submitBtn.disabled = b; submitBtn.setAttribute('aria-busy', b ? 'true' : 'false');
+      submitBtn.textContent = b ? 'Sending…' : idleLabel;
+    }
     var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
 
     function openMail() {
@@ -723,7 +731,7 @@
     }
 
     if (Store.cloudEnabled || endpoint) {
-      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
+      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…'; setBusy(true);
       var jobs = [];
       if (Store.cloudEnabled) jobs.push(Promise.resolve(Store.submitInquiry(entry)));
       if (endpoint) {
@@ -733,6 +741,7 @@
           .then(function (r) { if (!r.ok) throw new Error('bad status'); }));
       }
       Promise.allSettled(jobs).then(function (res) {
+        setBusy(false);
         if (res.some(function (r) { return r.status === 'fulfilled'; })) saved();
         else fallbackMail();
       });

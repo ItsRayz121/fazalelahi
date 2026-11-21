@@ -954,6 +954,10 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 @media (max-width:1000px){.contact-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.fs2{right:0}}
 @media (max-width:800px){.social-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.contact-cards{grid-template-columns:minmax(0,1fr)}.social-grid{grid-template-columns:minmax(0,1fr)}}
+/* Tactile press feedback (transform only; disabled automatically by the reduced-motion rule) */
+.btn{transition:transform .15s ease,box-shadow .25s ease,opacity .2s ease}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.985)}
+.btn:disabled{opacity:.6;cursor:progress}
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1384,7 +1388,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261120o" defer></script>
-<script src="render.js?v=20261120o" defer></script>
+<script src="data.js?v=20261120p" defer></script>
+<script src="render.js?v=20261120p" defer></script>
 </body>
 </html>
