@@ -875,7 +875,22 @@
         if (id) return { type: 'iframe', src: 'https://drive.google.com/file/d/' + id + '/preview' };
       }
       if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(s)) return { type: 'video', src: s };
-      return { type: 'iframe', src: s };
+      // Only embed players from known video hosts; any other URL is not framed (it could be an
+      // arbitrary page, ad, or phishing site chosen by anyone able to edit content).
+      return Util.embedHostOk(s) ? { type: 'iframe', src: s } : { type: 'none', src: '' };
+    },
+    EMBED_HOSTS: ['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'drive.google.com', 'player.vimeo.com', 'www.facebook.com'],
+    embedHostOk: function (u) {
+      try { var x = new URL(String(u), 'https://invalid.example/'); return x.protocol === 'https:' && Util.EMBED_HOSTS.indexOf(x.hostname.toLowerCase()) > -1; }
+      catch (e) { return false; }
+    },
+    // CSS colour from managed data -> safe for an inline style attribute (hex / rgb() / hsl() / var(--x) /
+    // named / simple gradient). Anything else collapses to '' so it cannot inject extra declarations.
+    safeColor: function (v) {
+      var s = String(v == null ? '' : v).trim();
+      var ok = /^#[0-9a-f]{3,8}$/i.test(s) || /^(rgb|hsl)a?\([0-9.,%\s\/]+\)$/i.test(s) || /^var\(--[a-z0-9-]+\)$/i.test(s) ||
+               /^[a-z]{3,20}$/i.test(s) || /^(linear|radial)-gradient\([#a-z0-9.,%()\s\-]+\)$/i.test(s);
+      return ok ? Util.escape(s) : '';
     },
     // Best-effort cover thumbnail for a video embed (YouTube / Google Drive).
     videoPoster: function (embed) {

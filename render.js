@@ -130,7 +130,7 @@
   var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
   function socialIconHTML(s) {
     return '<a href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
-      '" title="' + esc(s.platform) + '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
+      '" title="' + esc(s.platform) + '" style="color:' + Util.safeColor(s.color) + '">' + iconFor(s.platform) + '</a>';
   }
   document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
   document.getElementById('footSocial').innerHTML = social.map(socialIconHTML).join('');
@@ -183,7 +183,7 @@
   if (liveVideos.length) {
     videosWrap.innerHTML = liveVideos.map(function (em, i) {
       var inner = em.type === 'iframe'
-        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
+        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
         : '<video src="' + url(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
       return '<div class="video-card reveal"><div class="frame">' + inner +
         '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
@@ -425,7 +425,7 @@
     }
     function playing(v) {
       if (v.embed.type === 'iframe')
-        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
       return '<video src="' + url(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
     }
     function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
@@ -623,7 +623,7 @@
       var html;
       var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
       if (item.kind === 'image') html = '<img src="' + url(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
       else html = '<video' + pc + ' src="' + url(item.embed.src) + '" controls autoplay playsinline></video>';
       lbStage.innerHTML = html;
       lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
@@ -682,8 +682,8 @@
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
     var affLogo = a.logo
-      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + url(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
-      : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
+      ? '<div class="aff-logo" style="background:' + Util.safeColor(a.color) + ';overflow:hidden;padding:0"><img src="' + url(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
+      : '<div class="aff-logo" style="background:' + Util.safeColor(a.color) + '">' + esc(a.name[0]) + '</div>';
     var affCta = liveUrl(a.url)
       ? '<a class="btn btn-gold shimmer" href="' + url(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
       : '<span class="btn btn-glass" style="opacity:.55;cursor:default" aria-disabled="true">Link Coming Soon</span>';
@@ -696,7 +696,7 @@
   document.getElementById('socialGrid').innerHTML = social.map(function (s) {
     var scount = clean(s.count);
     return '<a class="card social-card reveal" href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
-      '<span style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</span>' +
+      '<span style="color:' + Util.safeColor(s.color) + '">' + iconFor(s.platform) + '</span>' +
       '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (scount ? ' · ' + esc(scount) : '') + '</span></span></a>';
   }).join('');
 
