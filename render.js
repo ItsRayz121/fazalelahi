@@ -17,6 +17,15 @@
   // Paint from the local cache/defaults immediately. (Awaiting the cloud here used to hold the whole page
   // for up to 2s whenever Supabase was slow or unreachable.) The cloud refresh runs after first render.
   Store.init();
+  // Stale-while-revalidate: returning visitors paint instantly from the local cache and refresh it in the background
+  // (they see admin edits on their next visit). A browser's FIRST visit has nothing cached, so wait briefly (once,
+  // <=800ms) for the shared content so new visitors see the admin's edits right away. Never blocks longer than that.
+  try {
+    if (Store.cloudEnabled && !localStorage.getItem('fazal_cloud_tried')) {
+      localStorage.setItem('fazal_cloud_tried', String(Date.now()));
+      await Store.refreshFromCloud(800);
+    }
+  } catch (e) { /* storage blocked: just render from defaults */ }
   // Apply the web-font stylesheet (already preloaded in <head>) without blocking first paint.
   (function () {
     var pre = document.querySelector('link[rel="preload"][as="style"][href*="fonts.googleapis.com"]');
@@ -931,11 +940,6 @@
   // block produced) - ScrollTrigger kept a 60fps rAF loop alive for 13 trivial fades.
 
 
-  // Background refresh of shared content. If the cloud content really changed and the visitor has not
-  // started reading yet, refresh once so edits made in the admin go live without waiting for a 2nd visit.
-  Store.refreshFromCloud().then(function (changed) {
-    if (!changed || window.scrollY > 80) return;
-    try { if (sessionStorage.getItem('fazal_cloud_reloaded')) return; sessionStorage.setItem('fazal_cloud_reloaded', '1'); } catch (e) { return; }
-    location.reload();
-  });
+  // Background refresh of the shared-content cache for the NEXT visit (no reload, no layout change under the reader).
+  Store.refreshFromCloud();
 })();
