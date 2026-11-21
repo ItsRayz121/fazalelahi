@@ -4,6 +4,8 @@
    ===================================================================== */
 (async function () {
   'use strict';
+  var reducedMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion:reduce)') : { matches: false };
+  function prefersReducedMotion() { return !!reducedMQ.matches; }
   var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, url = Util.safeUrl, clean = Util.clean;
   // True when a URL is real (not empty and not an unfilled [TOKEN]).
   function liveUrl(u) { return !!clean(u); }
@@ -530,7 +532,7 @@
         for (var d = 0; d < dots.length; d++) dots[d].classList.toggle('active', d === idx);
       }
       function stop() { if (timer) { clearInterval(timer); timer = null; } }
-      function start() { if (reduceMotion) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
+      function start() { if (prefersReducedMotion()) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
       var prev = cover.querySelector('.tl-prev'), next = cover.querySelector('.tl-next');
       if (prev) prev.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx - 1); start(); });
       if (next) next.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx + 1); start(); });
@@ -778,7 +780,8 @@
 
   // Custom cursor
   var cursor = document.getElementById('cursor');
-  if (window.matchMedia('(min-width:900px)').matches) {
+  // The current theme hides #cursor (display:none): don't attach global pointer listeners for it.
+  if (cursor && window.getComputedStyle(cursor).display !== 'none' && window.matchMedia('(min-width:900px)').matches) {
     document.addEventListener('mousemove', function (e) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
     document.addEventListener('mouseover', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.add('big'); });
     document.addEventListener('mouseout', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.remove('big'); });
@@ -820,6 +823,7 @@
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
   }, { threshold: 0.12 });
+  document.querySelectorAll('.sec-title').forEach(function (el) { el.classList.add('reveal'); });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
 
   // Count-up
@@ -830,6 +834,7 @@
       var num = parseFloat(raw.replace(/[^0-9.]/g, '')); var suffix = raw.replace(/[0-9.,]/g, '');
       var hasComma = raw.indexOf(',') > -1;
       if (isNaN(num)) { el.textContent = raw; counted.unobserve(el); return; }
+      if (prefersReducedMotion()) { el.textContent = raw; counted.unobserve(el); return; }
       var start = 0, dur = 1600, t0 = null;
       function step(ts) { if (!t0) t0 = ts; var prog = Math.min((ts - t0) / dur, 1);
         var eased = 1 - Math.pow(1 - prog, 3); var val = Math.floor(eased * num);
@@ -843,6 +848,7 @@
   // 3D tilt
   document.querySelectorAll('.tilt').forEach(function (card) {
     card.addEventListener('mousemove', function (e) {
+      if (prefersReducedMotion()) return;
       var r = card.getBoundingClientRect();
       var rx = ((e.clientY - r.top) / r.height - 0.5) * -8;
       var ry = ((e.clientX - r.left) / r.width - 0.5) * 8;
@@ -867,25 +873,23 @@
       ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 6.283);
       ctx.fillStyle = 'rgba(242,169,0,0.5)'; ctx.fill();
     });
-    requestAnimationFrame(drawParticles);
+    if (!prefersReducedMotion() && !document.hidden) particleRAF = requestAnimationFrame(drawParticles); else particleRAF = 0;
   }
-  if (!window.matchMedia('(prefers-reduced-motion:reduce)').matches) drawParticles();
+  var particleRAF = 0;
+  // The current theme hides the canvas (display:none => 0x0): a loop would only burn CPU/battery.
+  function startParticles() { if (!particleRAF && !prefersReducedMotion() && canvas.offsetWidth > 0) particleRAF = requestAnimationFrame(drawParticles); }
+  startParticles();
+  // follow live OS setting changes / tab visibility; never run two loops
+  if (reducedMQ.addEventListener) reducedMQ.addEventListener('change', function () { if (!prefersReducedMotion()) startParticles(); else ctx.clearRect(0, 0, W, H); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) startParticles(); });
 
   // Parallax hero photo (subtle)
   window.addEventListener('scroll', function () {
     var hp = document.querySelector('.hero-photo-wrap');
-    if (hp && window.scrollY < window.innerHeight) hp.style.transform = 'translateY(' + window.scrollY * 0.12 + 'px)';
+    if (hp && !prefersReducedMotion() && window.scrollY < window.innerHeight) hp.style.transform = 'translateY(' + window.scrollY * 0.12 + 'px)';
   }, { passive: true });
 
-  // GSAP scroll polish (progressive enhancement)
-  // GSAP is loaded after this file (deferred, ordered) so it never delays first render;
-  // initialise once everything has loaded.
-  function initGsap() {
-    if (!(window.gsap && window.ScrollTrigger)) return;
-    gsap.registerPlugin(ScrollTrigger);
-    gsap.utils.toArray('.sec-title').forEach(function (t) {
-      gsap.from(t, { scrollTrigger: { trigger: t, start: 'top 85%' }, y: 30, opacity: 0, duration: 0.8 });
-    });
-  }
-  if (document.readyState === 'complete') initGsap(); else window.addEventListener('load', initGsap);
+  // Section titles use the shared IntersectionObserver .reveal (same fade + rise the old GSAP/ScrollTrigger
+  // block produced) - ScrollTrigger kept a 60fps rAF loop alive for 13 trivial fades.
+
 })();
