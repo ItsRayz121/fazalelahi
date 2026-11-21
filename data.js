@@ -725,6 +725,20 @@
     var res = await sb.auth.signInWithPassword({ email: email, password: password });
     return { ok: !res.error, msg: res.error ? res.error.message : 'ok' };
   };
+  // Ask the DATABASE whether the signed-in user is an administrator (public.is_admin(), see
+  // supabase/hardening.proposed.sql). true = admin, false = not an admin / not signed in,
+  // null = the check is unavailable (function not deployed yet or network error).
+  Store.isAdmin = async function () {
+    if (!cloudEnabled) return false;
+    try {
+      var res = await sb.rpc('is_admin');
+      if (res.error) {
+        var missing = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|does not exist/i.test(res.error.message || '');
+        return missing ? null : false;
+      }
+      return res.data === true;
+    } catch (e) { return null; }
+  };
   Store.signOut = async function () { if (cloudEnabled) { try { await sb.auth.signOut(); } catch (e) {} } };
   Store.updatePassword = async function (pw) {
     if (!cloudEnabled) return { ok: false, msg: 'Cloud disabled' };

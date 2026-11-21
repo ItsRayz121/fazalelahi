@@ -165,7 +165,7 @@ textarea{min-height:90px;resize:vertical}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous"></script>
-<script src="data.js?v=20261121a"></script>
+<script src="data.js?v=20261121d"></script>
 <script>
 (function () {
   'use strict';
@@ -182,6 +182,21 @@ textarea{min-height:90px;resize:vertical}
   if (CLOUD) {
     document.getElementById('email').style.display = '';
     document.getElementById('loginHint').innerHTML = '🔐 Cloud mode — sign in with your Supabase admin email &amp; password.';
+  }
+
+  // Server-verified authorization: the UI is only a convenience, the database policies are the boundary.
+  // Returns true if the app may be shown. null (check unavailable, e.g. migration not applied yet) is allowed
+  // with a warning so deploying this page before the SQL cannot lock the admin out.
+  async function verifyAdmin(errEl) {
+    if (!CLOUD) return true;
+    var ok = await Store.isAdmin();
+    if (ok === null) { console.warn('is_admin() unavailable - falling back to session-only check. Apply supabase/hardening.proposed.sql.'); return true; }
+    if (ok === false) {
+      await Store.signOut(); sessionStorage.removeItem(SESSION_KEY);
+      if (errEl) errEl.textContent = '❌ This account is not an administrator.';
+      return false;
+    }
+    return true;
   }
 
   async function showApp() {
@@ -209,7 +224,10 @@ textarea{min-height:90px;resize:vertical}
       var email = document.getElementById('email').value.trim();
       errEl.textContent = 'Signing in…';
       var res = await Store.signIn(email, pw);
-      if (res.ok) { sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); await showApp(); }
+      if (res.ok) {
+        if (!(await verifyAdmin(errEl))) { logAttempt(false); document.getElementById('pw').value = ''; return; }
+        sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); await showApp();
+      }
       else { logAttempt(false); errEl.textContent = '❌ ' + (res.msg || 'Login failed'); document.getElementById('pw').value = ''; }
       return;
     }
@@ -238,7 +256,7 @@ textarea{min-height:90px;resize:vertical}
   (async function restoreSession() {
     if (CLOUD) {
       var session = await Store.cloudSession();
-      if (session) { sessionStorage.setItem(SESSION_KEY, 'true'); await showApp(); }
+      if (session && await verifyAdmin(null)) { sessionStorage.setItem(SESSION_KEY, 'true'); await showApp(); }
     } else if (isAuthed()) { showApp(); }
   })();
 
