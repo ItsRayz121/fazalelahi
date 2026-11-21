@@ -789,6 +789,13 @@
       return s;
     },
     safeUrl: function (str) { return Util.escape(Util.safeUrlRaw(str)); },
+    // One CSV cell, safe against spreadsheet formula injection: visitor-supplied text beginning with
+    // = + - @ (or tab/CR) is executed as a formula by Excel/Sheets, so neutralise it with a leading '.
+    csvCell: function (v) {
+      var s = String(v == null ? '' : v);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return '"' + s.replace(/"/g, '""') + '"';
+    },
     async sha256(text) {
       const data = new TextEncoder().encode(text);
       const buf = await crypto.subtle.digest('SHA-256', data);
