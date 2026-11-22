@@ -94,7 +94,7 @@
   // The headline is a constant and is also in the static HTML (so it paints before JS and
   // causes no layout shift). Only rebuild if it is missing/different, to avoid restarting the animation.
   var heroH1 = document.getElementById('heroHeadline');
-  if (heroH1.textContent.trim() !== headline) heroH1.innerHTML = headline.split(' ').map(function (w, i) {
+  if (heroH1.textContent.replace(/ /g, ' ').trim() !== headline) heroH1.innerHTML = headline.split(' ').map(function (w, i) {
     return '<span' + (/WEB3/.test(w) ? ' class="hl"' : '') + ' style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
