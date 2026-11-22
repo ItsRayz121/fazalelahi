@@ -983,6 +983,19 @@
     }, { passive: true });
   })();
 
+  // Experience rail fallback where CSS scroll-driven animations are unsupported (one passive, rAF-throttled listener)
+  (function () {
+    var list = document.getElementById('expList');
+    if (!list || (window.CSS && CSS.supports && CSS.supports('animation-timeline: view()')) || prefersReducedMotion()) return;
+    var queued = false;
+    function upd() {
+      queued = false; var b = list.getBoundingClientRect(), vh = window.innerHeight;
+      list.style.setProperty('--sig-p', Math.max(0, Math.min(1, (vh * 0.75 - b.top) / b.height)).toFixed(3));
+    }
+    window.addEventListener('scroll', function () { if (!queued) { queued = true; requestAnimationFrame(upd); } }, { passive: true });
+    upd();
+  })();
+
   // Parallax hero photo (subtle)
   window.addEventListener('scroll', function () {
     var hp = document.querySelector('.hero-photo-wrap');

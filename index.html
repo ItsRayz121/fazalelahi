@@ -1000,6 +1000,35 @@ html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;
    (anchor links landed short; content below jumped while scrolling). 2/3 = the shipped portrait's ratio. */
 #aboutPhoto{aspect-ratio:2/3;width:100%}
 /* =================== /SIGNAL 2 =================== */
+/* =================== SIGNAL 3 - EXPERIENCE TIMELINE ===================
+   Rail fill is scroll-linked with CSS (animation-timeline) where supported, a passive rAF fallback otherwise. */
+@property --sig-p{syntax:'<number>';inherits:true;initial-value:0}
+/* vertical timeline at every width (the approved design); the old 2-column grid put the rail beside only one card */
+#expList{position:relative;padding-left:36px;--sig-p:0;grid-template-columns:1fr}
+#expList::before,#expList::after{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:2px;border-radius:2px}
+#expList::before{background:var(--line)}
+#expList::after{background:linear-gradient(var(--gold),#ffcf5c);transform-origin:top;transform:scaleY(var(--sig-p))}
+@supports (animation-timeline:view()){
+  #expList{animation:sigRail linear both;animation-timeline:view();animation-range:entry 5% cover 75%}
+  @keyframes sigRail{from{--sig-p:0}to{--sig-p:1}}
+}
+#expList .exp-card{position:relative}
+#expList .exp-card::before{content:'';position:absolute;left:-35px;top:34px;width:12px;height:12px;border-radius:50%;background:var(--void);border:2px solid var(--gold)}
+#expList .exp-card:has(.status-Active)::before{background:var(--gold);box-shadow:0 0 0 6px rgba(242,169,0,.18)}
+#expList .exp-card.reveal:nth-child(2){transition-delay:.08s}
+#expList .exp-card.reveal:nth-child(3){transition-delay:.16s}
+#expList details.more summary{display:inline-flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:44px;padding:0 4px;font-family:var(--head);font-weight:600;color:var(--gold)}
+#expList details.more summary::-webkit-details-marker{display:none}
+#expList details.more summary::after,#expList details.more[open] summary::after{content:none}   /* the circle in ::before replaces the old +/- glyph */
+#expList details.more summary::before{content:'+';display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);transition:transform .22s var(--sig-ease),background .22s,color .22s}
+#expList details.more[open] summary::before{transform:rotate(45deg);background:var(--gold);color:#16120a}
+#expList details.more summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
+#expList details.more[open] p{animation:sigFade .32s var(--sig-ease)}
+@keyframes sigFade{from{opacity:0;transform:translateY(6px)}}
+@media (max-width:560px){#expList{padding-left:26px}#expList .exp-card::before{left:-25px}#expList::before,#expList::after{left:5px}}
+@media (prefers-reduced-motion:reduce){#expList{--sig-p:1;animation:none}#expList .exp-card::before{transition:none}}
+html[data-motion=reduced] #expList{--sig-p:1;animation:none}
+/* =================== /SIGNAL 3 =================== */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1431,7 +1460,7 @@ html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261122e" defer></script>
-<script src="render.js?v=20261122e" defer></script>
+<script src="data.js?v=20261122g" defer></script>
+<script src="render.js?v=20261122g" defer></script>
 </body>
 </html>
