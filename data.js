@@ -39,9 +39,17 @@
      ===================================================================== */
   var DATA_VERSION = '2026-07-02-hide-kol';
 
+  // Environment isolation: the shared Supabase project is only contacted from the real production hostnames. Localhost,
+  // Vercel preview deployments and any other host run in local-only mode (built-in content, contact form falls back to a mail
+  // draft), so a preview/test can never read or write production data. To exercise a STAGING backend deliberately, set
+  // window.FAZAL_ALLOW_CLOUD = true before this script (and point SUPABASE_URL/KEY at the staging project).
+  var PROD_HOSTS = ['fazalelahi.xyz', 'www.fazalelahi.xyz', 'fazalelahi.vercel.app'];
+  var cloudAllowed = global.FAZAL_ALLOW_CLOUD === true ||
+    (typeof location !== 'undefined' && PROD_HOSTS.indexOf(String(location.hostname).toLowerCase()) > -1);
+
   var sb = null, cloudEnabled = false;
   try {
-    if (global.supabase && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    if (global.supabase && cloudAllowed && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
       sb = global.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: { persistSession: true, autoRefreshToken: true }
       });
