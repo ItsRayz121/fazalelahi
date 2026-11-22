@@ -865,7 +865,7 @@
   function toggleMob(open, restoreFocus) {
     mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', String(open)); mob.setAttribute('aria-hidden', String(!open));
     document.body.style.overflow = open ? 'hidden' : '';
-    if (open) { drawerOpener = document.activeElement; nav.classList.remove('nav-hide'); setTimeout(function () { var c = document.getElementById('mobileClose'); if (c) c.focus({ preventScroll: true }); }, 0); }
+    if (open) { drawerOpener = burger;   /* explicit: Safari does not focus a button on click, so activeElement would be <body> */ nav.classList.remove('nav-hide'); setTimeout(function () { var c = document.getElementById('mobileClose'); if (c) c.focus({ preventScroll: true }); }, 0); }
     // preventScroll: focus() would otherwise cancel an in-flight smooth scroll; skip entirely when a link was chosen
     else { if (restoreFocus !== false && drawerOpener && drawerOpener.focus) drawerOpener.focus({ preventScroll: true }); drawerOpener = null; }
   }
