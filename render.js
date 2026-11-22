@@ -17,6 +17,18 @@
   // Paint from the local cache/defaults immediately. (Awaiting the cloud here used to hold the whole page
   // for up to 2s whenever Supabase was slow or unreachable.) The cloud refresh runs after first render.
   Store.init();
+  // The contact form is visible in the static HTML long before its real handler is attached (rendering yields between
+  // sections). Without a guard, a fast submit would navigate natively and put the visitor's message in the URL.
+  var contactReady = false;
+  (function () {
+    var cf = document.getElementById('contactForm'); if (!cf) return;
+    cf.addEventListener('submit', function (e) {
+      if (contactReady) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      var m = document.getElementById('formMsg');
+      if (m) { m.dataset.state = 'sending'; m.textContent = 'Almost ready \u2014 please press Send again in a moment.'; }
+    });
+  })();
   // Stale-while-revalidate: returning visitors paint instantly from the local cache and refresh it in the background
   // (they see admin edits on their next visit). A browser's FIRST visit has nothing cached, so wait briefly (once,
   // <=800ms) for the shared content so new visitors see the admin's edits right away. Never blocks longer than that.
@@ -736,6 +748,7 @@
        2) If an email-notification service is configured (FAZAL.CONTACT_ENDPOINT,
           e.g. Formspree), ping it too so an email also lands in his inbox.
        3) Only if neither is available, fall back to opening the visitor's mail app. */
+  contactReady = true;   // from here the real handler below owns submission
   document.getElementById('contactForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var form = e.target, fd = new FormData(form), san = FAZAL.Util.sanitize;
@@ -762,7 +775,7 @@
         encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
     }
     function saved() {
-      msg.style.color = 'var(--emerald)';
+      msg.style.color = ''; msg.dataset.state = 'ok';
       msg.textContent = "✅ Message sent! It's saved to Fazal's inbox — he'll get back to you soon.";
       form.reset();
     }
@@ -771,14 +784,14 @@
       // Not confirmed delivery: the message was NOT saved, and a mail draft is only
       // a draft until the visitor presses Send. Keep the form contents in case no
       // mail app opens.
-      msg.style.color = 'var(--gold, #f5b800)';
+      msg.style.color = ''; msg.dataset.state = 'warn';
       msg.textContent = (timedOut ? "We couldn't confirm that your message was saved online. " : "We couldn't save your message online. ") +
-        "Opening your email app with a draft — it isn't sent until you press Send there. Your text is kept below.";
+        "Opening your email app with a draft — it isn't sent until you press Send there. Your message is still in the form, so copy it before you leave this page if you need it.";
       openMail();
     }
 
     if (Store.cloudEnabled || endpoint) {
-      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…'; setBusy(true);
+      msg.style.color = ''; msg.dataset.state = 'sending'; msg.textContent = 'Sending…'; setBusy(true);
       var jobs = [];
       // A request that neither succeeds nor fails (stalled connection) must not leave the form stuck on 'Sending…'.
       function withTimeout(p, ms) {
@@ -1019,4 +1032,5 @@
 
   // Background refresh of the shared-content cache for the NEXT visit (no reload, no layout change under the reader).
   Store.refreshFromCloud();
+  document.documentElement.setAttribute('data-render-complete', 'true');   // all sections painted and handlers attached
 })();

@@ -1042,6 +1042,33 @@ html[data-motion=reduced] #expList{--sig-p:1;animation:none}
 .tl-card:focus-within{border-color:rgba(242,169,0,.55)}
 #evCount{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* =================== /SIGNAL 4 =================== */
+/* =================== SIGNAL 5 - CONTACT & COLLABORATION =================== */
+#contact .cform{max-width:none;padding:clamp(20px,3vw,34px);border:1px solid var(--line);border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015))}
+.cform .fld{display:grid;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cform .fld em{font-style:normal;text-transform:none;letter-spacing:0;opacity:.8}
+.cform input,.cform select,.cform textarea{border-radius:12px;padding:14px 16px;font-size:16px;transition:border-color .22s var(--sig-ease),box-shadow .22s var(--sig-ease)}
+.cform input:focus,.cform select:focus,.cform textarea:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 4px rgba(242,169,0,.16)}
+.cform input:user-invalid,.cform textarea:user-invalid,.cform select:user-invalid{border-color:#ff6b6b}
+.cform button[type=submit]{min-height:52px;justify-content:center}
+#formMsg{margin:0;min-height:0;font-size:14px;line-height:1.5}
+#formMsg:empty{display:none}
+#formMsg[data-state]{padding:12px 14px;border-radius:12px;border:1px solid var(--line);border-left-width:4px;background:rgba(255,255,255,.03)}
+#formMsg[data-state=sending]{border-left-color:var(--silver);color:var(--silver)}
+#formMsg[data-state=ok]{border-left-color:var(--emerald);color:var(--emerald)}
+#formMsg[data-state=warn]{border-left-color:var(--gold);color:var(--gold-2,#ffcf5c)}
+#formMsg[data-state=sending]::before{content:'';display:inline-block;width:12px;height:12px;margin-right:9px;vertical-align:-1px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:sigSpin .8s linear infinite}
+@keyframes sigSpin{to{transform:rotate(360deg)}}
+@media (min-width:1100px){
+  /* options on the left, the form beside them */
+  #contact .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(32px,4vw,64px);align-items:start}
+  #contact .wrap>.eyebrow,#contact .wrap>.sec-title,#contact .wrap>.sec-sub{grid-column:1/-1}
+  #contact .tracks{grid-column:1;grid-template-columns:1fr;margin-bottom:18px}
+  #contact .contact-cards{grid-column:1;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:0}
+  #contact .cform{grid-column:2;grid-row:4/span 2;position:sticky;top:96px}
+}
+@media (prefers-reduced-motion:reduce){#formMsg[data-state=sending]::before{animation:none}}
+html[data-motion=reduced] #formMsg[data-state=sending]::before{animation:none}
+/* =================== /SIGNAL 5 =================== */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1385,23 +1412,23 @@ html[data-motion=reduced] #expList{--sig-p:1;animation:none}
       </div>
     </div>
     <div class="contact-cards" id="contactCards"></div>
-    <form class="cform reveal" id="contactForm">
+    <form class="cform reveal" id="contactForm" method="post" action="mailto:fazalelahi5577@gmail.com" enctype="text/plain">
       <div class="row">
-        <input name="name" placeholder="Your Name" required maxlength="120" autocomplete="name" aria-label="Name">
-        <input name="email" type="email" placeholder="Your Email" required maxlength="254" autocomplete="email" aria-label="Email">
+        <label class="fld"><span>Name</span><input name="name" placeholder="Your name" required maxlength="120" autocomplete="name"></label>
+        <label class="fld"><span>Email</span><input name="email" type="email" placeholder="you@company.com" required maxlength="254" autocomplete="email"></label>
       </div>
-      <input name="company" placeholder="Company / Project Name" maxlength="200" autocomplete="organization" aria-label="Company or project">
-      <select name="type" aria-label="Inquiry type" required>
+      <label class="fld"><span>Company / project <em>(optional)</em></span><input name="company" placeholder="Company or project name" maxlength="200" autocomplete="organization"></label>
+      <label class="fld"><span>What do you need?</span><select name="type" required>
         <option value="">Inquiry Type…</option>
         <option>I Want to Learn Crypto</option><option>Join Community</option>
         <option>KOL Management</option><option>Ambassador Program</option>
         <option>Business Development</option><option>Pakistan Regional Partnership</option>
         <option>Content Collaboration</option><option>Other</option>
-      </select>
-      <textarea name="message" placeholder="Your Message" required maxlength="5000" aria-label="Message"></textarea>
+      </select></label>
+      <label class="fld"><span>Message</span><textarea name="message" placeholder="Tell me about your project or what you want to learn" required maxlength="5000"></textarea></label>
       <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>Leave this field empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
-      <button type="submit" class="btn btn-gold shimmer">Send Message →</button>
-      <p id="formMsg" role="status" aria-live="polite" style="font-size:13px;color:var(--emerald)"></p>
+      <button type="submit" class="btn btn-gold shimmer">Send Message <span aria-hidden="true">→</span></button>
+      <p id="formMsg" role="status" aria-live="polite"></p>
     </form>
   </div>
 </section>
@@ -1473,7 +1500,7 @@ html[data-motion=reduced] #expList{--sig-p:1;animation:none}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261122h" defer></script>
-<script src="render.js?v=20261122h" defer></script>
+<script src="data.js?v=20261122k" defer></script>
+<script src="render.js?v=20261122k" defer></script>
 </body>
 </html>
