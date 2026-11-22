@@ -5,6 +5,27 @@ Status as of 2026-11-21: **nothing here has been applied anywhere.** The Supabas
 from the live site in Chrome: `ERR_NAME_NOT_RESOLVED`). The project existed in June 2026 (anon-key `iat`).
 It is **paused or deleted** — cannot be distinguished without dashboard access.
 
+## What is established, and what is not (as of 2026-11-22)
+**Established by evidence**
+- The host `dnprmvvjxbbxbnixjfye.supabase.co` does not resolve (NXDOMAIN via 8.8.8.8 and 1.1.1.1; a random control ref also gives NXDOMAIN, so
+  that is how Supabase DNS answers for an unavailable project). The production site (https://fazalelahi.xyz) and `origin/main` both use exactly that host.
+- The anon key's `iat` shows the project existed in June 2026, so "never existed / typo" is unlikely.
+- Visitors to production therefore get built-in default content, the contact form cannot store inquiries (it now falls back to a mail draft with honest
+  wording), and admin login cannot work.
+- The schema in `schema.sql` (the file in this repo) grants every signed-in user admin-level access. Replayed in a local Postgres engine, a non-admin reads all
+  inquiries, rewrites content and deletes rows. That is a risk **in that schema**.
+
+**Not established (no access)**
+- Whether the project is *paused*, *deleted* or *replaced*. NXDOMAIN fits both a paused and a deleted project.
+- What policies/grants actually exist on any live database. The schema file may differ from what was ever applied; **no live policy has been inspected**, and
+  the local test results do not prove anything about an unreachable production database.
+- Whether public sign-up is enabled; whether the admin account and its metadata are set up; Auth/JWT settings; Storage bucket state.
+- Behaviour on a real Supabase stack (GoTrue/PostgREST/Storage): only a PGlite policy emulation and mocked HTTP were used. No isolated staging project was
+  available to me (creating one needs your Supabase account), so none was used.
+
+**Owner actions needed** (see section 0 and 1): open the dashboard to see the project state; if usable, point a *staging* project at this branch's preview,
+run `schema.sql` then `hardening.proposed.sql`, mark the admin via `app_metadata`, and re-run the checks in section 3 by hand. Nothing here was applied anywhere.
+
 ## 0. Prerequisite: find out what happened to the project (owner action)
 1. Sign in at supabase.com → check whether the project is *Paused* (free tier pauses after ~1 week inactive) or gone.
 2. Paused → "Restore project". Deleted → create a new project, run `schema.sql`, then this file, create the admin user,
