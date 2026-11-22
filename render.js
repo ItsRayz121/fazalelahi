@@ -807,25 +807,61 @@
     document.querySelectorAll('main section'),
     function (s) { return navTargets[s.id]; }
   );
-  window.addEventListener('scroll', function () {
-    nav.classList.toggle('scrolled', window.scrollY > 40);
-    document.getElementById('progress').style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
+  // No dead links: drop nav entries (desktop + drawer) whose target section is missing or not displayed.
+  (function () {
+    function live(id) { var t = document.getElementById(id); return !!t && t.offsetHeight > 0; }
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-links a, #mobileNav a'), function (a) {
+      var id = (a.getAttribute('href') || '').replace('#', '');
+      if (id && !live(id)) { var li = a.parentNode && a.parentNode.tagName === 'LI' ? a.parentNode : a; li.style.display = 'none'; a.setAttribute('data-nav-hidden', 'true'); }
+    });
+    navLinks = document.querySelectorAll('.nav-links a:not([data-nav-hidden])');
+  })();
+  // One rAF-batched scroll pass: reads layout once per frame instead of on every scroll event.
+  var mob = document.getElementById('mobileNav'), burger = document.getElementById('burger');
+  var lastY = 0, navTick = false;
+  function navScrollPass() {
+    navTick = false;
+    var y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 40);
+    // hide the bar while reading downwards, bring it back on any upward scroll or when keyboard focus is inside it
+    var goingDown = y > lastY + 4, goingUp = y < lastY - 4;
+    if (goingDown && y > 480 && !mob.classList.contains('open') && !nav.contains(document.activeElement)) nav.classList.add('nav-hide');
+    else if (goingUp || y <= 480) nav.classList.remove('nav-hide');
+    if (goingDown || goingUp) lastY = y;
+    document.getElementById('progress').style.width = (y / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
     var cur = '';
-    sections.forEach(function (s) { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+    // hidden sections (display:none) report offsetTop 0 and used to win the comparison; skip them
+    sections.forEach(function (s) { if (s.offsetHeight > 0 && y >= s.offsetTop - 120) cur = s.id; });
     // Near the bottom of the page, force the last section active (short final
     // sections may never cross the -120 threshold).
-    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4 && sections.length) {
+    if (window.innerHeight + y >= document.body.scrollHeight - 4 && sections.length) {
       cur = sections[sections.length - 1].id;
     }
     navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + cur); });
-  }, { passive: true });
+  }
+  window.addEventListener('scroll', function () { if (!navTick) { navTick = true; requestAnimationFrame(navScrollPass); } }, { passive: true });
+  nav.addEventListener('focusin', function () { nav.classList.remove('nav-hide'); });
 
-  // Mobile nav
-  var mob = document.getElementById('mobileNav'), burger = document.getElementById('burger');
-  function toggleMob(open) { mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', open); mob.setAttribute('aria-hidden', !open); }
+  // Mobile nav drawer: dialog semantics, focus moves in, Tab is trapped, Escape closes, focus returns to the burger.
+  var drawerOpener = null;
+  function toggleMob(open, restoreFocus) {
+    mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', String(open)); mob.setAttribute('aria-hidden', String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (open) { drawerOpener = document.activeElement; nav.classList.remove('nav-hide'); setTimeout(function () { var c = document.getElementById('mobileClose'); if (c) c.focus({ preventScroll: true }); }, 0); }
+    // preventScroll: focus() would otherwise cancel an in-flight smooth scroll; skip entirely when a link was chosen
+    else { if (restoreFocus !== false && drawerOpener && drawerOpener.focus) drawerOpener.focus({ preventScroll: true }); drawerOpener = null; }
+  }
   burger.addEventListener('click', function () { toggleMob(true); });
   document.getElementById('mobileClose').addEventListener('click', function () { toggleMob(false); });
-  mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false); }); });
+  mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false, false); }); });
+  document.addEventListener('keydown', function (e) {
+    if (!mob.classList.contains('open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); toggleMob(false); return; }
+    if (e.key === 'Tab') {   // cycle manually: Safari does not Tab to links by default, native order would leak focus
+      var f = Array.prototype.slice.call(mob.querySelectorAll('a,button')), i = f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
 
   // Custom cursor
   var cursor = document.getElementById('cursor');

@@ -987,6 +987,19 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 @media (prefers-reduced-motion:reduce){#hero h1 span{opacity:1;transform:none;clip-path:none}}
 html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;animation:none}
 /* =================== /SIGNAL 1 =================== */
+/* =================== SIGNAL 2 - NAVIGATION ===================
+   Hide-on-scroll-down / show-on-scroll-up (transform), animated active underline (transform), accessible drawer. */
+#nav{transition:transform .22s var(--sig-ease),background .22s,border-color .22s}
+#nav.nav-hide{transform:translateY(-101%)}
+.nav-links a{position:relative}
+.nav-links a::after{content:'';position:absolute;left:0;bottom:-2px;width:100%;height:2px;background:var(--gold);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s var(--sig-ease)}
+.nav-links a.active::after{transform:scaleX(1)}
+.nav-links a:focus-visible,.burger:focus-visible,#mobileNav a:focus-visible,#mobileNav .close:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:6px}
+#mobileNav a:hover{color:var(--gold)}
+/* Reserve the About photo's box: it is lazy-loaded and had no height, so its arrival grew the section by ~600px
+   (anchor links landed short; content below jumped while scrolling). 2/3 = the shipped portrait's ratio. */
+#aboutPhoto{aspect-ratio:2/3;width:100%}
+/* =================== /SIGNAL 2 =================== */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1053,7 +1066,7 @@ html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;
   </div>
   <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
-<div id="mobileNav" aria-hidden="true">
+<div id="mobileNav" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Menu">
   <button class="close" id="mobileClose" aria-label="Close menu">×</button>
   <a href="#about">About</a><a href="#experience">Experience</a><a href="#events">Events</a><a href="#network-tree">Network</a>
   <a href="#community">Community</a><a href="#content">Content</a><a href="#affiliates">Exchanges</a><a href="#services">Work With Me</a>
@@ -1418,7 +1431,7 @@ html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261122a" defer></script>
-<script src="render.js?v=20261122a" defer></script>
+<script src="data.js?v=20261122e" defer></script>
+<script src="render.js?v=20261122e" defer></script>
 </body>
 </html>
