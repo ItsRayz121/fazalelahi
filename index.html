@@ -1029,6 +1029,19 @@ html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;
 @media (prefers-reduced-motion:reduce){#expList{--sig-p:1;animation:none}#expList .exp-card::before{transition:none}}
 html[data-motion=reduced] #expList{--sig-p:1;animation:none}
 /* =================== /SIGNAL 3 =================== */
+/* =================== SIGNAL 4 - EVENTS & GALLERY ===================
+   Card hover (transform on the image only), pressed-state filters, focus rings, accessible viewer. */
+.filter-btn{min-height:44px;transition:background .22s var(--sig-ease),color .22s,border-color .22s,transform .14s var(--sig-ease)}
+.filter-btn:active{transform:scale(.97)}
+.filter-btn[aria-pressed=true]{background:var(--gold);color:#16120a;border-color:var(--gold)}
+.filter-btn:focus-visible,#lightbox button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.tl-card .tl-slide img{transition:transform .7s var(--sig-ease)}
+@media (hover:hover) and (pointer:fine){
+  .tl-card:hover .tl-slide.active img{transform:scale(1.05)}
+}
+.tl-card:focus-within{border-color:rgba(242,169,0,.55)}
+#evCount{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* =================== /SIGNAL 4 =================== */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1460,7 +1473,7 @@ html[data-motion=reduced] #expList{--sig-p:1;animation:none}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261122g" defer></script>
-<script src="render.js?v=20261122g" defer></script>
+<script src="data.js?v=20261122h" defer></script>
+<script src="render.js?v=20261122h" defer></script>
 </body>
 </html>

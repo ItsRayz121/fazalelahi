@@ -600,12 +600,15 @@
       var cats = ['All'];
       gallery.forEach(function (g) { if (!g.hideCard && g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
       filtersEl.innerHTML = cats.map(function (f, i) {
-        return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
+        return '<button type="button" class="filter-btn' + (i === 0 ? ' active' : '') + '" aria-pressed="' + (i === 0) + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
       }).join('');
+      // polite live region so screen-reader users hear how many events a filter shows
+      var evCount = document.createElement('p'); evCount.id = 'evCount'; evCount.setAttribute('role', 'status'); evCount.setAttribute('aria-live', 'polite');
+      filtersEl.parentNode.insertBefore(evCount, filtersEl.nextSibling);
       filtersEl.addEventListener('click', function (ev) {
         var btn = ev.target.closest('.filter-btn'); if (!btn) return;
-        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
         var f = btn.dataset.filter.toLowerCase();
         grid.querySelectorAll('.tl-item').forEach(function (item) {
           var match = f === 'all' || (item.dataset.cat || '').toLowerCase() === f ||
@@ -613,6 +616,8 @@
           item.style.display = match ? '' : 'none';
         });
         grid.querySelectorAll('.tl-group').forEach(function (gl) { gl.style.display = f === 'all' ? '' : 'none'; });
+        var shown = 0; grid.querySelectorAll('.tl-item').forEach(function (it) { if (it.style.display !== 'none') shown++; });
+        var ec = document.getElementById('evCount'); if (ec) ec.textContent = shown + (shown === 1 ? ' event shown' : ' events shown');
       });
     }
 
@@ -683,6 +688,12 @@
       if (e.key === 'Escape') closeLightbox();
       else if (e.key === 'ArrowLeft') step(-1);
       else if (e.key === 'ArrowRight') step(1);
+      else if (e.key === 'Tab') {   // trap focus inside the viewer; cycle manually (Safari does not Tab to every control)
+        var f = Array.prototype.slice.call(lb.querySelectorAll('button, a[href], [tabindex="0"]')).filter(function (n) { return n.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
     });
   })();
 
