@@ -968,6 +968,25 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 .mini-social{min-height:44px}
 @media (max-width:470px){.mini-social{min-height:98px}}          /* 9 icons wrap onto two rows on phones */
 @media (max-width:560px){.hero-sub{min-height:3lh}}              /* subtitle re-wraps to 3 lines once Outfit loads */
+/* =================== SIGNAL 1 - HERO (approved design, ported) ===================
+   Motion = transform / opacity / clip-path only. No layout properties are animated. */
+:root{--sig-ease:cubic-bezier(.2,.8,.2,1)}
+@keyframes sigWord{to{opacity:1;transform:none;clip-path:inset(-.12em -.06em -.25em -.06em)}}
+#hero h1 span{opacity:0;transform:translateY(.32em);clip-path:inset(0 0 100% 0);animation:sigWord .7s var(--sig-ease) forwards}
+#hero::before{transform:translate3d(var(--sx,0px),var(--sy,0px),0);will-change:transform}
+@media (min-width:901px){
+  /* anchor from the top: content position must not depend on viewport height (100vh centring moved it) */
+  #hero{align-items:flex-start;padding-top:150px;padding-bottom:110px}
+}
+.hero-cue{display:none}
+@media (min-width:901px) and (min-height:720px){
+  .hero-cue{display:block;position:absolute;left:50%;bottom:24px;translate:-50% 0;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+  .hero-cue::after{content:'';display:block;width:1px;height:34px;margin:8px auto 0;background:linear-gradient(var(--gold),transparent);transform-origin:top;animation:sigCue 2.2s var(--sig-ease) 3}
+}
+@keyframes sigCue{0%{transform:scaleY(0)}60%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){#hero h1 span{opacity:1;transform:none;clip-path:none}}
+html[data-motion=reduced] #hero h1 span{opacity:1;transform:none;clip-path:none;animation:none}
+/* =================== /SIGNAL 1 =================== */
 /* Small-phone fit: let grid items shrink instead of forcing horizontal scroll (<=400px) */
 .roles-grid>*,.svc-steps>*{min-width:0}
 @media (max-width:400px){
@@ -1072,6 +1091,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
       <div class="float-stat fs3"><div class="v">20K+</div><div class="l">Personal Followers</div></div>
     </div>
   </div>
+  <div class="hero-cue" aria-hidden="true">Scroll</div>
 </section>
 
 <!-- ============ MARQUEE ============ -->
@@ -1398,7 +1418,7 @@ details.more p,details.more .case-block{margin-top:12px;font-size:15px}
 <div id="maintenance"><h1>COMING SOON<span class="c-gold">.</span></h1><p>This site is briefly under maintenance. Check back soon.</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2" integrity="sha384-7i/4BYWz4Mn+lJfg2HWfEPfZQ7tmFKF3CTSKlXBpxWjNlLjcg+T6smpHG4gLmU1u" crossorigin="anonymous" defer></script>
-<script src="data.js?v=20261121o" defer></script>
-<script src="render.js?v=20261121o" defer></script>
+<script src="data.js?v=20261122a" defer></script>
+<script src="render.js?v=20261122a" defer></script>
 </body>
 </html>

@@ -936,6 +936,17 @@
   if (reducedMQ.addEventListener) reducedMQ.addEventListener('change', function () { if (!prefersReducedMotion()) startParticles(); else ctx.clearRect(0, 0, W, H); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) startParticles(); });
 
+  // Hero light bed follows the pointer (fine pointers only; transform-only; one rAF per frame at most)
+  (function () {
+    var hero = document.getElementById('hero'); if (!hero || !window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+    var px = 0, py = 0, raf = 0;
+    hero.addEventListener('pointermove', function (e) {
+      if (prefersReducedMotion()) return;
+      var b = hero.getBoundingClientRect(); px = (e.clientX - b.left - b.width / 2) * 0.08; py = (e.clientY - b.top - b.height / 2) * 0.08;
+      if (!raf) raf = requestAnimationFrame(function () { hero.style.setProperty('--sx', px.toFixed(1) + 'px'); hero.style.setProperty('--sy', py.toFixed(1) + 'px'); raf = 0; });
+    }, { passive: true });
+  })();
+
   // Parallax hero photo (subtle)
   window.addEventListener('scroll', function () {
     var hp = document.querySelector('.hero-photo-wrap');
