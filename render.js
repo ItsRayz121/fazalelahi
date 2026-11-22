@@ -38,12 +38,6 @@
       await Store.refreshFromCloud(800);
     }
   } catch (e) { /* storage blocked: just render from defaults */ }
-  // Apply the web-font stylesheet (already preloaded in <head>) without blocking first paint.
-  (function () {
-    var pre = document.querySelector('link[rel="preload"][as="style"][href*="fonts.googleapis.com"]');
-    if (!pre) return;
-    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = pre.href; document.head.appendChild(l);
-  })();
 
   // Per-tag show/hide (admin → "Show / Hide"). `shown(cat, arr)` drops any tag
   // whose exact text is listed as hidden under that category in fazal_hidden.
