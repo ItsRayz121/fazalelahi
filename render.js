@@ -4,10 +4,40 @@
    ===================================================================== */
 (async function () {
   'use strict';
-  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, clean = Util.clean;
+  var reducedMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion:reduce)') : { matches: false };
+  function prefersReducedMotion() { return !!reducedMQ.matches; }
+  var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, url = Util.safeUrl, clean = Util.clean;
+  // Yield to the main thread between big sections so the browser can paint/handle input (keeps long tasks short).
+  function tick() { return (window.scheduler && scheduler.yield) ? scheduler.yield() : new Promise(function (res) { setTimeout(res, 0); }); }
+  // The default profile photo ships as right-sized WebP copies (480w/800w, 36-65KB vs the 251KB original).
+  // Any admin-provided photo is used as-is.
+  function slimPhoto(src, w) { return /^(\.\/)?fazal\.jpg$/.test(String(src || '')) ? 'assets/hero/fazal-' + w + '.webp' : src; }
   // True when a URL is real (not empty and not an unfilled [TOKEN]).
   function liveUrl(u) { return !!clean(u); }
-  await Store.bootstrap(); // load shared cloud content (or seed local defaults)
+  // Paint from the local cache/defaults immediately. (Awaiting the cloud here used to hold the whole page
+  // for up to 2s whenever Supabase was slow or unreachable.) The cloud refresh runs after first render.
+  Store.init();
+  // The contact form is visible in the static HTML long before its real handler is attached (rendering yields between
+  // sections). Without a guard, a fast submit would navigate natively and put the visitor's message in the URL.
+  var contactReady = false;
+  (function () {
+    var cf = document.getElementById('contactForm'); if (!cf) return;
+    cf.addEventListener('submit', function (e) {
+      if (contactReady) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      var m = document.getElementById('formMsg');
+      if (m) { m.dataset.state = 'sending'; m.textContent = 'Almost ready \u2014 please press Send again in a moment.'; }
+    });
+  })();
+  // Stale-while-revalidate: returning visitors paint instantly from the local cache and refresh it in the background
+  // (they see admin edits on their next visit). A browser's FIRST visit has nothing cached, so wait briefly (once,
+  // <=800ms) for the shared content so new visitors see the admin's edits right away. Never blocks longer than that.
+  try {
+    if (Store.cloudEnabled && !localStorage.getItem('fazal_cloud_tried')) {
+      localStorage.setItem('fazal_cloud_tried', String(Date.now()));
+      await Store.refreshFromCloud(800);
+    }
+  } catch (e) { /* storage blocked: just render from defaults */ }
 
   // Per-tag show/hide (admin → "Show / Hide"). `shown(cat, arr)` drops any tag
   // whose exact text is listed as hidden under that category in fazal_hidden.
@@ -61,13 +91,22 @@
   /* ---------- Profile / hero / about ---------- */
   var p = Store.get('fazal_profile');
   var headline = 'I SCALE WEB3 COMMUNITIES.';
-  document.getElementById('heroHeadline').innerHTML = headline.split(' ').map(function (w, i) {
+  // The headline is a constant and is also in the static HTML (so it paints before JS and
+  // causes no layout shift). Only rebuild if it is missing/different, to avoid restarting the animation.
+  var heroH1 = document.getElementById('heroHeadline');
+  if (heroH1.textContent.replace(/ /g, ' ').trim() !== headline) heroH1.innerHTML = headline.split(' ').map(function (w, i) {
     return '<span' + (/WEB3/.test(w) ? ' class="hl"' : '') + ' style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
   }).join(' ');
   document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
   document.getElementById('heroBody').textContent = p.mission;
-  document.getElementById('heroPhoto').src = Util.imageUrl(p.photo);
-  document.getElementById('aboutPhoto').src = Util.imageUrl(p.photo);
+  var heroImg = document.getElementById('heroPhoto'), heroSrc = Util.safeUrlRaw(Util.imageUrl(p.photo));
+  if (heroImg.getAttribute('src') !== heroSrc) {
+    // Admin changed the photo: drop the bundled WebP <source>s so the new image is actually used.
+    var heroPic = heroImg.parentNode;
+    if (heroPic && heroPic.tagName === 'PICTURE') Array.prototype.slice.call(heroPic.querySelectorAll('source')).forEach(function (n) { n.remove(); });
+    heroImg.src = heroSrc;
+  }   // static HTML already requested the default; don't restart it
+  document.getElementById('aboutPhoto').src = Util.safeUrlRaw(slimPhoto(Util.imageUrl(p.photo), 800));
   document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
   document.getElementById('bio1').textContent = p.bio1;
   document.getElementById('bio2').textContent = p.bio2;
@@ -75,7 +114,7 @@
   document.getElementById('emailBtn').href = 'mailto:' + p.email;
   // Only show the Download CV button when a real file URL is set.
   var cvBtn = document.getElementById('cvBtn');
-  if (liveUrl(p.cvUrl)) { cvBtn.href = clean(p.cvUrl); }
+  if (liveUrl(p.cvUrl)) { cvBtn.href = Util.safeUrlRaw(clean(p.cvUrl)); }
   else { cvBtn.style.display = 'none'; }
 
   document.getElementById('aboutCred').innerHTML = [
@@ -91,7 +130,7 @@
   // Icon-only contact — raw email/number live in href only (privacy), never shown as text.
   function contactIcon(href, iconHTML, label, hd) {
     var isLink = href.indexOf('http') === 0;
-    return '<a class="card contact-icon reveal" href="' + esc(href) + '" ' + (isLink ? ext + ' ' : '') +
+    return '<a class="card contact-icon reveal" href="' + url(href) + '" ' + (isLink ? ext + ' ' : '') +
       'aria-label="' + esc(label) + '"><span class="ci-ic">' + iconHTML + '</span>' +
       '<span class="ci-tx"><span class="ci-nm">' + esc(label) + '</span><span class="ci-hd">' + esc(hd) + '</span></span></a>';
   }
@@ -105,8 +144,8 @@
   /* ---------- Mini + footer social ---------- */
   var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
   function socialIconHTML(s) {
-    return '<a href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
-      '" title="' + esc(s.platform) + '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
+    return '<a href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
+      '" title="' + esc(s.platform) + '" style="color:' + Util.safeColor(s.color) + '">' + iconFor(s.platform) + '</a>';
   }
   document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
   document.getElementById('footSocial').innerHTML = social.map(socialIconHTML).join('');
@@ -139,6 +178,7 @@
       '" data-count="' + esc(s.value) + '">0</div><div class="lbl">' + esc(s.label) + '</div></div>';
   }).join('');
 
+  await tick();
   /* ---------- Content / YouTube ---------- */
   var content = Store.get('fazal_content');
   document.getElementById('contentSub').textContent = content.frequency;
@@ -147,7 +187,7 @@
     return '<div class="card channel-card reveal"><div class="yt c-red">' + ICON.youtube + '</div>' +
       '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
       (subs ? '<div class="metric">📺 ' + esc(subs) + ' subscribers</div>' : '') +
-      '<a class="btn btn-gold shimmer" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
+      '<a class="btn btn-gold shimmer" href="' + url(c.url) + '" ' + ext + '>Subscribe</a></div>';
   }).join('');
   // Only render videos that resolve to a real embed — never show empty "add a
   // link" frames on the public site (admin still manages them in Content).
@@ -158,8 +198,8 @@
   if (liveVideos.length) {
     videosWrap.innerHTML = liveVideos.map(function (em, i) {
       var inner = em.type === 'iframe'
-        ? '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
-        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
+        ? '<iframe src="' + url(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+        : '<video src="' + url(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
       return '<div class="video-card reveal"><div class="frame">' + inner +
         '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
     }).join('');
@@ -177,7 +217,7 @@
     var cnt = clean(c.count);
     return '<div class="card comm-card reveal"><div class="ico" style="background:' + col + '22;color:' + col + '">' + ic + '</div>' +
       '<h3>' + esc(c.name) + '</h3>' + (cnt ? '<div class="cnt">' + esc(cnt) + '</div>' : '') + '<p>' + esc(c.desc) + '</p>' +
-      '<a class="btn btn-glass" href="' + esc(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
+      '<a class="btn btn-glass" href="' + url(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
   }).join('');
   document.getElementById('featStrip').innerHTML = comm.features.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('');
 
@@ -197,6 +237,7 @@
       }).join('');
   }
 
+  await tick();
   /* ---------- Experience ---------- */
   document.getElementById('expList').innerHTML = Store.get('fazal_experience').filter(function (e) { return e.visible !== false; }).map(function (e) {
     return '<div class="card exp-card reveal ' + (e.accent === 'emerald' ? 'em' : '') + '">' +
@@ -218,11 +259,11 @@
   document.getElementById('kolPartners').innerHTML = kol.partners.filter(function (k) { return k.visible !== false; }).map(function (k) {
     var initial = (String(k.name || '').replace(/^@/, '').charAt(0) || '?').toUpperCase();
     var avatar = clean(k.avatar)
-      ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
+      ? '<span class="kp-avatar"><img src="' + url(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
       : '<span class="kp-avatar kp-initial">' + esc(initial) + '</span>';
     var followers = clean(k.followers);
     var country = clean(k.country);
-    return '<a class="kol-partner reveal" href="' + esc(k.url) + '" ' + ext + '>' + avatar +
+    return '<a class="kol-partner reveal" href="' + url(k.url) + '" ' + ext + '>' + avatar +
       '<span class="kp-body"><span class="kp-name">' + esc(k.name) + '</span>' +
       '<span class="kp-plat">' + esc(k.platform) + '</span>' +
       '<span class="kp-meta">' + (followers ? '<span>👥 ' + esc(followers) + '</span>' : '') +
@@ -231,6 +272,7 @@
   document.getElementById('kolMarkets').innerHTML = kol.markets.filter(function (m) { return m.visible !== false; }).map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
   document.getElementById('kolSynd').textContent = kol.syndicates;
 
+  await tick();
   /* ---------- The Network Tree (constellation) ----------
      A central "Fazal" node with linking lines out to a featured ring of faces,
      plus a full wall of every connection below. Click any face → popup with the
@@ -266,14 +308,14 @@
       return '<line x1="50" y1="50" x2="' + pt.x.toFixed(1) + '" y2="' + pt.y.toFixed(1) + '"/>';
     }).join('');
     var coreName = prof.name || 'Fazal Elahi';
-    var core = '<div class="nt-core"><img src="' + esc(Util.imageUrl(prof.photo || fullOf(people[0]))) +
-      '" alt="' + esc(coreName) + '"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
+    var core = '<div class="nt-core"><img src="' + url(slimPhoto(Util.imageUrl(prof.photo || fullOf(people[0])), 480)) +
+      '" alt="' + esc(coreName) + '" loading="lazy" decoding="async"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
     var nodes = featured.map(function (x, i) {
       var pt = positions[i], gi = people.indexOf(x);
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
       return '<button class="nt-node" style="left:' + pt.x.toFixed(1) + '%;top:' + pt.y.toFixed(1) +
-        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" tabindex="-1" aria-label="' + esc(nameOf(x)) + '">' +
+        '<img src="' + url(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
     }).join('');
     stage.innerHTML = '<svg class="nt-links" viewBox="0 0 100 100" preserveAspectRatio="none">' + svgLines + '</svg>' + core + nodes;
 
@@ -281,7 +323,7 @@
     wall.innerHTML = people.map(function (x, i) {
       var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
       return '<button class="nt-chip" data-i="' + i + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+        '<img src="' + url(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
     }).join('');
 
     // Popup viewer.
@@ -291,7 +333,7 @@
     var cur = 0;
     function show(i) {
       cur = (i + people.length) % people.length; var x = people[cur];
-      mPhoto.src = fullOf(x); mPhoto.alt = nameOf(x);
+      mPhoto.src = Util.safeUrlRaw(fullOf(x)); mPhoto.alt = nameOf(x);
       mName.textContent = clean(x.name) ? x.name : 'Network Connection';
       if (clean(x.role)) { mRole.textContent = x.role; mRole.classList.remove('empty'); }
       else { mRole.textContent = 'Part of Fazal’s Web3 network'; mRole.classList.add('empty'); }
@@ -313,6 +355,7 @@
     });
   })();
 
+  await tick();
   /* ---------- Work With Me (services) ---------- */
   var SVC_ICON = {
     kol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -359,7 +402,7 @@
       '<div class="case-block"><strong>Challenge:</strong> ' + esc(c.challenge) + '</div>' +
       '<div class="case-block"><strong>Strategy:</strong> ' + esc(c.strategy) + '</div>' +
       '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div></details>' +
-      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
+      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + url(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
   }).join('');
 
   /* ---------- Milestone banner: tabbed horizontal video player ----------
@@ -391,14 +434,14 @@
     var active = 0;
 
     function facade(v) {
-      var poster = v.poster ? '<img src="' + esc(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
+      var poster = v.poster ? '<img src="' + url(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
       return '<button class="mv-facade" aria-label="Play ' + esc(v.title) + '">' + poster +
         '<span class="mv-play"></span><span class="mv-cap">' + esc(v.label) + '</span></button>';
     }
     function playing(v) {
       if (v.embed.type === 'iframe')
-        return '<iframe src="' + esc(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      return '<video src="' + esc(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
+        return '<iframe src="' + url(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+      return '<video src="' + url(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
     }
     function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
 
@@ -416,6 +459,7 @@
     showFacade(0);
   })();
 
+  await tick();
   /* ---------- Events & Gallery (timeline + lightbox) ---------- */
   (function () {
     var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
@@ -483,7 +527,7 @@
       var slidesHTML = imgSlides.length
         ? '<div class="tl-slides">' + imgSlides.map(function (o, si) {
             return '<div class="tl-slide' + (si === 0 ? ' active' : '') + '" data-mi="' + o.mi + '">' +
-              '<img src="' + esc(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
+              '<img src="' + url(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
           }).join('') + '</div>'
         : '';
       var navHTML = imgSlides.length > 1
@@ -497,13 +541,13 @@
         (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
       return groupHTML + '<div class="tl-item reveal ' + sideCls + '" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
         '<div class="tl-dot"></div>' +
-        '<div class="tl-card gcard" data-gi="' + gi + '" role="button" tabindex="0" aria-label="Open gallery for ' + esc(g.title) + '">' +
+        '<div class="tl-card gcard" data-gi="' + gi + '">' +
           '<div class="tl-cover">' + slidesHTML + navHTML +
             '<div class="tl-tags">' + tags + '</div>' +
             (g.milestone ? '<span class="tl-mile">🏆 Milestone</span>' : '') + '</div>' +
           '<div class="tl-body">' +
             (g.date ? '<div class="tl-date">' + esc(g.date) + '</div>' : '') +
-            '<h4>' + esc(g.title) + '</h4>' +
+            '<h4><button type="button" class="tl-open" aria-label="Open gallery for ' + esc(g.title) + '">' + esc(g.title) + '</button></h4>' +
             '<div class="event-meta">' +
               '<span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(g.category) + '</span>' +
               (g.role ? '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + esc(g.role) + '</span>' : '') +
@@ -514,7 +558,6 @@
     }).join('');
 
     // Auto-rotating cover slideshows (staggered, pause on hover, reduced-motion aware).
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
     Array.prototype.forEach.call(grid.querySelectorAll('.tl-item'), function (item, gi) {
       var cover = item.querySelector('.tl-cover'); if (!cover) return;
       var slides = cover.querySelectorAll('.tl-slide');
@@ -527,7 +570,7 @@
         for (var d = 0; d < dots.length; d++) dots[d].classList.toggle('active', d === idx);
       }
       function stop() { if (timer) { clearInterval(timer); timer = null; } }
-      function start() { if (reduceMotion) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
+      function start() { if (prefersReducedMotion()) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
       var prev = cover.querySelector('.tl-prev'), next = cover.querySelector('.tl-next');
       if (prev) prev.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx - 1); start(); });
       if (next) next.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx + 1); start(); });
@@ -563,12 +606,15 @@
       var cats = ['All'];
       gallery.forEach(function (g) { if (!g.hideCard && g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
       filtersEl.innerHTML = cats.map(function (f, i) {
-        return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
+        return '<button type="button" class="filter-btn' + (i === 0 ? ' active' : '') + '" aria-pressed="' + (i === 0) + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
       }).join('');
+      // polite live region so screen-reader users hear how many events a filter shows
+      var evCount = document.createElement('p'); evCount.id = 'evCount'; evCount.setAttribute('role', 'status'); evCount.setAttribute('aria-live', 'polite');
+      filtersEl.parentNode.insertBefore(evCount, filtersEl.nextSibling);
       filtersEl.addEventListener('click', function (ev) {
         var btn = ev.target.closest('.filter-btn'); if (!btn) return;
-        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
         var f = btn.dataset.filter.toLowerCase();
         grid.querySelectorAll('.tl-item').forEach(function (item) {
           var match = f === 'all' || (item.dataset.cat || '').toLowerCase() === f ||
@@ -576,6 +622,8 @@
           item.style.display = match ? '' : 'none';
         });
         grid.querySelectorAll('.tl-group').forEach(function (gl) { gl.style.display = f === 'all' ? '' : 'none'; });
+        var shown = 0; grid.querySelectorAll('.tl-item').forEach(function (it) { if (it.style.display !== 'none') shown++; });
+        var ec = document.getElementById('evCount'); if (ec) ec.textContent = shown + (shown === 1 ? ' event shown' : ' events shown');
       });
     }
 
@@ -593,9 +641,9 @@
       var item = curMedia[curIdx]; if (!item) return;
       var html;
       var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
-      if (item.kind === 'image') html = '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      else html = '<video' + pc + ' src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
+      if (item.kind === 'image') html = '<img src="' + url(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
+      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + url(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+      else html = '<video' + pc + ' src="' + url(item.embed.src) + '" controls autoplay playsinline></video>';
       lbStage.innerHTML = html;
       lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
       if (lbCaption) { lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none'; }
@@ -609,15 +657,20 @@
       curIdx = (start && start < curMedia.length) ? start : 0; curTitle = g.title;
       lbTitle.textContent = g.title + (g.location ? ' — ' + g.location : '');
       lbThumbs.innerHTML = curMedia.map(function (m, i) {
-        var inner = m.kind === 'image' ? '<img src="' + esc(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
+        var inner = m.kind === 'image' ? '<img src="' + url(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
         return '<button data-i="' + i + '" aria-label="Item ' + (i + 1) + '">' + inner + '</button>';
       }).join('');
       lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden'; renderStage();
+      lbOpener = document.activeElement;            // restore focus here on close
+      var lbc = document.getElementById('lbClose'); if (lbc) lbc.focus();
     }
+    var lbOpener = null;
     function closeLightbox() {
       lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true');
       lbStage.innerHTML = ''; document.body.style.overflow = '';
+      if (lbOpener && document.contains(lbOpener) && lbOpener.focus) lbOpener.focus();
+      lbOpener = null;
     }
     function step(d) { if (!curMedia.length) return; curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); }
 
@@ -627,10 +680,6 @@
       var cover = card.querySelector('.tl-cover');
       var start = (cover && cover._activeMi) ? cover._activeMi() : 0;
       openLightbox(parseInt(card.dataset.gi, 10), start);
-    });
-    grid.addEventListener('keydown', function (e) {
-      var card = e.target.closest('.gcard'); if (!card) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(parseInt(card.dataset.gi, 10)); }
     });
     document.getElementById('lbClose').addEventListener('click', closeLightbox);
     document.getElementById('lbPrev').addEventListener('click', function () { step(-1); });
@@ -645,16 +694,23 @@
       if (e.key === 'Escape') closeLightbox();
       else if (e.key === 'ArrowLeft') step(-1);
       else if (e.key === 'ArrowRight') step(1);
+      else if (e.key === 'Tab') {   // trap focus inside the viewer; cycle manually (Safari does not Tab to every control)
+        var f = Array.prototype.slice.call(lb.querySelectorAll('button, a[href], [tabindex="0"]')).filter(function (n) { return n.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
     });
   })();
 
+  await tick();
   /* ---------- Affiliates ---------- */
   document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
     var affLogo = a.logo
-      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
-      : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
+      ? '<div class="aff-logo" style="background:' + Util.safeColor(a.color) + ';overflow:hidden;padding:0"><img src="' + url(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
+      : '<div class="aff-logo" style="background:' + Util.safeColor(a.color) + '">' + esc(a.name[0]) + '</div>';
     var affCta = liveUrl(a.url)
-      ? '<a class="btn btn-gold shimmer" href="' + esc(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
+      ? '<a class="btn btn-gold shimmer" href="' + url(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
       : '<span class="btn btn-glass" style="opacity:.55;cursor:default" aria-disabled="true">Link Coming Soon</span>';
     return '<div class="card aff-card reveal tilt">' + affLogo +
       '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p><p class="aff-offer">' + esc(a.offer) + '</p>' +
@@ -664,8 +720,8 @@
   /* ---------- Social hub ---------- */
   document.getElementById('socialGrid').innerHTML = social.map(function (s) {
     var scount = clean(s.count);
-    return '<a class="card social-card reveal" href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
-      '<span style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</span>' +
+    return '<a class="card social-card reveal" href="' + url(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
+      '<span style="color:' + Util.safeColor(s.color) + '">' + iconFor(s.platform) + '</span>' +
       '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (scount ? ' · ' + esc(scount) : '') + '</span></span></a>';
   }).join('');
 
@@ -673,10 +729,11 @@
   document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').filter(function (t) { return t.visible !== false; }).map(function (t) {
     return '<div class="card test-card reveal"><p class="q">"' + esc(t.quote) + '"</p>' +
       '<div class="test-author"><div class="test-avatar"' + (t.avatar ? ' style="background:none;overflow:hidden"' : '') + '>' +
-      (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
+      (t.avatar ? '<img src="' + url(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
       '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
   }).join('');
 
+  await tick();
   /* ---------- Contact form → inquiries ----------
      Delivery order:
        1) Save the message straight into the admin "Inquiries" panel (Supabase).
@@ -685,13 +742,24 @@
        2) If an email-notification service is configured (FAZAL.CONTACT_ENDPOINT,
           e.g. Formspree), ping it too so an email also lands in his inbox.
        3) Only if neither is available, fall back to opening the visitor's mail app. */
+  contactReady = true;   // from here the real handler below owns submission
   document.getElementById('contactForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var form = e.target, fd = new FormData(form), san = FAZAL.Util.sanitize;
+    // Honeypot: real visitors never see/fill this. Bots get a silent no-op (nothing is stored or sent).
+    if (fd.get('website')) { form.reset(); return; }
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
       type: san(fd.get('type')), message: san(fd.get('message')),
       status: 'New', ts: new Date().toISOString() };
     var msg = document.getElementById('formMsg');
+    var submitBtn = form.querySelector('button[type=submit]');
+    if (submitBtn && submitBtn.disabled) return;           // already sending: ignore double submit
+    var idleLabel = submitBtn ? submitBtn.textContent : '';
+    function setBusy(b) {
+      if (!submitBtn) return;
+      submitBtn.disabled = b; submitBtn.setAttribute('aria-busy', b ? 'true' : 'false');
+      submitBtn.textContent = b ? 'Sending…' : idleLabel;
+    }
     var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
 
     function openMail() {
@@ -701,26 +769,37 @@
         encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
     }
     function saved() {
-      msg.style.color = 'var(--emerald)';
+      msg.style.color = ''; msg.dataset.state = 'ok';
       msg.textContent = "✅ Message sent! It's saved to Fazal's inbox — he'll get back to you soon.";
       form.reset();
     }
+    var timedOut = false;
     function fallbackMail() {
-      msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…';
-      openMail(); form.reset();
+      // Not confirmed delivery: the message was NOT saved, and a mail draft is only
+      // a draft until the visitor presses Send. Keep the form contents in case no
+      // mail app opens.
+      msg.style.color = ''; msg.dataset.state = 'warn';
+      msg.textContent = (timedOut ? "We couldn't confirm that your message was saved online. " : "We couldn't save your message online. ") +
+        "Opening your email app with a draft — it isn't sent until you press Send there. Your message is still in the form, so copy it before you leave this page if you need it.";
+      openMail();
     }
 
     if (Store.cloudEnabled || endpoint) {
-      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
+      msg.style.color = ''; msg.dataset.state = 'sending'; msg.textContent = 'Sending…'; setBusy(true);
       var jobs = [];
-      if (Store.cloudEnabled) jobs.push(Promise.resolve(Store.submitInquiry(entry)));
+      // A request that neither succeeds nor fails (stalled connection) must not leave the form stuck on 'Sending…'.
+      function withTimeout(p, ms) {
+        return Promise.race([p, new Promise(function (_, reject) { setTimeout(function () { timedOut = true; reject(new Error('timeout')); }, ms); })]);
+      }
+      if (Store.cloudEnabled) jobs.push(withTimeout(Promise.resolve(Store.submitInquiry(entry)), 10000));
       if (endpoint) {
         var body = new FormData();
         Object.keys(entry).forEach(function (k) { if (k !== 'status' && k !== 'ts') body.append(k, entry[k]); });
-        jobs.push(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
-          .then(function (r) { if (!r.ok) throw new Error('bad status'); }));
+        jobs.push(withTimeout(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
+          .then(function (r) { if (!r.ok) throw new Error('bad status'); }), 10000));
       }
       Promise.allSettled(jobs).then(function (res) {
+        setBusy(false);
         if (res.some(function (r) { return r.status === 'fulfilled'; })) saved();
         else fallbackMail();
       });
@@ -746,29 +825,66 @@
     document.querySelectorAll('main section'),
     function (s) { return navTargets[s.id]; }
   );
-  window.addEventListener('scroll', function () {
-    nav.classList.toggle('scrolled', window.scrollY > 40);
-    document.getElementById('progress').style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
+  // No dead links: drop nav entries (desktop + drawer) whose target section is missing or not displayed.
+  (function () {
+    function live(id) { var t = document.getElementById(id); return !!t && t.offsetHeight > 0; }
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-links a, #mobileNav a'), function (a) {
+      var id = (a.getAttribute('href') || '').replace('#', '');
+      if (id && !live(id)) { var li = a.parentNode && a.parentNode.tagName === 'LI' ? a.parentNode : a; li.style.display = 'none'; a.setAttribute('data-nav-hidden', 'true'); }
+    });
+    navLinks = document.querySelectorAll('.nav-links a:not([data-nav-hidden])');
+  })();
+  // One rAF-batched scroll pass: reads layout once per frame instead of on every scroll event.
+  var mob = document.getElementById('mobileNav'), burger = document.getElementById('burger');
+  var lastY = 0, navTick = false;
+  function navScrollPass() {
+    navTick = false;
+    var y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 40);
+    // hide the bar while reading downwards, bring it back on any upward scroll or when keyboard focus is inside it
+    var goingDown = y > lastY + 4, goingUp = y < lastY - 4;
+    if (goingDown && y > 480 && !mob.classList.contains('open') && !nav.contains(document.activeElement)) nav.classList.add('nav-hide');
+    else if (goingUp || y <= 480) nav.classList.remove('nav-hide');
+    if (goingDown || goingUp) lastY = y;
+    document.getElementById('progress').style.width = (y / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
     var cur = '';
-    sections.forEach(function (s) { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+    // hidden sections (display:none) report offsetTop 0 and used to win the comparison; skip them
+    sections.forEach(function (s) { if (s.offsetHeight > 0 && y >= s.offsetTop - 120) cur = s.id; });
     // Near the bottom of the page, force the last section active (short final
     // sections may never cross the -120 threshold).
-    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4 && sections.length) {
+    if (window.innerHeight + y >= document.body.scrollHeight - 4 && sections.length) {
       cur = sections[sections.length - 1].id;
     }
     navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + cur); });
-  }, { passive: true });
+  }
+  window.addEventListener('scroll', function () { if (!navTick) { navTick = true; requestAnimationFrame(navScrollPass); } }, { passive: true });
+  nav.addEventListener('focusin', function () { nav.classList.remove('nav-hide'); });
 
-  // Mobile nav
-  var mob = document.getElementById('mobileNav'), burger = document.getElementById('burger');
-  function toggleMob(open) { mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', open); mob.setAttribute('aria-hidden', !open); }
+  // Mobile nav drawer: dialog semantics, focus moves in, Tab is trapped, Escape closes, focus returns to the burger.
+  var drawerOpener = null;
+  function toggleMob(open, restoreFocus) {
+    mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', String(open)); mob.setAttribute('aria-hidden', String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (open) { drawerOpener = burger;   /* explicit: Safari does not focus a button on click, so activeElement would be <body> */ nav.classList.remove('nav-hide'); setTimeout(function () { var c = document.getElementById('mobileClose'); if (c) c.focus({ preventScroll: true }); }, 0); }
+    // preventScroll: focus() would otherwise cancel an in-flight smooth scroll; skip entirely when a link was chosen
+    else { if (restoreFocus !== false && drawerOpener && drawerOpener.focus) drawerOpener.focus({ preventScroll: true }); drawerOpener = null; }
+  }
   burger.addEventListener('click', function () { toggleMob(true); });
   document.getElementById('mobileClose').addEventListener('click', function () { toggleMob(false); });
-  mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false); }); });
+  mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false, false); }); });
+  document.addEventListener('keydown', function (e) {
+    if (!mob.classList.contains('open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); toggleMob(false); return; }
+    if (e.key === 'Tab') {   // cycle manually: Safari does not Tab to links by default, native order would leak focus
+      var f = Array.prototype.slice.call(mob.querySelectorAll('a,button')), i = f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
 
   // Custom cursor
   var cursor = document.getElementById('cursor');
-  if (window.matchMedia('(min-width:900px)').matches) {
+  // The current theme hides #cursor (display:none): don't attach global pointer listeners for it.
+  if (cursor && window.getComputedStyle(cursor).display !== 'none' && window.matchMedia('(min-width:900px)').matches) {
     document.addEventListener('mousemove', function (e) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
     document.addEventListener('mouseover', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.add('big'); });
     document.addEventListener('mouseout', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.remove('big'); });
@@ -810,6 +926,7 @@
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
   }, { threshold: 0.12 });
+  document.querySelectorAll('.sec-title').forEach(function (el) { el.classList.add('reveal'); });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
 
   // Count-up
@@ -820,6 +937,7 @@
       var num = parseFloat(raw.replace(/[^0-9.]/g, '')); var suffix = raw.replace(/[0-9.,]/g, '');
       var hasComma = raw.indexOf(',') > -1;
       if (isNaN(num)) { el.textContent = raw; counted.unobserve(el); return; }
+      if (prefersReducedMotion()) { el.textContent = raw; counted.unobserve(el); return; }
       var start = 0, dur = 1600, t0 = null;
       function step(ts) { if (!t0) t0 = ts; var prog = Math.min((ts - t0) / dur, 1);
         var eased = 1 - Math.pow(1 - prog, 3); var val = Math.floor(eased * num);
@@ -828,11 +946,16 @@
       requestAnimationFrame(step); counted.unobserve(el);
     });
   }, { threshold: 0.5 });
-  document.querySelectorAll('[data-count]').forEach(function (el) { counted.observe(el); });
+  document.querySelectorAll('[data-count]').forEach(function (el) {
+    // Reduced motion: show the real number straight away (the "0" placeholder is only the start frame of the count-up).
+    if (prefersReducedMotion()) { el.textContent = el.dataset.count; return; }
+    counted.observe(el);
+  });
 
   // 3D tilt
   document.querySelectorAll('.tilt').forEach(function (card) {
     card.addEventListener('mousemove', function (e) {
+      if (prefersReducedMotion()) return;
       var r = card.getBoundingClientRect();
       var rx = ((e.clientY - r.top) / r.height - 0.5) * -8;
       var ry = ((e.clientX - r.left) / r.width - 0.5) * 8;
@@ -857,21 +980,51 @@
       ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 6.283);
       ctx.fillStyle = 'rgba(242,169,0,0.5)'; ctx.fill();
     });
-    requestAnimationFrame(drawParticles);
+    if (!prefersReducedMotion() && !document.hidden) particleRAF = requestAnimationFrame(drawParticles); else particleRAF = 0;
   }
-  if (!window.matchMedia('(prefers-reduced-motion:reduce)').matches) drawParticles();
+  var particleRAF = 0;
+  // The current theme hides the canvas (display:none => 0x0): a loop would only burn CPU/battery.
+  function startParticles() { if (!particleRAF && !prefersReducedMotion() && canvas.offsetWidth > 0) particleRAF = requestAnimationFrame(drawParticles); }
+  startParticles();
+  // follow live OS setting changes / tab visibility; never run two loops
+  if (reducedMQ.addEventListener) reducedMQ.addEventListener('change', function () { if (!prefersReducedMotion()) startParticles(); else ctx.clearRect(0, 0, W, H); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) startParticles(); });
+
+  // Hero light bed follows the pointer (fine pointers only; transform-only; one rAF per frame at most)
+  (function () {
+    var hero = document.getElementById('hero'); if (!hero || !window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+    var px = 0, py = 0, raf = 0;
+    hero.addEventListener('pointermove', function (e) {
+      if (prefersReducedMotion()) return;
+      var b = hero.getBoundingClientRect(); px = (e.clientX - b.left - b.width / 2) * 0.08; py = (e.clientY - b.top - b.height / 2) * 0.08;
+      if (!raf) raf = requestAnimationFrame(function () { hero.style.setProperty('--sx', px.toFixed(1) + 'px'); hero.style.setProperty('--sy', py.toFixed(1) + 'px'); raf = 0; });
+    }, { passive: true });
+  })();
+
+  // Experience rail fallback where CSS scroll-driven animations are unsupported (one passive, rAF-throttled listener)
+  (function () {
+    var list = document.getElementById('expList');
+    if (!list || (window.CSS && CSS.supports && CSS.supports('animation-timeline: view()')) || prefersReducedMotion()) return;
+    var queued = false;
+    function upd() {
+      queued = false; var b = list.getBoundingClientRect(), vh = window.innerHeight;
+      list.style.setProperty('--sig-p', Math.max(0, Math.min(1, (vh * 0.75 - b.top) / b.height)).toFixed(3));
+    }
+    window.addEventListener('scroll', function () { if (!queued) { queued = true; requestAnimationFrame(upd); } }, { passive: true });
+    upd();
+  })();
 
   // Parallax hero photo (subtle)
   window.addEventListener('scroll', function () {
     var hp = document.querySelector('.hero-photo-wrap');
-    if (hp && window.scrollY < window.innerHeight) hp.style.transform = 'translateY(' + window.scrollY * 0.12 + 'px)';
+    if (hp && !prefersReducedMotion() && window.scrollY < window.innerHeight) hp.style.transform = 'translateY(' + window.scrollY * 0.12 + 'px)';
   }, { passive: true });
 
-  // GSAP scroll polish (progressive enhancement)
-  if (window.gsap && window.ScrollTrigger) {
-    gsap.registerPlugin(ScrollTrigger);
-    gsap.utils.toArray('.sec-title').forEach(function (t) {
-      gsap.from(t, { scrollTrigger: { trigger: t, start: 'top 85%' }, y: 30, opacity: 0, duration: 0.8 });
-    });
-  }
+  // Section titles use the shared IntersectionObserver .reveal (same fade + rise the old GSAP/ScrollTrigger
+  // block produced) - ScrollTrigger kept a 60fps rAF loop alive for 13 trivial fades.
+
+
+  // Background refresh of the shared-content cache for the NEXT visit (no reload, no layout change under the reader).
+  Store.refreshFromCloud();
+  document.documentElement.setAttribute('data-render-complete', 'true');   // all sections painted and handlers attached
 })();

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07070F">
+<title>DESIGN PREVIEW — Fazal Elahi (not the live site)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307070F'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='700' font-size='20' text-anchor='middle' fill='%23F2A900'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="preview.css">
+<script>document.documentElement.classList.remove('no-js')</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="Fazal Elahi — top">FAZAL ELAHI<i>.</i></a>
+    <nav class="links" id="links" aria-label="Primary"><a href="#about">About</a><a href="#experience">Experience</a><a href="#events">Events</a><a href="#contact">Contact</a><span class="ind" id="ind" aria-hidden="true"></span></nav>
+    <a class="btn btn-gold" href="#contact">Work with me <span class="arr" aria-hidden="true">→</span></a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><span></span></button>
+  </div>
+</header>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true">
+  <button class="x" id="dclose" aria-label="Close menu">✕</button>
+  <a href="#about">About</a><a href="#experience">Experience</a><a href="#events">Events</a><a href="#contact">Contact</a>
+</div>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="chips fade-up" style="--d:0" id="chips"></div>
+      <h1 aria-label="I scale Web3 communities.">
+        <span class="ln" aria-hidden="true"><span class="w" style="--i:0">I</span> <span class="w" style="--i:1">SCALE</span></span>
+        <span class="ln" aria-hidden="true"><span class="w hl" style="--i:2">WEB3</span></span>
+        <span class="ln" aria-hidden="true"><span class="w" style="--i:3">COMMUNITIES.</span></span>
+      </h1>
+      <p class="sub fade-up" style="--d:3" id="sub"></p>
+      <div class="cta fade-up" style="--d:4">
+        <a class="btn btn-gold" href="#events">See the events <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="#contact">Collaborate</a>
+      </div>
+    </div>
+    <div class="frame fade-up" style="--d:2">
+      <div class="ph"><img id="photo" alt="Portrait of Fazal Elahi" width="1025" height="1536" fetchpriority="high"></div>
+      <div class="statcard a" id="sc0"></div><div class="statcard b" id="sc1"></div>
+    </div>
+  </div>
+  <div class="cue" aria-hidden="true">Scroll</div>
+</section>
+
+<div class="marq" aria-hidden="true"><div class="marq-t" id="marq"></div></div>
+
+<section id="about"><div class="wrap about-grid">
+  <div class="rv"><p class="eyebrow">About</p><h2 class="title">Educator first. <em>Builder</em> always.</h2><div id="bio"></div></div>
+  <div class="bento rv" style="--d:2" id="stats" role="list"></div>
+</div></section>
+
+<section id="experience"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Experience</p><h2 class="title">Where the <em>work</em> happened</h2></div>
+  <div class="tl" id="tl"></div>
+</div></section>
+
+<section id="events"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Events &amp; community</p><h2 class="title">On the <em>ground</em></h2></div>
+  <div class="filters rv" id="filters" role="group" aria-label="Filter events by category"></div>
+  <div class="ev-grid" id="evgrid"></div>
+  <p id="evcount" class="sr" role="status" aria-live="polite"></p>
+</div></section>
+
+<section id="contact"><div class="wrap contact-grid">
+  <div class="rv"><p class="eyebrow">Let’s build</p><h2 class="title">Start a <em>collaboration</em></h2>
+    <p>Real contact options from the current site. The form on the right is a layout study only.</p>
+    <div class="ways" id="ways"></div></div>
+  <form class="form rv" style="--d:2" aria-describedby="pvnote">
+    <p class="note" id="pvnote">Preview only — this form is intentionally disabled and sends nothing. The live site’s form is unchanged.</p>
+    <label>Name<input disabled autocomplete="off"></label>
+    <label>Email<input type="email" disabled></label>
+    <label>What do you need?<select disabled><option>KOL management</option></select></label>
+    <label>Message<textarea disabled></textarea></label>
+    <button type="button" class="btn btn-gold" disabled>Send message <span class="arr" aria-hidden="true">→</span></button>
+  </form>
+</div></section>
+</main>
+<footer><div class="wrap">Design preview · content comes from the site’s current default data · nothing here is deployed.</div></footer>
+
+<dialog id="dlg" aria-label="Event photo viewer"><div class="dl"><img id="dimg" alt=""><div class="dl-b"><div><h3 id="dt"></h3><p id="dp"></p></div>
+  <div class="dl-c"><button id="dprev" aria-label="Previous photo">‹</button><button id="dnext" aria-label="Next photo">›</button><button id="dclose2" aria-label="Close viewer">✕</button></div></div></div></dialog>
+
+<div class="pc" role="group" aria-label="Preview controls"><span>PREVIEW</span>
+  <button id="rm" aria-pressed="false">Reduce motion: off</button></div>
+
+<script src="../data.js"></script>
+<script src="preview.js"></script>
+</body>
+</html>

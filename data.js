@@ -39,9 +39,17 @@
      ===================================================================== */
   var DATA_VERSION = '2026-07-02-hide-kol';
 
+  // Environment isolation: the shared Supabase project is only contacted from the real production hostnames. Localhost,
+  // Vercel preview deployments and any other host run in local-only mode (built-in content, contact form falls back to a mail
+  // draft), so a preview/test can never read or write production data. To exercise a STAGING backend deliberately, set
+  // window.FAZAL_ALLOW_CLOUD = true before this script (and point SUPABASE_URL/KEY at the staging project).
+  var PROD_HOSTS = ['fazalelahi.xyz', 'www.fazalelahi.xyz', 'fazalelahi.vercel.app'];
+  var cloudAllowed = global.FAZAL_ALLOW_CLOUD === true ||
+    (typeof location !== 'undefined' && PROD_HOSTS.indexOf(String(location.hostname).toLowerCase()) > -1);
+
   var sb = null, cloudEnabled = false;
   try {
-    if (global.supabase && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    if (global.supabase && cloudAllowed && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
       sb = global.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: { persistSession: true, autoRefreshToken: true }
       });
@@ -426,8 +434,8 @@
       footerTagline: 'Educating. Building. Scaling. From Pakistan to the World.',
       maintenance: false,
       showDisclaimer: true,
-      siteUrl: 'https://fazalelahi.vercel.app/',
-      ogImage: 'https://fazalelahi.vercel.app/fazal.jpg'
+      siteUrl: 'https://fazalelahi.xyz/',
+      ogImage: 'https://fazalelahi.xyz/fazal.jpg'
     },
 
     fazal_customcss: '',
@@ -626,6 +634,29 @@
   // local defaults (data.js) instantly; the cloud read is a best-effort cache
   // refresh, capped by a short timeout so a slow/asleep Supabase project can never
   // hang the page (previously caused 20–30s blank loads).
+  // Non-blocking variant for the PUBLIC site: render immediately from the local cache/defaults, then
+  // refresh the cache in the background. Resolves true only when the cloud content really differs
+  // (order-insensitive), so the caller can refresh the view once instead of reloading needlessly.
+  function canon(v) {
+    if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + canon(v[k]); }).join(',') + '}';
+    return JSON.stringify(v);
+  }
+  Store.refreshFromCloud = async function (timeoutMs) {
+    if (!cloudEnabled) return false;
+    try {
+      var timeout = new Promise(function (resolve) { setTimeout(function () { resolve({ __timedOut: true }); }, timeoutMs || 8000); });
+      var res = await Promise.race([sb.from('site_content').select('key,value'), timeout]);
+      if (res.__timedOut || res.error) return false;
+      var changed = false;
+      (res.data || []).forEach(function (row) {
+        var cur = null; try { cur = JSON.parse(localStorage.getItem(row.key)); } catch (e) {}
+        if (cur === null || canon(cur) !== canon(row.value)) { changed = true; localStorage.setItem(row.key, JSON.stringify(row.value)); }
+      });
+      return changed;
+    } catch (e) { return false; }
+  };
+
   Store.bootstrap = async function () {
     Store.init();
     if (!cloudEnabled) return;
@@ -663,12 +694,17 @@
     var local = Store.get('fazal_inquiries'); local.unshift(entry);
     localStorage.setItem('fazal_inquiries', JSON.stringify(local));
     if (cloudEnabled) {
+      // supabase-js reports failures via { error } instead of throwing, so check it.
+      // Reject on failure so the caller can fall back to email instead of
+      // telling the visitor their message was saved when it was not.
+      var res;
       try {
-        await sb.from('inquiries').insert({
+        res = await sb.from('inquiries').insert({
           name: entry.name, email: entry.email, company: entry.company,
           type: entry.type, message: entry.message, status: 'New'
         });
-      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); }
+      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); throw e; }
+      if (res && res.error) { console.warn('Inquiry cloud insert failed', res.error.message || res.error); throw res.error; }
     }
   };
   Store.getInquiries = async function () {
@@ -696,6 +732,20 @@
     if (!cloudEnabled) return { ok: false, msg: 'Cloud disabled' };
     var res = await sb.auth.signInWithPassword({ email: email, password: password });
     return { ok: !res.error, msg: res.error ? res.error.message : 'ok' };
+  };
+  // Ask the DATABASE whether the signed-in user is an administrator (public.is_admin(), see
+  // supabase/hardening.proposed.sql). true = admin, false = not an admin / not signed in,
+  // null = the check is unavailable (function not deployed yet or network error).
+  Store.isAdmin = async function () {
+    if (!cloudEnabled) return false;
+    try {
+      var res = await sb.rpc('is_admin');
+      if (res.error) {
+        var missing = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|does not exist/i.test(res.error.message || '');
+        return missing ? null : false;
+      }
+      return res.data === true;
+    } catch (e) { return null; }
   };
   Store.signOut = async function () { if (cloudEnabled) { try { await sb.auth.signOut(); } catch (e) {} } };
   Store.updatePassword = async function (pw) {
@@ -767,6 +817,30 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
+    // For href/src attributes: HTML-escape AND allow only safe URL schemes, so an
+    // admin-entered (or tampered) "javascript:" / "data:text/html" value can never
+    // become a clickable script or iframe source. Relative URLs are allowed.
+    safeUrlRaw: function (str) {
+      var s = String(str == null ? '' : str).trim();
+      // Browsers ignore tab/newline/control chars inside a scheme ("java	script:").
+      var probe = s.replace(/[ - -]+/g, '');
+      var m = probe.match(/^([a-z][a-z0-9+.\-]*):/i);
+      if (m) {
+        var scheme = m[1].toLowerCase();
+        var ok = scheme === 'http' || scheme === 'https' || scheme === 'mailto' || scheme === 'tel' ||
+          (scheme === 'data' && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(probe));
+        if (!ok) return 'about:blank';
+      }
+      return s;
+    },
+    safeUrl: function (str) { return Util.escape(Util.safeUrlRaw(str)); },
+    // One CSV cell, safe against spreadsheet formula injection: visitor-supplied text beginning with
+    // = + - @ (or tab/CR) is executed as a formula by Excel/Sheets, so neutralise it with a leading '.
+    csvCell: function (v) {
+      var s = String(v == null ? '' : v);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return '"' + s.replace(/"/g, '""') + '"';
+    },
     async sha256(text) {
       const data = new TextEncoder().encode(text);
       const buf = await crypto.subtle.digest('SHA-256', data);
@@ -809,7 +883,22 @@
         if (id) return { type: 'iframe', src: 'https://drive.google.com/file/d/' + id + '/preview' };
       }
       if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(s)) return { type: 'video', src: s };
-      return { type: 'iframe', src: s };
+      // Only embed players from known video hosts; any other URL is not framed (it could be an
+      // arbitrary page, ad, or phishing site chosen by anyone able to edit content).
+      return Util.embedHostOk(s) ? { type: 'iframe', src: s } : { type: 'none', src: '' };
+    },
+    EMBED_HOSTS: ['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'drive.google.com', 'player.vimeo.com', 'www.facebook.com'],
+    embedHostOk: function (u) {
+      try { var x = new URL(String(u), 'https://invalid.example/'); return x.protocol === 'https:' && Util.EMBED_HOSTS.indexOf(x.hostname.toLowerCase()) > -1; }
+      catch (e) { return false; }
+    },
+    // CSS colour from managed data -> safe for an inline style attribute (hex / rgb() / hsl() / var(--x) /
+    // named / simple gradient). Anything else collapses to '' so it cannot inject extra declarations.
+    safeColor: function (v) {
+      var s = String(v == null ? '' : v).trim();
+      var ok = /^#[0-9a-f]{3,8}$/i.test(s) || /^(rgb|hsl)a?\([0-9.,%\s\/]+\)$/i.test(s) || /^var\(--[a-z0-9-]+\)$/i.test(s) ||
+               /^[a-z]{3,20}$/i.test(s) || /^(linear|radial)-gradient\([#a-z0-9.,%()\s\-]+\)$/i.test(s);
+      return ok ? Util.escape(s) : '';
     },
     // Best-effort cover thumbnail for a video embed (YouTube / Google Drive).
     videoPoster: function (embed) {
