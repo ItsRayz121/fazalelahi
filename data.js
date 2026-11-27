@@ -662,14 +662,15 @@
   Store.submitInquiry = async function (entry) {
     var local = Store.get('fazal_inquiries'); local.unshift(entry);
     localStorage.setItem('fazal_inquiries', JSON.stringify(local));
-    if (cloudEnabled) {
-      try {
-        await sb.from('inquiries').insert({
-          name: entry.name, email: entry.email, company: entry.company,
-          type: entry.type, message: entry.message, status: 'New'
-        });
-      } catch (e) { console.warn('Inquiry cloud insert failed', e.message || e); }
-    }
+    if (!cloudEnabled) throw new Error('cloud disabled');
+    // Let failures reach the caller: the local copy above lives only in the
+    // VISITOR's browser, so a failed insert must not be reported as "sent".
+    // The contact form then falls back to the visitor's email app.
+    var res = await sb.from('inquiries').insert({
+      name: entry.name, email: entry.email, company: entry.company,
+      type: entry.type, message: entry.message, status: 'New'
+    });
+    if (res && res.error) { console.warn('Inquiry cloud insert failed', res.error.message || res.error); throw res.error; }
   };
   Store.getInquiries = async function () {
     if (cloudEnabled) {

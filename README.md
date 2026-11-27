@@ -10,8 +10,13 @@ A premium, educator-first personal brand site for **Fazal Elahi** (Crypto Educat
 | `admin.html` | Admin CMS — login-gated content manager |
 | `data.js` | Shared data layer + defaults (both pages read/write `localStorage` here) |
 | `render.js` | Public-site rendering + animations |
+| `classic.html` + `render-classic.js` | Frozen copy of the previous design (not linked; kept as a fallback) |
+| `assets/fonts/` | Self-hosted Bricolage Grotesque + Instrument Sans (latin, OFL) |
+| `og.jpg`, `favicon.svg` | Social share image (1200×630) and site icon |
 
-All four are plain static files. **No build step, no server, no dependencies** (GSAP + Google Fonts load from CDN; the site still works if they fail).
+All of these are plain static files. **No build step, no server, no dependencies** (GSAP + Flip load from a CDN; the site still works if they fail).
+
+Event photos in `assets/events/` each have a smaller `-t.jpg` twin used for the card covers; new uploads without one fall back to the original automatically.
 
 ## Running locally
 

@@ -1,23 +1,64 @@
 /* =====================================================================
-   FAZAL ELAHI — Public site renderer
+   FAZAL ELAHI — Public site renderer (v3 "Field pass")
    Reads from FAZAL.Store (data.js) and paints every dynamic section.
+   Section ids and data-block hooks are unchanged, so admin show/hide works.
    ===================================================================== */
 (async function () {
   'use strict';
   var Store = FAZAL.Store, Util = FAZAL.Util, esc = Util.escape, clean = Util.clean;
-  // True when a URL is real (not empty and not an unfilled [TOKEN]).
   function liveUrl(u) { return !!clean(u); }
-  await Store.bootstrap(); // load shared cloud content (or seed local defaults)
+  function $(id) { return document.getElementById(id); }
+  // Menu and nav work immediately, before content loads from the cloud.
+  function initChrome() {
+    // Nav border + scroll spy
+    var nav = $('nav'), navLinks = document.querySelectorAll('.nav-links a');
+    var spy = Array.prototype.map.call(navLinks, function (a) { return $(a.getAttribute('href').slice(1)); }).filter(Boolean);
+    initChrome.spy = onScroll;
+    var ticking = false;
+    function onScroll() {
+      ticking = false;
+      nav.classList.toggle('scrolled', window.scrollY > 8);
+      var cur = '';
+      spy.forEach(function (s) { if (s.offsetParent !== null && s.getBoundingClientRect().top <= 120) cur = s.id; });
+      navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + cur); });
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+    onScroll();
 
-  // Per-tag show/hide (admin → "Show / Hide"). `shown(cat, arr)` drops any tag
-  // whose exact text is listed as hidden under that category in fazal_hidden.
+    // Mobile menu
+    var mob = $('mobileNav'), burger = $('burger');
+    function toggleMob(open) {
+      mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', open); mob.setAttribute('aria-hidden', !open);
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) $('mobileClose').focus(); else burger.focus({ preventScroll: true });
+    }
+    burger.addEventListener('click', function () { toggleMob(true); });
+    $('mobileClose').addEventListener('click', function () { toggleMob(false); });
+    mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false); }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mob.classList.contains('open')) toggleMob(false); });
+
+  }
+  initChrome();
+
+  await Store.bootstrap();
+
   var HIDDEN = Store.get('fazal_hidden') || {};
   function shown(cat, arr) {
     var h = HIDDEN[cat] || [];
     return (arr || []).filter(function (t) { return h.indexOf(t) < 0; });
   }
+  // Content in the CMS still carries emoji labels; the design uses line icons
+  // instead, so strip decorative emoji (and flag pairs) from displayed text.
+  function noEmoji(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '')
+      .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+      .replace(/\s{2,}/g, ' ').trim();
+  }
+  function visible(arr) { return (arr || []).filter(function (x) { return x && x.visible !== false; }); }
+  var ext = 'target="_blank" rel="noopener noreferrer"';
 
-  /* ---------- Official SVG icons (brand-correct) ---------- */
+  /* ---------- Icons: brand marks + one line set (1.5 stroke) ---------- */
   var ICON = {
     youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.5 15.5v-7l6.3 3.5z"/></svg>',
     telegram: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm5.6 8.2-1.9 8.9c-.1.6-.5.8-1.1.5l-3-2.2-1.4 1.4c-.2.2-.3.3-.6.3l.2-3 5.5-5c.2-.2 0-.3-.4-.1L8 12.1l-2.9-.9c-.6-.2-.6-.6.1-.9l11.4-4.4c.5-.2 1 .1.8.9z"/></svg>',
@@ -25,8 +66,25 @@
     twitter: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2H21l-6.5 7.4L22 22h-6l-4.7-6.1L5.9 22H3l7-8-7.3-12h6.1l4.3 5.7zm-1 18h1.6L7.1 3.7H5.4z"/></svg>',
     facebook: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.6 4.5-4.6 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.4 0-1.9.9-1.9 1.8V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0 0 24 12z"/></svg>',
     linkedin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.4 20.4h-3.6v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1a3.8 3.8 0 0 1 3.4-1.9c3.6 0 4.3 2.4 4.3 5.5zM5.3 7.4a2.1 2.1 0 1 1 0-4.2 2.1 2.1 0 0 1 0 4.2zm1.8 13H3.5V9h3.6zM22.2 0H1.8A1.8 1.8 0 0 0 0 1.8v20.4A1.8 1.8 0 0 0 1.8 24h20.4a1.8 1.8 0 0 0 1.8-1.8V1.8A1.8 1.8 0 0 0 22.2 0z"/></svg>',
-    linktree: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 2h2v6.3l4.5-4.5 1.4 1.4L14.4 9.7H21v2h-6.6l4.5 4.5-1.4 1.4L13 13.6V22h-2v-8.4l-4.5 4.5-1.4-1.4 4.5-4.5H3v-2h6.6L5.1 5.2l1.4-1.4L11 8.3z"/></svg>',
-    generic: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8 8 8 0 0 1 8-8z"/></svg>'
+    linktree: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 2h2v6.3l4.5-4.5 1.4 1.4L14.4 9.7H21v2h-6.6l4.5 4.5-1.4 1.4L13 13.6V22h-2v-8.4l-4.5 4.5-1.4-1.4 4.5-4.5H3v-2h6.6L5.1 5.2l1.4-1.4L11 8.3z"/></svg>'
+  };
+  function line(d) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  }
+  var LI = {
+    book: line('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>'),
+    video: line('<rect x="2.5" y="5" width="15" height="14" rx="3"/><path d="M17.5 10l4-2.5v9l-4-2.5"/>'),
+    users: line('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/>'),
+    award: line('<circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 8 5-3 5 3-1.5-8"/>'),
+    briefcase: line('<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M8.5 7V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2M2.5 12.5h19"/>'),
+    megaphone: line('<path d="M3 10v4a1 1 0 0 0 1 1h3l7 5V4L7 9H4a1 1 0 0 0-1 1z"/><path d="M18 8.5a5 5 0 0 1 0 7"/>'),
+    pin: line('<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+    mail: line('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>'),
+    image: line('<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>'),
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
+    plus: line('<path d="M12 5v14M5 12h14"/>'),
+    globe: line('<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5a14.5 14.5 0 0 1 0 19M12 2.5a14.5 14.5 0 0 0 0 19"/>'),
+    link: line('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/>')
   };
   function iconFor(name) {
     var n = (name || '').toLowerCase();
@@ -37,841 +95,504 @@
     if (n.indexOf('facebook') > -1) return ICON.facebook;
     if (n.indexOf('linkedin') > -1) return ICON.linkedin;
     if (n.indexOf('linktree') > -1) return ICON.linktree;
-    return ICON.generic;
+    return LI.link;
   }
-  function badgeColor(c) {
-    return 'var(--' + ({ blue:'blue',red:'red',emerald:'emerald',gold:'gold',purple:'purple',orange:'orange',pkgreen:'pkgreen' }[c] || 'gold') + ')';
+  function roleIcon(title) {
+    var t = (title || '').toLowerCase();
+    if (/educat|teach/.test(t)) return LI.book;
+    if (/content|creator|video/.test(t)) return LI.video;
+    if (/community/.test(t)) return LI.users;
+    if (/ambassador program/.test(t)) return LI.award;
+    if (/business|bd/.test(t)) return LI.briefcase;
+    if (/kol|influenc/.test(t)) return LI.megaphone;
+    if (/pakistan|regional|ambassador/.test(t)) return LI.pin;
+    return LI.globe;
   }
-  var ext = 'target="_blank" rel="noopener noreferrer"';
+  // Local event photos have a pre-sized "-t.jpg" twin for covers; fall back to
+  // the original if a new upload doesn't have one yet.
+  function thumbSrc(src) {
+    if (/^assets\/events\/.+\.(jpe?g|png)$/i.test(src) && !/-t\.jpg$/i.test(src)) return src.replace(/\.(jpe?g|png)$/i, '-t.jpg');
+    return Util.imageUrl(src);
+  }
+  function imgTag(src, alt, extra) {
+    var t = thumbSrc(src), full = Util.imageUrl(src);
+    return '<img src="' + esc(t) + '"' + (t !== full ? ' data-full="' + esc(full) + '" onerror="this.onerror=null;this.src=this.dataset.full"' : '') +
+      ' alt="' + esc(alt) + '" loading="lazy" decoding="async"' + (extra || '') + '>';
+  }
 
   /* ---------- Settings & maintenance ---------- */
-  var settings = Store.get('fazal_settings');
-  if (settings.maintenance) {
-    document.getElementById('maintenance').style.display = 'flex';
-    document.getElementById('main').style.display = 'none';
-  }
+  var settings = Store.get('fazal_settings') || {};
+  if (settings.maintenance) { $('maintenance').style.display = 'flex'; $('main').style.display = 'none'; }
   if (settings.title) document.title = settings.title;
-  document.getElementById('footTagline').textContent = settings.footerTagline || '';
-  if (!settings.showDisclaimer) document.getElementById('disclaimerLine').style.display = 'none';
-
-  // custom CSS injection
+  $('footTagline').textContent = settings.footerTagline || '';
+  if (settings.showDisclaimer === false) $('disclaimerLine').style.display = 'none';
   var css = Store.get('fazal_customcss');
-  if (css) { var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+  if (css) { var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); }
 
-  /* ---------- Profile / hero / about ---------- */
-  var p = Store.get('fazal_profile');
-  var headline = 'I SCALE WEB3 COMMUNITIES.';
-  document.getElementById('heroHeadline').innerHTML = headline.split(' ').map(function (w, i) {
-    return '<span' + (/WEB3/.test(w) ? ' class="hl"' : '') + ' style="animation-delay:' + (0.3 + i * 0.08) + 's">' + esc(w) + '</span>';
-  }).join(' ');
-  document.getElementById('heroSub').textContent = settings.heroSub || p.subTagline;
-  document.getElementById('heroBody').textContent = p.mission;
-  document.getElementById('heroPhoto').src = Util.imageUrl(p.photo);
-  document.getElementById('aboutPhoto').src = Util.imageUrl(p.photo);
-  document.getElementById('aboutPhoto').alt = 'Fazal Elahi';
-  document.getElementById('bio1').textContent = p.bio1;
-  document.getElementById('bio2').textContent = p.bio2;
-  document.getElementById('bio3').textContent = p.bio3;
-  document.getElementById('emailBtn').href = 'mailto:' + p.email;
-  // Only show the Download CV button when a real file URL is set.
-  var cvBtn = document.getElementById('cvBtn');
-  if (liveUrl(p.cvUrl)) { cvBtn.href = clean(p.cvUrl); }
-  else { cvBtn.style.display = 'none'; }
-
-  document.getElementById('aboutCred').innerHTML = [
-    '📍 Based in ' + esc(p.location),
-    '⏱️ ' + esc('2.5 Years Daily Web3'),
-    '📧 ' + esc(p.email),
-    '💼 ' + esc(p.availability) + ' Available'
-  ].map(function (t) { return '<span class="pill">' + t + '</span>'; }).join('');
-
-  document.getElementById('tagCloud').innerHTML = shown('expertise', p.expertise)
-    .map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
-
-  // Icon-only contact — raw email/number live in href only (privacy), never shown as text.
-  function contactIcon(href, iconHTML, label, hd) {
-    var isLink = href.indexOf('http') === 0;
-    return '<a class="card contact-icon reveal" href="' + esc(href) + '" ' + (isLink ? ext + ' ' : '') +
-      'aria-label="' + esc(label) + '"><span class="ci-ic">' + iconHTML + '</span>' +
-      '<span class="ci-tx"><span class="ci-nm">' + esc(label) + '</span><span class="ci-hd">' + esc(hd) + '</span></span></a>';
-  }
-  document.getElementById('contactCards').innerHTML =
-    contactIcon('mailto:' + p.email, '<span class="ci-emoji">✉️</span>', 'Email', 'Tap to email') +
-    contactIcon(liveUrl(p.whatsapp) ? clean(p.whatsapp) : 'https://wa.me/', ICON.whatsapp, 'WhatsApp', 'Chat on WhatsApp') +
-    contactIcon(liveUrl(p.linkedin) ? clean(p.linkedin) : 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android', ICON.linkedin, 'LinkedIn', 'Connect') +
-    '<div class="card contact-icon reveal"><span class="ci-ic"><span class="ci-emoji">🌍</span></span>' +
-      '<span class="ci-tx"><span class="ci-nm">' + esc(p.location) + '</span><span class="ci-hd">' + esc(p.availability) + '</span></span></div>';
-
-  /* ---------- Mini + footer social ---------- */
-  var social = Store.get('fazal_social').filter(function (s) { return s.visible !== false; });
-  function socialIconHTML(s) {
-    return '<a href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) +
-      '" title="' + esc(s.platform) + '" style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</a>';
-  }
-  document.getElementById('heroSocial').innerHTML = social.map(socialIconHTML).join('');
-  document.getElementById('footSocial').innerHTML = social.map(socialIconHTML).join('');
-  // Compact discovery sets — nav (top picks) + mobile menu (all).
-  var navSocialEl = document.getElementById('navSocial');
-  var mobileSocialEl = document.getElementById('mobileSocial');
-  if (navSocialEl) {
-    var navPicks = ['youtube', 'telegram', 'twitter', 'whatsapp', 'linkedin'];
-    var picked = navPicks.map(function (key) {
-      return social.filter(function (s) { return (s.platform || '').toLowerCase().indexOf(key) > -1; })[0];
-    }).filter(Boolean);
-    navSocialEl.innerHTML = (picked.length ? picked : social.slice(0, 5)).map(socialIconHTML).join('');
-  }
-  if (mobileSocialEl) mobileSocialEl.innerHTML = social.map(socialIconHTML).join('');
-
-  /* ---------- Roles ---------- */
-  document.getElementById('rolesGrid').innerHTML = Store.get('fazal_roles')
-    .filter(function (r) { return r.visible !== false; })
-    .map(function (r, i) {
-      var col = badgeColor(r.color);
-      return '<div class="card role-card reveal tilt" style="transition-delay:' + (i * 0.07) + 's">' +
-        '<div class="ico" style="background:' + col + '22;color:' + col + '">' + esc(r.icon) + '</div>' +
-        '<h3>' + esc(r.title) + '</h3><p>' + esc(r.desc) + '</p>' +
-        '<span class="badge" style="background:' + col + '22;color:' + col + '">' + esc(r.title) + '</span></div>';
-    }).join('');
+  /* ---------- Profile / about ---------- */
+  var p = Store.get('fazal_profile') || {};
+  if (p.photo && clean(p.photo) && p.photo !== 'fazal.jpg') $('heroPhoto').src = Util.imageUrl(p.photo);
+  // Keep the new hero copy unless the sub-tagline was edited in admin.
+  var defSub = ((Store.defaults || {}).fazal_profile || {}).subTagline;
+  if (clean(p.subTagline) && p.subTagline !== defSub) $('heroSub').textContent = p.subTagline;
+  $('bio1').textContent = p.bio1 || '';
+  $('bio2').textContent = p.bio2 || '';
+  $('bio3').textContent = p.bio3 || '';
+  var cvBtn = $('cvBtn');
+  if (liveUrl(p.cvUrl)) cvBtn.href = clean(p.cvUrl); else cvBtn.style.display = 'none';
+  // Raw email/number live only in hrefs (privacy), never as visible text.
+  $('aboutCred').innerHTML = [
+    ['Based in', esc(p.location || 'Pakistan')],
+    ['In Web3', '2.5 years, every day'],
+    ['Availability', esc(p.availability || '')],
+    ['Contact', '<a class="link" href="mailto:' + esc(p.email) + '">Email me</a>']
+  ].map(function (f) { return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('');
+  var tags = shown('expertise', p.expertise);
+  if (tags.length) $('tagCloud').innerHTML = tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
 
   /* ---------- Stats ---------- */
-  document.getElementById('statsGrid').innerHTML = p.stats.filter(function (s) { return s.visible !== false; }).map(function (s) {
-    return '<div class="stat reveal"><div class="num c-' + ({gold:'gold',emerald:'em',blue:'blue'}[s.accent] || 'gold') +
-      '" data-count="' + esc(s.value) + '">0</div><div class="lbl">' + esc(s.label) + '</div></div>';
+  $('statsGrid').innerHTML = visible(p.stats).map(function (s) {
+    return '<div class="stat"><div class="stat-v" data-count="' + esc(s.value) + '">' + esc(s.value) + '</div><div class="stat-l">' + esc(s.label) + '</div></div>';
+  }).join('');
+
+  /* ---------- Contact links ---------- */
+  function contactRow(href, icon, label, hd) {
+    var isLink = /^https?:/.test(href);
+    return '<a class="contact-icon" href="' + esc(href) + '" ' + (isLink ? ext : '') + '>' +
+      '<span class="ci-ic">' + icon + '</span><span class="ci-tx"><span class="ci-nm">' + esc(label) + '</span><span class="ci-hd">' + esc(hd) + '</span></span></a>';
+  }
+  $('contactCards').innerHTML =
+    contactRow('mailto:' + p.email, LI.mail, 'Email', 'Best for proposals and briefs') +
+    contactRow(liveUrl(p.whatsapp) ? clean(p.whatsapp) : 'https://wa.me/923098336810', ICON.whatsapp, 'WhatsApp', 'Quick questions and calls') +
+    contactRow(liveUrl(p.linkedin) ? clean(p.linkedin) : 'https://www.linkedin.com/in/fazal-elahi-bb59a8212', ICON.linkedin, 'LinkedIn', 'Connect and check references') +
+    '<div class="contact-icon"><span class="ci-ic">' + LI.pin + '</span><span class="ci-tx"><span class="ci-nm">' + esc(p.location || 'Pakistan') +
+      '</span><span class="ci-hd">' + esc(p.availability || '') + '</span></span></div>';
+  var emailBtn = document.querySelector('.dock-mail'); if (emailBtn && p.email) emailBtn.href = 'mailto:' + p.email;
+
+  /* ---------- Social ---------- */
+  var social = visible(Store.get('fazal_social'));
+  $('footSocial').innerHTML = social.map(function (s) {
+    return '<a href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '" title="' + esc(s.platform) + '">' + iconFor(s.platform) + '</a>';
+  }).join('');
+  $('socialGrid').innerHTML = social.map(function (s) {
+    var cnt = clean(s.count);
+    return '<a class="social-card" href="' + esc(s.url) + '" ' + ext + '><span class="ic">' + iconFor(s.platform) + '</span>' +
+      '<span class="tx"><span class="nm">' + esc(s.platform) + '</span><span class="hd">' + esc(s.handle) + (cnt ? ', ' + esc(cnt) : '') + '</span></span></a>';
+  }).join('');
+
+  /* ---------- Roles ---------- */
+  $('rolesGrid').innerHTML = visible(Store.get('fazal_roles')).map(function (r) {
+    return '<div class="role"><span class="role-ic">' + roleIcon(r.title) + '</span><div><h3>' + esc(noEmoji(r.title)) + '</h3><p>' + esc(r.desc) + '</p></div></div>';
   }).join('');
 
   /* ---------- Content / YouTube ---------- */
-  var content = Store.get('fazal_content');
-  document.getElementById('contentSub').textContent = content.frequency;
-  document.getElementById('channels').innerHTML = content.channels.filter(function (c) { return c.visible !== false; }).map(function (c) {
+  var content = Store.get('fazal_content') || { channels: [], videos: [] };
+  $('contentSub').textContent = content.frequency || '';
+  $('channels').innerHTML = visible(content.channels).map(function (c) {
     var subs = clean(c.subs);
-    return '<div class="card channel-card reveal"><div class="yt c-red">' + ICON.youtube + '</div>' +
-      '<h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
-      (subs ? '<div class="metric">📺 ' + esc(subs) + ' subscribers</div>' : '') +
-      '<a class="btn btn-gold shimmer" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
+    return '<div class="channel-card"><span class="yt">' + ICON.youtube + '</span><h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
+      (subs ? '<p class="num">' + esc(subs) + ' subscribers</p>' : '') +
+      '<a class="btn btn-secondary" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
   }).join('');
-  // Only render videos that resolve to a real embed — never show empty "add a
-  // link" frames on the public site (admin still manages them in Content).
-  var liveVideos = content.videos
-    .map(function (v) { return Util.videoEmbed(v); })
+  var liveVideos = (content.videos || []).map(function (v) { return Util.videoEmbed(v); })
     .filter(function (em) { return em.type === 'iframe' || em.type === 'video'; });
-  var videosWrap = document.getElementById('videos');
   if (liveVideos.length) {
-    videosWrap.innerHTML = liveVideos.map(function (em, i) {
+    $('videos').innerHTML = liveVideos.map(function (em, i) {
       var inner = em.type === 'iframe'
         ? '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
-        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border:0;display:block"></video>';
-      return '<div class="video-card reveal"><div class="frame">' + inner +
-        '</div><div class="vt">Latest Upload ' + (i + 1) + '</div></div>';
+        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>';
+      return '<div class="video-card"><div class="frame">' + inner + '</div><p class="vt">Latest upload ' + (i + 1) + '</p></div>';
     }).join('');
-  } else {
-    videosWrap.style.display = 'none'; // no videos set yet — collapse the row
-  }
-  document.getElementById('pillars').innerHTML = shown('pillars', content.pillars).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
-  document.getElementById('hashtags').innerHTML = shown('hashtags', content.hashtags).map(function (t) { return '<span class="chip hash">' + esc(t) + '</span>'; }).join('');
+  } else $('videos').style.display = 'none';
+  $('pillars').innerHTML = shown('pillars', content.pillars).map(function (t) { return '<span class="chip">' + esc(noEmoji(t)) + '</span>'; }).join('');
+  $('hashtags').innerHTML = shown('hashtags', content.hashtags).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('');
 
   /* ---------- Community ---------- */
-  var comm = Store.get('fazal_community');
-  document.getElementById('commGrid').innerHTML = comm.cards.filter(function (c) { return c.visible !== false; }).map(function (c) {
-    var col = c.platform === 'whatsapp' ? '#25D366' : '#2AABEE';
-    var ic = c.platform === 'whatsapp' ? ICON.whatsapp : ICON.telegram;
-    var cnt = clean(c.count);
-    return '<div class="card comm-card reveal"><div class="ico" style="background:' + col + '22;color:' + col + '">' + ic + '</div>' +
-      '<h3>' + esc(c.name) + '</h3>' + (cnt ? '<div class="cnt">' + esc(cnt) + '</div>' : '') + '<p>' + esc(c.desc) + '</p>' +
-      '<a class="btn btn-glass" href="' + esc(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
+  var comm = Store.get('fazal_community') || { cards: [], features: [] };
+  $('commGrid').innerHTML = visible(comm.cards).map(function (c) {
+    var wa = c.platform === 'whatsapp', cnt = clean(c.count);
+    return '<div class="comm-card"><span class="comm-ic" style="background:' + (wa ? '#1F9D57' : '#229ED9') + '">' + (wa ? ICON.whatsapp : ICON.telegram) + '</span>' +
+      '<h3>' + esc(c.name) + '</h3>' + (cnt ? '<p class="cnt">' + esc(cnt) + ' members</p>' : '') + '<p>' + esc(c.desc) + '</p>' +
+      '<a class="btn btn-secondary" href="' + esc(c.url) + '" ' + ext + '>' + esc(c.cta) + '</a></div>';
   }).join('');
-  document.getElementById('featStrip').innerHTML = comm.features.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('');
+  $('featStrip').innerHTML = (comm.features || []).map(function (f) { return '<span>' + esc(noEmoji(f)) + '</span>'; }).join('');
 
-  /* ---------- Regional Leadership cards ---------- */
-  var regionGrid = document.getElementById('regionGrid');
-  if (regionGrid) {
-    regionGrid.innerHTML = (Store.get('fazal_regions') || []).filter(function (r) { return r.visible !== false; })
-      .map(function (r) {
-        var secondary = /secondary/i.test(r.tier || '');
-        function row(ic, v) { return clean(v) ? '<div class="rc-row"><span class="ic">' + ic + '</span><span>' + esc(clean(v)) + '</span></div>' : ''; }
-        return '<div class="card region-card reveal' + (secondary ? ' secondary' : '') + '">' +
-          '<div class="rc-head"><span class="rc-flag">' + esc(r.flag) + '</span><span class="rc-name">' + esc(r.name) + '</span></div>' +
-          (clean(r.tier) ? '<span class="rc-tier">' + esc(clean(r.tier)) + '</span>' : '') +
-          (clean(r.reach) ? '<div class="rc-reach">' + esc(clean(r.reach)) + '</div>' : '') +
-          row('👥', r.communities) + row('🗣️', r.languages) + row('⚡', r.activity) +
-          '</div>';
-      }).join('');
-  }
+  /* ---------- Regional markets ---------- */
+  var CODES = { pakistan: 'PK', india: 'IN', bangladesh: 'BD', indonesia: 'ID', nigeria: 'NG', 'sri lanka': 'LK', nepal: 'NP', uae: 'AE', vietnam: 'VN', philippines: 'PH', turkey: 'TR' };
+  function dots(s) { return esc(clean(s) || '').replace(/\s*·\s*/g, ', '); }
+  $('regionGrid').innerHTML = visible(Store.get('fazal_regions')).map(function (r) {
+    var code = CODES[(r.name || '').toLowerCase()] || (r.name || '??').slice(0, 2).toUpperCase();
+    var primary = !/secondary/i.test(r.tier || '');
+    return '<tr><td><span class="mk-name"><span class="mk-code">' + esc(code) + '</span>' + esc(r.name) + '</span></td>' +
+      '<td><span class="mk-tier' + (primary ? ' primary' : '') + '">' + esc((clean(r.tier) || '').replace(/ market$/i, '')) + '</span></td>' +
+      '<td>' + esc(clean(r.reach) || '') + '</td><td>' + dots(r.communities) + '</td><td>' + dots(r.languages) + '</td></tr>';
+  }).join('');
 
   /* ---------- Experience ---------- */
-  document.getElementById('expList').innerHTML = Store.get('fazal_experience').filter(function (e) { return e.visible !== false; }).map(function (e) {
-    return '<div class="card exp-card reveal ' + (e.accent === 'emerald' ? 'em' : '') + '">' +
-      '<div class="exp-head"><div><h3>' + esc(e.company) + '</h3><span class="role">' + esc(e.role) + '</span></div>' +
-      '<div style="text-align:right"><div class="status-badge status-' + esc(e.status) + '">' +
-        (e.status === 'Active' ? '🟢 ' : '✅ ') + esc(e.status) + '</div>' +
-        '<div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px">' + esc(e.start) + ' – ' + esc(e.end) + '</div></div></div>' +
-      '<div class="metrics">' + e.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
-      '<details class="more"><summary>Read the story</summary><p>' + esc(e.desc) + '</p></details>' +
-      '<div class="skills">' + e.skills.map(function (s) { return '<span class="tag">' + esc(s) + '</span>'; }).join('') + '</div></div>';
+  $('expList').innerHTML = visible(Store.get('fazal_experience')).map(function (e) {
+    var on = /active/i.test(e.status);
+    return '<article class="exp"><div class="exp-when">' + esc(e.start) + ' – ' + esc(e.end) + '</div>' +
+      '<div class="exp-body"><h3>' + esc(e.company) + '</h3><p class="exp-role">' + esc(e.role) + '</p>' +
+      '<ul class="exp-metrics">' + (e.metrics || []).map(function (m) { return '<li>' + esc(noEmoji(m)) + '</li>'; }).join('') + '</ul>' +
+      '<details class="more"><summary>What I did ' + LI.plus + '</summary><p>' + esc(e.desc) + '</p></details></div>' +
+      '<span class="status' + (on ? ' on' : '') + '"><i></i>' + esc(on ? 'Current' : e.status) + '</span></article>';
+  }).join('');
+
+  /* ---------- Case studies ---------- */
+  $('caseList').innerHTML = visible(Store.get('fazal_casestudies')).map(function (c) {
+    var tp = String(c.title || '').split(/\s+[—–-]\s+/), cname = tp[0], cstat = tp.slice(1).join(' — ');
+    var cm = cstat.match(/^([\d.,]+\s*[KMB]?\+?)\s*(?:→|->|to)\s*([\d.,]+\s*[KMB]?\+?)/i);
+    var statHTML = cm ? esc(cm[1].trim()) + '<span class="arr">→</span>' + esc(cm[2].trim()) : esc(cstat);
+    return '<article class="case"><div><p class="case-badge">' + esc(c.badge) + '</p><h3>' + esc(cname) + '</h3>' +
+      (cstat ? '<p class="case-stat">' + statHTML + '</p>' : '') + '</div>' +
+      '<div><ul class="metrics">' + (c.metrics || []).map(function (m) { return '<li>' + esc(noEmoji(m)) + '</li>'; }).join('') + '</ul>' +
+      '<details class="more"><summary>Challenge, strategy, results ' + LI.plus + '</summary>' +
+      '<p class="case-block"><strong>Challenge.</strong> ' + esc(c.challenge) + '</p>' +
+      '<p class="case-block"><strong>Strategy.</strong> ' + esc(c.strategy) + '</p>' +
+      '<p class="case-block"><strong>Results.</strong> ' + esc(c.results) + '</p></details>' +
+      (liveUrl(c.proofUrl) ? '<a class="link case-proof" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>See the proof</a>' : '') +
+      '</div></article>';
   }).join('');
 
   /* ---------- KOL ---------- */
-  var kol = Store.get('fazal_kol_network');
-  document.getElementById('kolIntro').textContent = kol.intro;
-  document.getElementById('kolServices').innerHTML = kol.services.map(function (s) {
-    return '<div class="card reveal tilt"><div class="ico">' + esc(s.icon) + '</div><h4>' + esc(s.title) + '</h4><p>' + esc(s.desc) + '</p></div>';
+  var kol = Store.get('fazal_kol_network') || { services: [], partners: [], markets: [] };
+  $('kolIntro').textContent = kol.intro || '';
+  $('kolServices').innerHTML = (kol.services || []).map(function (s) {
+    return '<div><h4>' + esc(s.title) + '</h4><p>' + esc(s.desc) + '</p></div>';
   }).join('');
-  document.getElementById('kolPartners').innerHTML = kol.partners.filter(function (k) { return k.visible !== false; }).map(function (k) {
+  $('kolPartners').innerHTML = visible(kol.partners).map(function (k) {
     var initial = (String(k.name || '').replace(/^@/, '').charAt(0) || '?').toUpperCase();
-    var avatar = clean(k.avatar)
-      ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="' + esc(k.name) + '" loading="lazy"></span>'
-      : '<span class="kp-avatar kp-initial">' + esc(initial) + '</span>';
-    var followers = clean(k.followers);
-    var country = clean(k.country);
-    return '<a class="kol-partner reveal" href="' + esc(k.url) + '" ' + ext + '>' + avatar +
-      '<span class="kp-body"><span class="kp-name">' + esc(k.name) + '</span>' +
-      '<span class="kp-plat">' + esc(k.platform) + '</span>' +
-      '<span class="kp-meta">' + (followers ? '<span>👥 ' + esc(followers) + '</span>' : '') +
-        (country ? '<span>' + esc(country) + '</span>' : '') + '</span></span></a>';
-  }).join('') + '<div class="kol-partner kp-more reveal">+ Dozens More<span class="kp-plat">in the Network</span></div>';
-  document.getElementById('kolMarkets').innerHTML = kol.markets.filter(function (m) { return m.visible !== false; }).map(function (m) { return '<span>' + esc(m.flag) + ' ' + esc(m.name) + '</span>'; }).join(' · ');
-  document.getElementById('kolSynd').textContent = kol.syndicates;
+    var av = clean(k.avatar) ? '<span class="kp-avatar"><img src="' + esc(Util.imageUrl(k.avatar)) + '" alt="" loading="lazy"></span>' : '<span class="kp-avatar">' + esc(initial) + '</span>';
+    var meta = [clean(k.followers), noEmoji(clean(k.country))].filter(Boolean).join(', ');
+    return '<a class="kol-partner" href="' + esc(k.url) + '" ' + ext + '>' + av + '<span class="kp-body"><span class="kp-name">' + esc(k.name) + '</span>' +
+      '<span class="kp-plat">' + esc(k.platform) + (meta ? ', ' + esc(meta) : '') + '</span></span></a>';
+  }).join('') + '<div class="kol-partner kp-more">And dozens more</div>';
+  $('kolMarkets').textContent = visible(kol.markets).length ? 'Markets: ' + visible(kol.markets).map(function (m) { return m.name; }).join(', ') : '';
+  $('kolSynd').textContent = kol.syndicates || '';
 
-  /* ---------- The Network Tree (constellation) ----------
-     A central "Fazal" node with linking lines out to a featured ring of faces,
-     plus a full wall of every connection below. Click any face → popup with the
-     full photo + name/role, walkable with ‹ › / arrow keys. Names are managed in
-     admin → Network Tree; blank names fall back to a neutral label. */
+  /* ---------- Network wall ---------- */
   (function () {
-    var nt = Store.get('fazal_network_tree'); if (!nt) return;
-    var stage = document.getElementById('ntStage'), wall = document.getElementById('ntWall');
-    var introEl = document.getElementById('ntIntro'), countEl = document.getElementById('ntCount');
-    if (!stage || !wall) return;
-    if (introEl) introEl.textContent = nt.intro || '';
-    var people = (nt.people || []).filter(function (x) { return x.visible !== false; });
-    if (!people.length) { var sec = document.getElementById('network-tree'); if (sec) sec.style.display = 'none'; return; }
-
-    var prof = Store.get('fazal_profile') || {};
+    var nt = Store.get('fazal_network_tree'); var wall = $('ntWall');
+    if (!nt || !wall) return;
+    var people = visible(nt.people);
+    if (!people.length) { $('network-tree').dataset.empty = '1'; return; }
+    $('ntIntro').textContent = nt.intro || '';
+    $('ntCount').textContent = people.length + ' people and counting';
     function thumbOf(x) { return Util.imageUrl(x.thumb || x.photo || ''); }
-    function fullOf(x)  { return Util.imageUrl(x.photo || x.thumb || ''); }
-    function nameOf(x)  { return clean(x.name) ? x.name : 'Network Connection'; }
-    if (countEl) countEl.textContent = people.length + ' connection' + (people.length === 1 ? '' : 's') + ' and growing';
-
-    // Featured ring(s): first faces laid out on an inner + outer ellipse (percent coords).
-    var featured = people.slice(0, Math.min(16, people.length));
-    var innerN = Math.min(6, featured.length), outerN = featured.length - innerN;
-    function ringPos(idx, total, rx, ry, offset) {
-      var a = offset + (idx / total) * Math.PI * 2;
-      return { x: 50 + rx * Math.cos(a), y: 50 + ry * Math.sin(a) };
-    }
-    var positions = featured.map(function (x, i) {
-      return i < innerN ? ringPos(i, innerN, 24, 26, -Math.PI / 2)
-                        : ringPos(i - innerN, outerN || 1, 43, 40, -Math.PI / 2 + Math.PI / (outerN || 1));
-    });
-    var svgLines = positions.map(function (pt) {
-      return '<line x1="50" y1="50" x2="' + pt.x.toFixed(1) + '" y2="' + pt.y.toFixed(1) + '"/>';
-    }).join('');
-    var coreName = prof.name || 'Fazal Elahi';
-    var core = '<div class="nt-core"><img src="' + esc(Util.imageUrl(prof.photo || fullOf(people[0]))) +
-      '" alt="' + esc(coreName) + '"><span class="nt-core-tag">' + esc(coreName.split(' ')[0].toUpperCase()) + '</span></div>';
-    var nodes = featured.map(function (x, i) {
-      var pt = positions[i], gi = people.indexOf(x);
-      var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
-      return '<button class="nt-node" style="left:' + pt.x.toFixed(1) + '%;top:' + pt.y.toFixed(1) +
-        '%;--d:' + (5 + (i % 5)) + 's" data-i="' + gi + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
-    }).join('');
-    stage.innerHTML = '<svg class="nt-links" viewBox="0 0 100 100" preserveAspectRatio="none">' + svgLines + '</svg>' + core + nodes;
-
-    // Wall of every visible face.
+    function fullOf(x) { return Util.imageUrl(x.photo || x.thumb || ''); }
+    function nameOf(x) { return clean(x.name) ? x.name : 'Network connection'; }
     wall.innerHTML = people.map(function (x, i) {
-      var tip = clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '';
-      return '<button class="nt-chip" data-i="' + i + '" aria-label="' + esc(nameOf(x)) + '">' +
-        '<img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy">' + tip + '</button>';
+      return '<button class="nt-chip" data-i="' + i + '" aria-label="' + esc(nameOf(x)) + '"><img src="' + esc(thumbOf(x)) + '" alt="" loading="lazy" decoding="async">' +
+        (clean(x.name) ? '<span class="nt-tip">' + esc(x.name) + '</span>' : '') + '</button>';
     }).join('');
-
-    // Popup viewer.
-    var modal = document.getElementById('ntModal');
-    var mPhoto = document.getElementById('ntMPhoto'), mName = document.getElementById('ntMName'),
-        mRole = document.getElementById('ntMRole'), mCount = document.getElementById('ntMCount');
-    var cur = 0;
+    var modal = $('ntModal'), mPhoto = $('ntMPhoto'), mName = $('ntMName'), mRole = $('ntMRole'), mCount = $('ntMCount');
+    var cur = 0, lastFocus = null;
     function show(i) {
       cur = (i + people.length) % people.length; var x = people[cur];
       mPhoto.src = fullOf(x); mPhoto.alt = nameOf(x);
-      mName.textContent = clean(x.name) ? x.name : 'Network Connection';
+      mName.textContent = nameOf(x);
       if (clean(x.role)) { mRole.textContent = x.role; mRole.classList.remove('empty'); }
       else { mRole.textContent = 'Part of Fazal’s Web3 network'; mRole.classList.add('empty'); }
       mCount.textContent = (cur + 1) + ' / ' + people.length;
     }
-    function openAt(i) { show(i); modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
-    stage.addEventListener('click', function (e) { var b = e.target.closest('.nt-node'); if (b) openAt(+b.dataset.i); });
-    wall.addEventListener('click', function (e) { var b = e.target.closest('.nt-chip'); if (b) openAt(+b.dataset.i); });
-    document.getElementById('ntMClose').addEventListener('click', close);
-    document.getElementById('ntMPrev').addEventListener('click', function () { show(cur - 1); });
-    document.getElementById('ntMNext').addEventListener('click', function () { show(cur + 1); });
+    function open(i) { lastFocus = document.activeElement; show(i); modal.classList.add('open'); document.body.style.overflow = 'hidden'; $('ntMClose').focus(); }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; if (lastFocus) lastFocus.focus(); }
+    wall.addEventListener('click', function (e) { var b = e.target.closest('.nt-chip'); if (b) open(+b.dataset.i); });
+    $('ntMClose').addEventListener('click', close);
+    $('ntMPrev').addEventListener('click', function () { show(cur - 1); });
+    $('ntMNext').addEventListener('click', function () { show(cur + 1); });
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
     document.addEventListener('keydown', function (e) {
       if (!modal.classList.contains('open')) return;
-      if (e.key === 'Escape') close();
-      else if (e.key === 'ArrowLeft') show(cur - 1);
-      else if (e.key === 'ArrowRight') show(cur + 1);
+      if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') show(cur - 1); else if (e.key === 'ArrowRight') show(cur + 1);
     });
   })();
 
-  /* ---------- Work With Me (services) ---------- */
-  var SVC_ICON = {
-    kol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    growth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
-    region: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-    ambassador: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"/></svg>',
-    generic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 7V5h6v2"/></svg>'
-  };
+  /* ---------- Services ---------- */
   (function () {
     var svc = Store.get('fazal_services'); if (!svc) return;
-    var introEl = document.getElementById('servicesIntro');
-    if (introEl) introEl.textContent = svc.intro || '';
-    var grid = document.getElementById('servicesGrid');
-    if (grid) {
-      grid.innerHTML = (svc.items || []).filter(function (s) { return s.visible !== false; }).map(function (s) {
-        var pts = (s.points || []).map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('');
-        return '<div class="svc-card card reveal tilt">' +
-          '<div class="svc-ico">' + (SVC_ICON[s.icon] || SVC_ICON.generic) + '</div>' +
-          '<h3>' + esc(s.title) + '</h3>' +
-          '<p class="svc-tag">' + esc(s.tagline) + '</p>' +
-          (pts ? '<ul class="svc-points">' + pts + '</ul>' : '') +
-          (clean(s.ideal) ? '<p class="svc-ideal"><span>Ideal for</span> ' + esc(s.ideal) + '</p>' : '') +
-          '<a class="btn btn-emerald svc-cta" href="#contact">' + esc(s.cta || 'Get in Touch') + ' →</a>' +
-          '</div>';
-      }).join('');
-    }
-    var steps = document.getElementById('servicesSteps');
-    if (steps) {
-      steps.innerHTML = (svc.steps || []).map(function (st) {
-        return '<div class="svc-step reveal"><span class="svc-step-n">' + esc(st.step) + '</span>' +
-          '<h4>' + esc(st.title) + '</h4><p>' + esc(st.desc) + '</p></div>';
-      }).join('');
-    }
+    $('servicesIntro').textContent = svc.intro || '';
+    $('servicesGrid').innerHTML = visible(svc.items).map(function (s) {
+      var pts = (s.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+      return '<article class="svc"><div><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p></div>' +
+        '<ul class="svc-points">' + pts + '</ul>' +
+        '<a class="btn btn-secondary" href="#contact">' + esc(s.cta || 'Get in touch') + '</a></article>';
+    }).join('');
+    $('servicesSteps').innerHTML = (svc.steps || []).map(function (st) {
+      return '<li class="svc-step"><span class="svc-step-n">Step ' + esc(String(st.step).replace(/^0/, '')) + '</span><h4>' + esc(st.title) + '</h4><p>' + esc(st.desc) + '</p></li>';
+    }).join('');
   })();
 
-  /* ---------- Case studies ---------- */
-  document.getElementById('caseList').innerHTML = Store.get('fazal_casestudies').filter(function (c) { return c.visible !== false; }).map(function (c) {
-    var tp = String(c.title || '').split(/\s+[—–-]\s+/), cname = tp[0], cstat = tp.slice(1).join(' — ');
-    var cm = cstat.match(/^[\d.,]+\s*[KMB]?\+?\s*(?:→|->|to)\s*[\d.,]+\s*[KMB]?\+?/i); if (cm) cstat = cm[0];
-    return '<div class="card case-card reveal"><span class="badge">' + esc(c.badge) + '</span><h3>' + esc(cname) + '</h3>' +
-      (cstat ? '<div class="case-stat">' + esc(cstat) + '</div>' : '') +
-      '<div class="metrics">' + c.metrics.map(function (m) { return '<span class="metric">' + esc(m) + '</span>'; }).join('') + '</div>' +
-      '<details class="more"><summary>Read the story</summary>' +
-      '<div class="case-block"><strong>Challenge:</strong> ' + esc(c.challenge) + '</div>' +
-      '<div class="case-block"><strong>Strategy:</strong> ' + esc(c.strategy) + '</div>' +
-      '<div class="case-block"><strong>Results:</strong> ' + esc(c.results) + '</div></details>' +
-      (liveUrl(c.proofUrl) ? '<a class="btn btn-emerald" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>🔗 Live Proof</a>' : '') + '</div>';
-  }).join('');
-
-  /* ---------- Milestone banner: tabbed horizontal video player ----------
-     Videos flagged `bannerVideo` in fazal_gallery render as tabs inside the
-     milestone box. Each tab shows a poster + play icon; clicking loads the
-     embed (Drive/YouTube iframe or direct <video>) and plays. */
+  /* ---------- Milestone video player ---------- */
   (function () {
-    var host = document.getElementById('milestoneVideos');
-    if (!host) return;
-    var vids = (Store.get('fazal_gallery') || []).filter(function (g) {
-      return g && g.visible !== false && g.bannerVideo;
-    }).map(function (g) {
-      var vm = (g.media || []).filter(function (m) { return m.type === 'video'; })[0];
-      if (!vm) return null;
-      var embed = Util.videoEmbed(vm.src);
-      if (embed.type === 'none') return null;
-      return { label: g.bannerLabel || g.title, title: g.title, embed: embed, poster: Util.videoPoster(embed) };
+    var host = $('milestoneVideos'); if (!host) return;
+    var vids = visible(Store.get('fazal_gallery')).filter(function (g) { return g.bannerVideo; }).map(function (g) {
+      var vm = (g.media || []).filter(function (m) { return m.type === 'video'; })[0]; if (!vm) return null;
+      var embed = Util.videoEmbed(vm.src); if (embed.type === 'none') return null;
+      return { label: noEmoji(g.bannerLabel || g.title).replace(/\s+—\s+/, ', '), title: g.title, embed: embed, poster: Util.videoPoster(embed) };
     }).filter(Boolean);
-
     if (!vids.length) { host.style.display = 'none'; return; }
-
-    var tabsHTML = vids.length > 1
-      ? '<div class="mv-tabs">' + vids.map(function (v, i) {
-          return '<button class="mv-tab' + (i === 0 ? ' active' : '') + '" data-i="' + i + '">' + esc(v.label) + '</button>';
-        }).join('') + '</div>'
-      : '';
-    host.innerHTML = tabsHTML + '<div class="mv-stage" id="mvStage"></div>';
-    var stage = document.getElementById('mvStage');
-    var active = 0;
-
+    host.innerHTML = (vids.length > 1 ? '<div class="mv-tabs" role="tablist">' + vids.map(function (v, i) {
+      return '<button class="mv-tab' + (i ? '' : ' active') + '" role="tab" aria-selected="' + (i ? 'false' : 'true') + '" data-i="' + i + '">' + esc(v.label) + '</button>';
+    }).join('') + '</div>' : '') + '<div class="mv-stage" id="mvStage"></div>';
+    var stage = $('mvStage'), active = 0;
     function facade(v) {
-      var poster = v.poster ? '<img src="' + esc(v.poster) + '" alt="' + esc(v.title) + '" loading="lazy">' : '';
-      return '<button class="mv-facade" aria-label="Play ' + esc(v.title) + '">' + poster +
-        '<span class="mv-play"></span><span class="mv-cap">' + esc(v.label) + '</span></button>';
+      return '<button class="mv-facade" aria-label="Play video: ' + esc(v.label) + '">' + (v.poster ? '<img src="' + esc(v.poster) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
+        '<span class="mv-play">' + LI.play + '</span><span class="mv-cap">' + esc(v.label) + '</span></button>';
     }
     function playing(v) {
-      if (v.embed.type === 'iframe')
-        return '<iframe src="' + esc(v.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      return '<video src="' + esc(v.embed.src) + '" controls autoplay playsinline preload="auto"></video>';
+      return v.embed.type === 'iframe' ? '<iframe src="' + esc(v.embed.src) + '" title="' + esc(v.title) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>'
+        : '<video src="' + esc(v.embed.src) + '" controls autoplay playsinline></video>';
     }
-    function showFacade(i) { active = i; stage.innerHTML = facade(vids[i]); }
-
-    stage.addEventListener('click', function (e) {
-      if (e.target.closest('.mv-facade')) stage.innerHTML = playing(vids[active]);
+    stage.addEventListener('click', function (e) { if (e.target.closest('.mv-facade')) stage.innerHTML = playing(vids[active]); });
+    host.addEventListener('click', function (e) {
+      var t = e.target.closest('.mv-tab'); if (!t) return;
+      host.querySelectorAll('.mv-tab').forEach(function (b) { b.classList.toggle('active', b === t); b.setAttribute('aria-selected', b === t); });
+      active = +t.dataset.i; stage.innerHTML = facade(vids[active]);
     });
-    if (vids.length > 1) {
-      host.addEventListener('click', function (e) {
-        var t = e.target.closest('.mv-tab'); if (!t) return;
-        var tabs = host.querySelectorAll('.mv-tab');
-        for (var k = 0; k < tabs.length; k++) tabs[k].classList.toggle('active', tabs[k] === t);
-        showFacade(parseInt(t.dataset.i, 10));
-      });
-    }
-    showFacade(0);
+    stage.innerHTML = facade(vids[0]);
   })();
 
-  /* ---------- Events & Gallery (timeline + lightbox) ---------- */
+  /* ---------- Events grid + lightbox ---------- */
   (function () {
-    var gallery = (Store.get('fazal_gallery') || []).filter(function (g) {
-      return g && g.visible !== false && (g.media && g.media.length);
-    });
-    var grid = document.getElementById('eventsGrid');
-    var filtersEl = document.getElementById('eventFilters');
+    var gallery = visible(Store.get('fazal_gallery')).filter(function (g) { return g.media && g.media.length; });
+    var grid = $('eventsGrid'), filtersEl = $('eventFilters');
     if (!grid) return;
-
-    // Tree order: organized (CreatorX / milestone) -> exchanges -> universities -> industry -> speaking -> rest.
-    // Stable sort, so the admin's order is kept within each group.
-    var groupRank = { Milestone:0, CreatorX:0, Exchange:1, University:2, 'Industry Event':3, Speaker:4 };
+    var rank = { Milestone: 0, CreatorX: 0, Exchange: 1, University: 2, 'Industry Event': 3, Speaker: 4 };
     gallery = gallery.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) {
-      var ra = groupRank[a.g.category] != null ? groupRank[a.g.category] : 9;
-      var rb = groupRank[b.g.category] != null ? groupRank[b.g.category] : 9;
+      var ra = rank[a.g.category] != null ? rank[a.g.category] : 9, rb = rank[b.g.category] != null ? rank[b.g.category] : 9;
       return ra - rb || a.i - b.i;
     }).map(function (o) { return o.g; });
 
-    var catColors = { CreatorX:'gold', Exchange:'emerald', University:'blue', 'Industry Event':'purple',
-      Speaker:'red', Partnership:'purple', Campaign:'orange', Community:'emerald', Network:'emerald',
-      Education:'blue', Milestone:'gold' };
-
-    // Build a flat media list per event (images + valid videos), each with caption.
     function mediaOf(g) {
       return (g.media || []).map(function (m) {
         if (m.type === 'video') return { kind: 'video', embed: Util.videoEmbed(m.src), orient: m.orient || '', caption: m.caption || '' };
         return { kind: 'image', src: m.src, caption: m.caption || '' };
       }).filter(function (m) { return m.kind === 'image' || (m.embed && m.embed.type !== 'none'); });
     }
-    function counts(g) {
-      var imgs = 0, vids = 0;
-      (g.media || []).forEach(function (m) {
-        if (m.type === 'video') { if (Util.videoEmbed(m.src).type !== 'none') vids++; }
-        else imgs++;
-      });
-      return { imgs: imgs, vids: vids };
-    }
-    grid.className = 'timeline';
-    // Tree grouping: each change of category group gets a centred label, and cards
-    // alternate left/right by their own counter (labels don't disturb the alternation).
-    var groupOf = { CreatorX:['🏆','Organized · CreatorX'], Milestone:['🏆','Organized'], Exchange:['💱','Exchanges'],
-      University:['🎓','Universities'], 'Industry Event':['🏢','Industry'], Speaker:['🎤','Speaking'],
-      Partnership:['🤝','Partnerships'], Campaign:['📣','Campaigns'] };
-    var lastGroup = null, side = 0;
     grid.innerHTML = gallery.map(function (g, gi) {
-      if (g.hideCard) return ''; // shown in the milestone banner player instead of the timeline
-      var grp = groupOf[g.category] || ['✨', g.category || 'Events'];
-      var groupHTML = '';
-      if (grp[1] !== lastGroup) { lastGroup = grp[1]; groupHTML = '<div class="tl-group" data-group="' + esc(grp[1]) + '"><span><i>' + grp[0] + '</i>' + esc(grp[1]) + '</span></div>'; }
-      var sideCls = (side++ % 2 === 0) ? 'tl-l' : 'tl-r';
-      var col = badgeColor(catColors[g.category] || 'gold');
-      var c = counts(g), media = mediaOf(g);
-      // Cover slideshow uses only the images (videos play in the lightbox on click).
-      var imgSlides = [];
-      media.forEach(function (m, k) { if (m.kind === 'image') imgSlides.push({ src: m.src, mi: k }); });
-      // Video-only events have no photo cover — fall back to the first video's thumbnail.
-      if (!imgSlides.length) {
-        for (var vp = 0; vp < media.length; vp++) {
-          if (media[vp].kind === 'video') {
-            var poster = Util.videoPoster(media[vp].embed);
-            if (poster) { imgSlides.push({ src: poster, mi: vp, poster: true }); break; }
-          }
-        }
-      }
-      var slidesHTML = imgSlides.length
-        ? '<div class="tl-slides">' + imgSlides.map(function (o, si) {
-            return '<div class="tl-slide' + (si === 0 ? ' active' : '') + '" data-mi="' + o.mi + '">' +
-              '<img src="' + esc(o.poster ? o.src : Util.imageUrl(o.src)) + '" alt="' + esc(g.title) + '" loading="lazy"></div>';
-          }).join('') + '</div>'
-        : '';
-      var navHTML = imgSlides.length > 1
-        ? '<button class="tl-arrow tl-prev" aria-label="Previous photo">‹</button>' +
-          '<button class="tl-arrow tl-next" aria-label="Next photo">›</button>' +
-          '<div class="tl-dots">' + imgSlides.map(function (_, si) {
-            return '<span class="tl-cdot' + (si === 0 ? ' active' : '') + '" data-si="' + si + '"></span>';
-          }).join('') + '</div>'
-        : '';
-      var tags = (c.imgs ? '<span class="cat-badge" style="background:rgba(7,7,15,.7);color:#fff">📷 ' + c.imgs + '</span>' : '') +
-        (c.vids ? '<span class="cat-badge" style="background:rgba(255,59,59,.85);color:#fff">▶ ' + c.vids + '</span>' : '');
-      return groupHTML + '<div class="tl-item reveal ' + sideCls + '" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
-        '<div class="tl-dot"></div>' +
-        '<div class="tl-card gcard" data-gi="' + gi + '" role="button" tabindex="0" aria-label="Open gallery for ' + esc(g.title) + '">' +
-          '<div class="tl-cover">' + slidesHTML + navHTML +
-            '<div class="tl-tags">' + tags + '</div>' +
-            (g.milestone ? '<span class="tl-mile">🏆 Milestone</span>' : '') + '</div>' +
-          '<div class="tl-body">' +
-            (g.date ? '<div class="tl-date">' + esc(g.date) + '</div>' : '') +
-            '<h4>' + esc(g.title) + '</h4>' +
-            '<div class="event-meta">' +
-              '<span class="cat-badge" style="background:' + col + '22;color:' + col + '">' + esc(g.category) + '</span>' +
-              (g.role ? '<span class="cat-badge" style="background:var(--glass);color:var(--silver)">' + esc(g.role) + '</span>' : '') +
-              (g.location ? '<span class="cat-badge" style="background:var(--glass);color:var(--muted)">📍 ' + esc(g.location) + '</span>' : '') +
-            '</div>' +
-          '</div>' +
-        '</div></div>';
+      if (g.hideCard) return '';
+      var media = mediaOf(g), imgs = media.filter(function (m) { return m.kind === 'image'; }), nv = media.length - imgs.length;
+      var cover = imgs.length ? imgTag(imgs[0].src, '') : '';
+      if (!cover) { var v = media.filter(function (m) { return m.kind === 'video'; })[0]; var ps = v && Util.videoPoster(v.embed); if (ps) cover = '<img src="' + esc(ps) + '" alt="" loading="lazy" onerror="this.remove()">'; }
+      var counts = (imgs.length ? '<span>' + LI.image + imgs.length + '</span>' : '') + (nv ? '<span>' + LI.play + nv + '</span>' : '');
+      var meta = [g.category === 'Milestone' ? '' : g.category, clean(g.date)].filter(Boolean).join(', ');
+      return '<button type="button" class="ev" data-gi="' + gi + '" data-cat="' + esc(g.category) + '" data-role="' + esc((g.role || '').toLowerCase()) + '">' +
+        '<span class="ev-cover">' + cover + (g.milestone ? '<span class="ev-mile">Milestone</span>' : '') + '<span class="ev-count">' + counts + '</span></span>' +
+        (meta ? '<span class="ev-meta">' + esc(meta) + '</span>' : '') +
+        '<h3>' + esc(noEmoji(g.title).replace(/\s+—\s+/, ', ')) + '</h3>' +
+        '<span class="ev-role">' + esc([g.role, g.location].filter(Boolean).join(', ').replace(/\s*\/\s*/g, ' and ')) + '</span></button>';
     }).join('');
 
-    // Auto-rotating cover slideshows (staggered, pause on hover, reduced-motion aware).
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-    Array.prototype.forEach.call(grid.querySelectorAll('.tl-item'), function (item, gi) {
-      var cover = item.querySelector('.tl-cover'); if (!cover) return;
-      var slides = cover.querySelectorAll('.tl-slide');
-      var dots = cover.querySelectorAll('.tl-cdot');
-      if (slides.length < 2) return;
-      var idx = 0, timer = null;
-      function show(n) {
-        idx = (n + slides.length) % slides.length;
-        for (var k = 0; k < slides.length; k++) slides[k].classList.toggle('active', k === idx);
-        for (var d = 0; d < dots.length; d++) dots[d].classList.toggle('active', d === idx);
-      }
-      function stop() { if (timer) { clearInterval(timer); timer = null; } }
-      function start() { if (reduceMotion) return; stop(); timer = setInterval(function () { show(idx + 1); }, 3500); }
-      var prev = cover.querySelector('.tl-prev'), next = cover.querySelector('.tl-next');
-      if (prev) prev.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx - 1); start(); });
-      if (next) next.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(idx + 1); start(); });
-      Array.prototype.forEach.call(dots, function (dot) {
-        dot.addEventListener('click', function (e) { e.stopPropagation(); stop(); show(+dot.dataset.si); start(); });
-      });
-      cover.addEventListener('mouseenter', stop);
-      cover.addEventListener('mouseleave', start);
-      cover._activeMi = function () { var s = slides[idx]; return s ? +s.getAttribute('data-mi') : 0; };
-      setTimeout(start, 500 + gi * 500); // stagger so cards don't flip in unison
+    // Portrait phone screenshots (Spaces, AMAs) show whole instead of cropped.
+    grid.querySelectorAll('.ev-cover img').forEach(function (img) {
+      function check() { if (img.naturalHeight > img.naturalWidth * 1.55) img.parentNode.classList.add('tall'); }
+      if (img.complete && img.naturalWidth) check(); else img.addEventListener('load', check, { once: true });
     });
 
-    // Mobile: show only the first few events until "Show all" is tapped (CSS only applies <=700px).
-    var MOBILE_EVENTS = 4;
-    var evItems = grid.querySelectorAll('.tl-item');
-    if (evItems.length > MOBILE_EVENTS + 1) {
-      var seen = 0;
-      Array.prototype.forEach.call(grid.children, function (el) {
-        if (el.classList.contains('tl-item')) { if (seen++ >= MOBILE_EVENTS) el.classList.add('ev-extra'); }
-        else if (el.classList.contains('tl-group') && seen >= MOBILE_EVENTS) el.classList.add('ev-extra'); // heading of a hidden section
-      });
-      grid.classList.add('ev-collapsed');
-      var moreBtn = document.createElement('button');
-      moreBtn.type = 'button'; moreBtn.className = 'btn btn-glass ev-more';
-      moreBtn.textContent = 'Show all ' + evItems.length + ' events';
-      grid.parentNode.insertBefore(moreBtn, grid.nextSibling);
-      moreBtn.addEventListener('click', function () { grid.classList.remove('ev-collapsed'); moreBtn.remove(); });
-      if (filtersEl) filtersEl.addEventListener('click', function () { grid.classList.remove('ev-collapsed'); moreBtn.remove(); });
-    }
-
-    // Filters from the categories actually present.
     if (filtersEl) {
       var cats = ['All'];
       gallery.forEach(function (g) { if (!g.hideCard && g.category && cats.indexOf(g.category) < 0) cats.push(g.category); });
+      if (cats.length < 3) filtersEl.style.display = 'none';
       filtersEl.innerHTML = cats.map(function (f, i) {
-        return '<button class="filter-btn' + (i === 0 ? ' active' : '') + '" data-filter="' + esc(f) + '">' + esc(f) + '</button>';
+        return '<button class="filter-btn' + (i ? '' : ' active') + '" aria-pressed="' + (i ? 'false' : 'true') + '" data-filter="' + esc(f) + '">' + esc(f === 'All' ? 'All events' : f) + '</button>';
       }).join('');
       filtersEl.addEventListener('click', function (ev) {
-        var btn = ev.target.closest('.filter-btn'); if (!btn) return;
-        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        var f = btn.dataset.filter.toLowerCase();
-        grid.querySelectorAll('.tl-item').forEach(function (item) {
-          var match = f === 'all' || (item.dataset.cat || '').toLowerCase() === f ||
-            (item.dataset.role || '').indexOf(f) > -1;
-          item.style.display = match ? '' : 'none';
+        var btn = ev.target.closest('.filter-btn'); if (!btn || btn.classList.contains('active')) return;
+        filtersEl.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', b === btn); });
+        var f = btn.dataset.filter.toLowerCase(), items = grid.querySelectorAll('.ev');
+        var flip = window.Flip && !reduceMotion ? Flip.getState(items) : null;
+        items.forEach(function (it) {
+          var match = f === 'all' || (it.dataset.cat || '').toLowerCase() === f || (it.dataset.role || '').indexOf(f) > -1;
+          it.style.display = match ? '' : 'none';
         });
-        grid.querySelectorAll('.tl-group').forEach(function (gl) { gl.style.display = f === 'all' ? '' : 'none'; });
+        grid.scrollLeft = 0;
+        if (flip) Flip.from(flip, { duration: 0.45, ease: 'power3.out', onEnter: function (els) { return gsap.fromTo(els, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power3.out' }); } });
       });
     }
 
-    // ---- Lightbox ----
-    var lb = document.getElementById('lightbox');
-    if (!lb) return;
-    var lbStage = document.getElementById('lbStage');
-    var lbThumbs = document.getElementById('lbThumbs');
-    var lbTitle = document.getElementById('lbTitle');
-    var lbCount = document.getElementById('lbCount');
-    var lbCaption = document.getElementById('lbCaption');
-    var curMedia = [], curIdx = 0, curTitle = '';
-
+    var lb = $('lightbox'), lbStage = $('lbStage'), lbThumbs = $('lbThumbs'), lbTitle = $('lbTitle'), lbCount = $('lbCount'), lbCaption = $('lbCaption');
+    var curMedia = [], curIdx = 0, curTitle = '', lastFocus = null;
     function renderStage() {
       var item = curMedia[curIdx]; if (!item) return;
-      var html;
       var pc = item.orient === 'portrait' ? ' class="lb-portrait"' : '';
-      if (item.kind === 'image') html = '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">';
-      else if (item.embed.type === 'iframe') html = '<iframe' + pc + ' src="' + esc(item.embed.src) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-      else html = '<video' + pc + ' src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
-      lbStage.innerHTML = html;
-      lbCount.textContent = (curIdx + 1) + ' / ' + curMedia.length;
-      if (lbCaption) { lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none'; }
+      lbStage.innerHTML = item.kind === 'image' ? '<img src="' + esc(Util.imageUrl(item.src)) + '" alt="' + esc(item.caption || curTitle) + '">'
+        : item.embed.type === 'iframe' ? '<iframe' + pc + ' src="' + esc(item.embed.src) + '" title="' + esc(curTitle) + '" allow="autoplay; fullscreen" allowfullscreen></iframe>'
+        : '<video' + pc + ' src="' + esc(item.embed.src) + '" controls autoplay playsinline></video>';
+      lbCount.textContent = (curIdx + 1) + ' of ' + curMedia.length;
+      lbCaption.textContent = item.caption || ''; lbCaption.style.display = item.caption ? '' : 'none';
       Array.prototype.forEach.call(lbThumbs.children, function (b, i) { b.classList.toggle('active', i === curIdx); });
-      var active = lbThumbs.children[curIdx];
-      if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+      var a = lbThumbs.children[curIdx]; if (a && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' });
     }
-    function openLightbox(gi, start) {
-      var g = gallery[gi]; curMedia = mediaOf(g);
-      if (!curMedia.length) return;
-      curIdx = (start && start < curMedia.length) ? start : 0; curTitle = g.title;
-      lbTitle.textContent = g.title + (g.location ? ' — ' + g.location : '');
+    function openLightbox(gi) {
+      var g = gallery[gi]; curMedia = mediaOf(g); if (!curMedia.length) return;
+      // Photos first: most people open an event to see who was there.
+      curMedia.sort(function (a, b) { return (a.kind === 'image' ? 0 : 1) - (b.kind === 'image' ? 0 : 1); });
+      curIdx = 0; curTitle = g.title; lastFocus = document.activeElement;
+      var t = noEmoji(g.title).replace(/\s+—\s+/, ', '), city = (g.location || '').split(',')[0].trim();
+      lbTitle.textContent = t + (city && t.indexOf(city) < 0 ? ', ' + g.location : '');
       lbThumbs.innerHTML = curMedia.map(function (m, i) {
-        var inner = m.kind === 'image' ? '<img src="' + esc(Util.imageUrl(m.src)) + '" alt="thumb ' + (i + 1) + '" loading="lazy">' : '<span class="vthumb">▶</span>';
-        return '<button data-i="' + i + '" aria-label="Item ' + (i + 1) + '">' + inner + '</button>';
+        return '<button data-i="' + i + '" aria-label="Item ' + (i + 1) + '">' + (m.kind === 'image' ? imgTag(m.src, '') : '<span class="vthumb">' + LI.play + '</span>') + '</button>';
       }).join('');
-      lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden'; renderStage();
+      lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+      renderStage(); $('lbClose').focus();
     }
     function closeLightbox() {
-      lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true');
-      lbStage.innerHTML = ''; document.body.style.overflow = '';
+      lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true'); lbStage.innerHTML = ''; document.body.style.overflow = '';
+      if (lastFocus) lastFocus.focus();
     }
-    function step(d) { if (!curMedia.length) return; curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); }
-
-    grid.addEventListener('click', function (e) {
-      if (e.target.closest('.tl-arrow') || e.target.closest('.tl-cdot')) return; // carousel controls, not open
-      var card = e.target.closest('.gcard'); if (!card) return;
-      var cover = card.querySelector('.tl-cover');
-      var start = (cover && cover._activeMi) ? cover._activeMi() : 0;
-      openLightbox(parseInt(card.dataset.gi, 10), start);
-    });
-    grid.addEventListener('keydown', function (e) {
-      var card = e.target.closest('.gcard'); if (!card) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(parseInt(card.dataset.gi, 10)); }
-    });
-    document.getElementById('lbClose').addEventListener('click', closeLightbox);
-    document.getElementById('lbPrev').addEventListener('click', function () { step(-1); });
-    document.getElementById('lbNext').addEventListener('click', function () { step(1); });
-    lbThumbs.addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      curIdx = parseInt(b.dataset.i, 10); renderStage();
-    });
+    function step(d) { if (curMedia.length) { curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); } }
+    grid.addEventListener('click', function (e) { var c = e.target.closest('.ev'); if (c) openLightbox(+c.dataset.gi); });
+    $('lbClose').addEventListener('click', closeLightbox);
+    $('lbPrev').addEventListener('click', function () { step(-1); });
+    $('lbNext').addEventListener('click', function () { step(1); });
+    lbThumbs.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { curIdx = +b.dataset.i; renderStage(); } });
     lb.addEventListener('click', function (e) { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', function (e) {
       if (!lb.classList.contains('open')) return;
-      if (e.key === 'Escape') closeLightbox();
-      else if (e.key === 'ArrowLeft') step(-1);
-      else if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'Escape') closeLightbox(); else if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1);
     });
+    // swipe between photos on touch screens
+    var sx = null;
+    lbStage.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    lbStage.addEventListener('touchend', function (e) { if (sx == null) return; var dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1); sx = null; });
   })();
 
   /* ---------- Affiliates ---------- */
-  document.getElementById('affGrid').innerHTML = Store.get('fazal_affiliates').filter(function (a) { return a.visible !== false; }).map(function (a) {
-    var affLogo = a.logo
-      ? '<div class="aff-logo" style="background:' + esc(a.color) + ';overflow:hidden;padding:0"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt="' + esc(a.name) + '" style="width:100%;height:100%;object-fit:cover"></div>'
-      : '<div class="aff-logo" style="background:' + esc(a.color) + '">' + esc(a.name[0]) + '</div>';
-    var affCta = liveUrl(a.url)
-      ? '<a class="btn btn-gold shimmer" href="' + esc(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>'
-      : '<span class="btn btn-glass" style="opacity:.55;cursor:default" aria-disabled="true">Link Coming Soon</span>';
-    return '<div class="card aff-card reveal tilt">' + affLogo +
-      '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p><p class="aff-offer">' + esc(a.offer) + '</p>' +
-      affCta + '</div>';
-  }).join('');
-
-  /* ---------- Social hub ---------- */
-  document.getElementById('socialGrid').innerHTML = social.map(function (s) {
-    var scount = clean(s.count);
-    return '<a class="card social-card reveal" href="' + esc(s.url) + '" ' + ext + ' aria-label="' + esc(s.platform) + '">' +
-      '<span style="color:' + esc(s.color) + '">' + iconFor(s.platform) + '</span>' +
-      '<span><span class="nm">' + esc(s.platform) + '</span><br><span class="hd">' + esc(s.handle) + (scount ? ' · ' + esc(scount) : '') + '</span></span></a>';
+  $('affGrid').innerHTML = visible(Store.get('fazal_affiliates')).map(function (a) {
+    var logo = a.logo ? '<span class="aff-logo" style="background:' + esc(a.color) + '"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt=""></span>'
+      : '<span class="aff-logo" style="background:' + esc(a.color) + '">' + esc((a.name || '?')[0]) + '</span>';
+    var live = liveUrl(a.url);
+    return '<div class="aff-card">' + logo + '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>' +
+      (live ? '<p class="aff-offer">' + esc(a.offer) + '</p><a class="btn btn-secondary" href="' + esc(clean(a.url)) + '" ' + ext + '>' + esc(a.cta) + '</a>' : '') + '</div>';
   }).join('');
 
   /* ---------- Testimonials ---------- */
-  document.getElementById('testGrid').innerHTML = Store.get('fazal_testimonials').filter(function (t) { return t.visible !== false; }).map(function (t) {
-    return '<div class="card test-card reveal"><p class="q">"' + esc(t.quote) + '"</p>' +
-      '<div class="test-author"><div class="test-avatar"' + (t.avatar ? ' style="background:none;overflow:hidden"' : '') + '>' +
-      (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="' + esc(t.name) + '" style="width:100%;height:100%;object-fit:cover">' : esc((t.name || '?')[0])) + '</div>' +
-      '<div><div class="n">' + esc(t.name) + '</div><div class="t">' + esc(t.title) + '</div></div></div></div>';
+  $('testGrid').innerHTML = visible(Store.get('fazal_testimonials')).map(function (t) {
+    return '<figure class="test-card"><blockquote class="q">“' + esc(t.quote) + '”</blockquote><figcaption class="test-author"><span class="test-avatar">' +
+      (t.avatar ? '<img src="' + esc(Util.imageUrl(t.avatar)) + '" alt="">' : esc((t.name || '?')[0])) + '</span>' +
+      '<span><span class="n">' + esc(t.name) + '</span><br><span class="t">' + esc(t.title) + '</span></span></figcaption></figure>';
   }).join('');
 
   /* ---------- Contact form → inquiries ----------
-     Delivery order:
-       1) Save the message straight into the admin "Inquiries" panel (Supabase).
-          This is the always-on path — Fazal reads every submission in the admin,
-          with full details (name, email, company, type, message, date, status).
-       2) If an email-notification service is configured (FAZAL.CONTACT_ENDPOINT,
-          e.g. Formspree), ping it too so an email also lands in his inbox.
-       3) Only if neither is available, fall back to opening the visitor's mail app. */
-  document.getElementById('contactForm').addEventListener('submit', function (e) {
+     1) Save to the admin "Inquiries" panel (Supabase).
+     2) Also ping FAZAL.CONTACT_ENDPOINT (e.g. Formspree) when configured.
+     3) If neither is available, open the visitor's mail app. */
+  $('contactForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var form = e.target, fd = new FormData(form), san = FAZAL.Util.sanitize;
     var entry = { name: san(fd.get('name')), email: san(fd.get('email')), company: san(fd.get('company')),
-      type: san(fd.get('type')), message: san(fd.get('message')),
-      status: 'New', ts: new Date().toISOString() };
-    var msg = document.getElementById('formMsg');
-    var endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim();
-
+      type: san(fd.get('type')), message: san(fd.get('message')), status: 'New', ts: new Date().toISOString() };
+    var msg = $('formMsg'), endpoint = (FAZAL.CONTACT_ENDPOINT || '').trim(), btn = form.querySelector('button[type=submit]');
     function openMail() {
-      var body = encodeURIComponent('Name: ' + entry.name + '\nEmail: ' + entry.email + '\nCompany: ' +
-        entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
-      window.location.href = 'mailto:' + p.email + '?subject=' +
-        encodeURIComponent('Website Inquiry — ' + entry.type) + '&body=' + body;
+      var body = encodeURIComponent('Name: ' + entry.name + '\nEmail: ' + entry.email + '\nCompany: ' + entry.company + '\nType: ' + entry.type + '\n\n' + entry.message);
+      window.location.href = 'mailto:' + p.email + '?subject=' + encodeURIComponent('Website inquiry: ' + entry.type) + '&body=' + body;
     }
-    function saved() {
-      msg.style.color = 'var(--emerald)';
-      msg.textContent = "✅ Message sent! It's saved to Fazal's inbox — he'll get back to you soon.";
-      form.reset();
-    }
-    function fallbackMail() {
-      msg.style.color = 'var(--emerald)'; msg.textContent = '✅ Opening your email app…';
-      openMail(); form.reset();
-    }
-
+    function done(text) { msg.textContent = text; form.reset(); btn.disabled = false; btn.textContent = 'Send message'; }
     if (Store.cloudEnabled || endpoint) {
-      msg.style.color = 'var(--silver)'; msg.textContent = 'Sending…';
+      btn.disabled = true; btn.textContent = 'Sending'; msg.textContent = '';
       var jobs = [];
       if (Store.cloudEnabled) jobs.push(Promise.resolve(Store.submitInquiry(entry)));
       if (endpoint) {
         var body = new FormData();
         Object.keys(entry).forEach(function (k) { if (k !== 'status' && k !== 'ts') body.append(k, entry[k]); });
-        jobs.push(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body })
-          .then(function (r) { if (!r.ok) throw new Error('bad status'); }));
+        jobs.push(fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: body }).then(function (r) { if (!r.ok) throw new Error('bad status'); }));
       }
       Promise.allSettled(jobs).then(function (res) {
-        if (res.some(function (r) { return r.status === 'fulfilled'; })) saved();
-        else fallbackMail();
+        if (res.some(function (r) { return r.status === 'fulfilled'; })) done('Message sent. Fazal will reply to ' + entry.email + '.');
+        else { done('Opening your email app to send it instead.'); openMail(); }
       });
-    } else {
-      fallbackMail();
-    }
+    } else { done('Opening your email app to send it.'); openMail(); }
   });
 
   /* ===================================================================
      INTERACTIONS
      =================================================================== */
-  // Nav scroll + scroll spy
-  var nav = document.getElementById('nav');
-  var navLinks = document.querySelectorAll('.nav-links a');
-  // Only track sections that have a matching nav tab, so the active tab stays
-  // lit while scrolling through in-between sections that have no tab of their own.
-  var navTargets = {};
-  navLinks.forEach(function (a) {
-    var id = (a.getAttribute('href') || '').replace('#', '');
-    if (id) navTargets[id] = true;
-  });
-  var sections = Array.prototype.filter.call(
-    document.querySelectorAll('main section'),
-    function (s) { return navTargets[s.id]; }
-  );
-  window.addEventListener('scroll', function () {
-    nav.classList.toggle('scrolled', window.scrollY > 40);
-    document.getElementById('progress').style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
-    var cur = '';
-    sections.forEach(function (s) { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
-    // Near the bottom of the page, force the last section active (short final
-    // sections may never cross the -120 threshold).
-    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4 && sections.length) {
-      cur = sections[sections.length - 1].id;
-    }
-    navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + cur); });
-  }, { passive: true });
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Mobile nav
-  var mob = document.getElementById('mobileNav'), burger = document.getElementById('burger');
-  function toggleMob(open) { mob.classList.toggle('open', open); burger.setAttribute('aria-expanded', open); mob.setAttribute('aria-hidden', !open); }
-  burger.addEventListener('click', function () { toggleMob(true); });
-  document.getElementById('mobileClose').addEventListener('click', function () { toggleMob(false); });
-  mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false); }); });
-
-  // Custom cursor
-  var cursor = document.getElementById('cursor');
-  if (window.matchMedia('(min-width:900px)').matches) {
-    document.addEventListener('mousemove', function (e) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
-    document.addEventListener('mouseover', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.add('big'); });
-    document.addEventListener('mouseout', function (e) { if (e.target.closest('a,button,.tilt')) cursor.classList.remove('big'); });
-  }
-
-  // Whole-section show/hide. Hidden sections are removed from flow (display:none),
-  // so the next section moves up naturally with no empty gap. Hero + contact are
-  // always shown (core); everything else is toggle-able from the admin.
-  (function applySectionVisibility() {
+  // Section + part visibility from admin
+  (function () {
     var vis = Store.get('fazal_sections') || {};
-    var toggleable = ['roles','stats','about','content','community','regional','experience',
-      'kol','network-tree','cases','services','events','affiliates','social','testimonials'];
-    toggleable.forEach(function (id) {
-      var hidden = vis[id] === false;
-      var el = document.getElementById(id);
+    ['roles','stats','about','content','community','regional','experience','kol','network-tree','cases','services','events','affiliates','social','testimonials'].forEach(function (id) {
+      var el = $(id), hidden = vis[id] === false || !!(el && el.dataset.empty);
       if (el) el.style.display = hidden ? 'none' : '';
-      // Also hide any nav link (desktop + mobile menu) pointing at a hidden
-      // section, so it doesn't become a dead link that scrolls nowhere.
-      document.querySelectorAll('.nav-links a[href="#' + id + '"], #mobileNav a[href="#' + id + '"]')
-        .forEach(function (a) {
-          var li = a.closest('li');
-          (li || a).style.display = hidden ? 'none' : '';
-        });
+      document.querySelectorAll('.nav-links a[href="#' + id + '"], #mobileNav a[href="#' + id + '"]').forEach(function (a) {
+        (a.closest('li') || a).style.display = hidden ? 'none' : '';
+      });
     });
-  })();
-
-  // Part-level show/hide. Individual pieces INSIDE a section (a heading, a
-  // tagline, a chip group) can be hidden without removing the whole section.
-  // Any element carrying data-block="<id>" is hidden when fazal_blocks[id]===false.
-  // Managed in admin → "Show / Hide" (Section Parts).
-  (function applyBlockVisibility() {
     var blocks = Store.get('fazal_blocks') || {};
-    document.querySelectorAll('[data-block]').forEach(function (el) {
-      if (blocks[el.getAttribute('data-block')] === false) el.style.display = 'none';
-    });
+    document.querySelectorAll('[data-block]').forEach(function (el) { if (blocks[el.getAttribute('data-block')] === false) el.style.display = 'none'; });
   })();
 
-  // Reveal on scroll
-  var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  initChrome.spy();
 
-  // Count-up
-  var counted = new IntersectionObserver(function (entries) {
-    entries.forEach(function (en) {
-      if (!en.isIntersecting) return;
-      var el = en.target, raw = el.dataset.count;
-      var num = parseFloat(raw.replace(/[^0-9.]/g, '')); var suffix = raw.replace(/[0-9.,]/g, '');
-      var hasComma = raw.indexOf(',') > -1;
-      if (isNaN(num)) { el.textContent = raw; counted.unobserve(el); return; }
-      var start = 0, dur = 1600, t0 = null;
-      function step(ts) { if (!t0) t0 = ts; var prog = Math.min((ts - t0) / dur, 1);
-        var eased = 1 - Math.pow(1 - prog, 3); var val = Math.floor(eased * num);
-        el.textContent = (hasComma ? val.toLocaleString() : val) + suffix;
-        if (prog < 1) requestAnimationFrame(step); }
-      requestAnimationFrame(step); counted.unobserve(el);
-    });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('[data-count]').forEach(function (el) { counted.observe(el); });
-
-  // 3D tilt
-  document.querySelectorAll('.tilt').forEach(function (card) {
-    card.addEventListener('mousemove', function (e) {
-      var r = card.getBoundingClientRect();
-      var rx = ((e.clientY - r.top) / r.height - 0.5) * -8;
-      var ry = ((e.clientX - r.left) / r.width - 0.5) * 8;
-      card.style.transform = 'perspective(800px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-4px)';
-      card.style.borderColor = 'rgba(242,169,0,.4)';
-    });
-    card.addEventListener('mouseleave', function () { card.style.transform = ''; card.style.borderColor = ''; });
-  });
-
-  // Particle canvas
-  var canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
-  var particles = [], W, H;
-  function resize() { W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
-  resize(); window.addEventListener('resize', resize);
-  for (var i = 0; i < 70; i++) particles.push({ x: Math.random() * W, y: Math.random() * H,
-    vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, r: Math.random() * 1.8 + 0.4 });
-  function drawParticles() {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach(function (pt) {
-      pt.x += pt.vx; pt.y += pt.vy;
-      if (pt.x < 0 || pt.x > W) pt.vx *= -1; if (pt.y < 0 || pt.y > H) pt.vy *= -1;
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 6.283);
-      ctx.fillStyle = 'rgba(242,169,0,0.5)'; ctx.fill();
-    });
-    requestAnimationFrame(drawParticles);
+  // The contact dock steps aside while the contact section or footer is on screen
+  var dock = $('dock');
+  if (dock && 'IntersectionObserver' in window) {
+    var onScreen = new Set();
+    var dio = new IntersectionObserver(function (ens) {
+      ens.forEach(function (en) { if (en.isIntersecting) onScreen.add(en.target); else onScreen.delete(en.target); });
+      dock.classList.toggle('away', onScreen.size > 0);
+    }, { threshold: 0.15 });
+    [$('contact'), document.querySelector('footer'), $('hero')].forEach(function (el) { if (el) dio.observe(el); });
   }
-  if (!window.matchMedia('(prefers-reduced-motion:reduce)').matches) drawParticles();
 
-  // Parallax hero photo (subtle)
-  window.addEventListener('scroll', function () {
-    var hp = document.querySelector('.hero-photo-wrap');
-    if (hp && window.scrollY < window.innerHeight) hp.style.transform = 'translateY(' + window.scrollY * 0.12 + 'px)';
-  }, { passive: true });
-
-  // GSAP scroll polish (progressive enhancement)
-  if (window.gsap && window.ScrollTrigger) {
-    gsap.registerPlugin(ScrollTrigger);
-    gsap.utils.toArray('.sec-title').forEach(function (t) {
-      gsap.from(t, { scrollTrigger: { trigger: t, start: 'top 85%' }, y: 30, opacity: 0, duration: 0.8 });
+  /* ---------- Motion (GSAP). Everything is visible without it. ----------
+     Set up after load so it never competes with the first paint. Scroll-based
+     moments use IntersectionObserver (cheap) instead of ScrollTrigger. */
+  function whenSeen(el, fn, margin) {
+    if (!el || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (ens) {
+      if (ens.some(function (en) { return en.isIntersecting; })) { io.disconnect(); fn(); }
+    }, { rootMargin: margin || '0px 0px -10% 0px' });
+    io.observe(el);
+  }
+  function startMotion() {
+    if (!window.gsap) return;
+    if (window.Flip) gsap.registerPlugin(Flip);
+    var mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', function () {
+      // Figures count up once, the first time the band is on screen
+      var counters = document.querySelectorAll('[data-count]');
+      var band = $('statsGrid');
+      if (counters.length && band && band.getBoundingClientRect().top > window.innerHeight) {
+        var jobs = [];
+        counters.forEach(function (el) {
+          var raw = el.dataset.count, num = parseFloat(raw.replace(/[^0-9.]/g, ''));
+          if (isNaN(num) || num < 10) return;
+          var pre = raw.match(/^[^0-9]*/)[0], suf = raw.replace(/^[^0-9]*[0-9.,]+/, ''), comma = raw.indexOf(',') > -1;
+          jobs.push({ el: el, num: num, fmt: function (v) { return pre + (comma ? v.toLocaleString('en-US') : v) + suf; } });
+        });
+        jobs.forEach(function (j) { j.el.textContent = j.fmt(0); });
+        whenSeen(band, function () {
+          jobs.forEach(function (j) {
+            var o = { v: 0 };
+            gsap.to(o, { v: j.num, duration: 1.4, ease: 'power2.out', onUpdate: function () { j.el.textContent = j.fmt(Math.round(o.v)); } });
+          });
+        });
+      }
+      // Network wall: faces arrive in one wave from the middle
+      var wall = $('ntWall');
+      if (wall && wall.children.length && wall.getBoundingClientRect().top > window.innerHeight) {
+        var chips = gsap.utils.toArray(wall.children);
+        gsap.set(chips, { autoAlpha: 0, scale: 0.8 });
+        whenSeen(wall, function () {
+          gsap.to(chips, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'power3.out', stagger: { amount: 0.7, grid: 'auto', from: 'center' } });
+        });
+      }
+    });
+    // On desktop the pass follows the pointer a little, like a badge on a lanyard
+    mm.add('(prefers-reduced-motion: no-preference) and (hover: hover) and (min-width: 901px)', function () {
+      var pass = $('pass'), hero = $('hero'); if (!pass || !hero) return;
+      gsap.set(pass, { transformOrigin: '50% 0%' });
+      var rot = gsap.quickTo(pass, 'rotation', { duration: 0.8, ease: 'power3.out' });
+      function move(e) { var r = hero.getBoundingClientRect(); rot(((e.clientX - r.left) / r.width - 0.5) * 5); }
+      function leave() { rot(0); }
+      hero.addEventListener('pointermove', move); hero.addEventListener('pointerleave', leave);
+      return function () { hero.removeEventListener('pointermove', move); hero.removeEventListener('pointerleave', leave); };
     });
   }
+  function idle(fn) { (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(fn, { timeout: 1500 }); }
+  if (document.readyState === 'complete') idle(startMotion);
+  else window.addEventListener('load', function () { idle(startMotion); }, { once: true });
 })();
