@@ -37,6 +37,21 @@
     mob.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { toggleMob(false); }); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mob.classList.contains('open')) toggleMob(false); });
 
+    // Light / dark toggle. The choice is remembered; without one, the device setting decides.
+    var root = document.documentElement, meta = document.querySelector('meta[name=theme-color]');
+    function setTheme(t, save) {
+      root.dataset.theme = t;
+      if (meta) meta.content = t === 'dark' ? '#0D1310' : '#F3F4F1';
+      document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+        b.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      });
+      if (save) { try { localStorage.setItem('fe-theme', t); } catch (e) {} }
+    }
+    setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light', false);
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () { setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark', true); });
+    });
+
   }
   initChrome();
 
@@ -228,22 +243,48 @@
       '<td>' + esc(clean(r.reach) || '') + '</td><td>' + dots(r.communities) + '</td><td>' + dots(r.languages) + '</td></tr>';
   }).join('');
 
+  /* ---------- Company logos (official files in assets/logos) ---------- */
+  var ORG_LOGO = { creatorx: 'creatorx.png', efsane: 'efsane.png', 'efsane project': 'efsane.png',
+    syndicate: 'syndicate.png', 'elyon chain': 'elyon.png', elyon: 'elyon.png' };
+  function orgLogo(name, cls) {
+    var f = ORG_LOGO[String(name || '').toLowerCase().trim()];
+    return f ? '<img class="' + (cls || 'org-logo') + (f === 'efsane.png' ? ' lg-round' : '') + '" src="assets/logos/' + f + '" alt="" width="40" height="40" loading="lazy">' : '';
+  }
+
   /* ---------- Experience ---------- */
   $('expList').innerHTML = visible(Store.get('fazal_experience')).map(function (e) {
     var on = /active/i.test(e.status);
-    return '<article class="exp"><div class="exp-when">' + esc(e.start) + ' – ' + esc(e.end) + '</div>' +
-      '<div class="exp-body"><h3>' + esc(e.company) + '</h3><p class="exp-role">' + esc(e.role) + '</p>' +
+    var when = clean(e.start) ? esc(e.start) + ' – ' + esc(clean(e.end) || 'Present') : (on ? 'Current role' : '');
+    var name = liveUrl(e.url) ? '<a href="' + esc(clean(e.url)) + '" ' + ext + '>' + esc(e.company) + '</a>' : esc(e.company);
+    return '<article class="exp"><div class="exp-when">' + when + '</div>' +
+      '<div class="exp-body"><h3 class="exp-name">' + orgLogo(e.company) + '<span>' + name + '</span></h3><p class="exp-role">' + esc(e.role) + '</p>' +
       '<ul class="exp-metrics">' + (e.metrics || []).map(function (m) { return '<li>' + esc(noEmoji(m)) + '</li>'; }).join('') + '</ul>' +
-      '<details class="more"><summary>What I did ' + LI.plus + '</summary><p>' + esc(e.desc) + '</p></details></div>' +
+      (clean(e.desc) ? '<details class="more"><summary>What I did ' + LI.plus + '</summary><p>' + esc(e.desc) + '</p></details>' : '') + '</div>' +
       '<span class="status' + (on ? ' on' : '') + '"><i></i>' + esc(on ? 'Current' : e.status) + '</span></article>';
   }).join('');
 
   /* ---------- Case studies ---------- */
+  var openEventByTitle = function () {};
+  // Real photos from events that belong to a case (matched by name) act as proof.
+  function proofFor(name) {
+    var key = String(name || '').toLowerCase().trim(); if (!key) return '';
+    var evs = visible(Store.get('fazal_gallery')).filter(function (g) {
+      return String(g.title || '').toLowerCase().indexOf(key) > -1 && (g.media || []).some(function (m) { return m.type !== 'video'; });
+    }).slice(0, 4);
+    if (!evs.length) return '';
+    var cities = [];
+    evs.forEach(function (g) { var c = String(g.location || '').split(',')[0].trim(); if (c && c !== 'Pakistan' && cities.indexOf(c) < 0) cities.push(c); });
+    return '<div class="proof"><p class="proof-l">On the ground' + (cities.length ? ': ' + esc(name) + ' events in ' + esc(cities.join(', ')) : '') + '</p><div class="proof-row">' +
+      evs.map(function (g) {
+        var img = (g.media || []).filter(function (m) { return m.type !== 'video'; })[0];
+        return '<button type="button" class="proof-ph" data-ev="' + esc(g.title) + '" aria-label="Photos: ' + esc(noEmoji(g.title)) + '">' + imgTag(img.src, '') + '</button>';
+      }).join('') + '</div></div>';
+  }
   $('caseList').innerHTML = visible(Store.get('fazal_casestudies')).map(function (c) {
     var tp = String(c.title || '').split(/\s+[—–-]\s+/), cname = tp[0], cstat = tp.slice(1).join(' — ');
     var cm = cstat.match(/^([\d.,]+\s*[KMB]?\+?)\s*(?:→|->|to)\s*([\d.,]+\s*[KMB]?\+?)/i);
     var statHTML = cm ? esc(cm[1].trim()) + '<span class="arr">→</span>' + esc(cm[2].trim()) : esc(cstat);
-    return '<article class="case"><div><p class="case-badge">' + esc(c.badge) + '</p><h3>' + esc(cname) + '</h3>' +
+    return '<article class="case"><div><p class="case-badge">' + esc(c.badge) + '</p><h3 class="exp-name">' + orgLogo(cname) + '<span>' + esc(cname) + '</span></h3>' +
       (cstat ? '<p class="case-stat">' + statHTML + '</p>' : '') + '</div>' +
       '<div><ul class="metrics">' + (c.metrics || []).map(function (m) { return '<li>' + esc(noEmoji(m)) + '</li>'; }).join('') + '</ul>' +
       '<details class="more"><summary>Challenge, strategy, results ' + LI.plus + '</summary>' +
@@ -251,8 +292,9 @@
       '<p class="case-block"><strong>Strategy.</strong> ' + esc(c.strategy) + '</p>' +
       '<p class="case-block"><strong>Results.</strong> ' + esc(c.results) + '</p></details>' +
       (liveUrl(c.proofUrl) ? '<a class="link case-proof" href="' + esc(clean(c.proofUrl)) + '" ' + ext + '>See the proof</a>' : '') +
-      '</div></article>';
+      proofFor(cname) + '</div></article>';
   }).join('');
+  $('caseList').addEventListener('click', function (e) { var b = e.target.closest('.proof-ph'); if (b) openEventByTitle(b.getAttribute('data-ev')); });
 
   /* ---------- KOL ---------- */
   var kol = Store.get('fazal_kol_network') || { services: [], partners: [], markets: [] };
@@ -276,7 +318,9 @@
     if (!nt || !wall) return;
     var people = visible(nt.people);
     if (!people.length) { $('network-tree').dataset.empty = '1'; return; }
-    $('ntIntro').textContent = nt.intro || '';
+    // Short default line; an intro edited in admin still wins.
+    var ntDef = ((Store.defaults || {}).fazal_network_tree || {}).intro;
+    $('ntIntro').textContent = (nt.intro && nt.intro !== ntDef) ? nt.intro : 'Founders, creators, exchange teams and community leaders. Tap a face to see who.';
     $('ntCount').textContent = people.length + ' people and counting';
     function thumbOf(x) { return Util.imageUrl(x.thumb || x.photo || ''); }
     function fullOf(x) { return Util.imageUrl(x.photo || x.thumb || ''); }
@@ -311,7 +355,8 @@
   /* ---------- Services ---------- */
   (function () {
     var svc = Store.get('fazal_services'); if (!svc) return;
-    $('servicesIntro').textContent = svc.intro || '';
+    var svcDef = ((Store.defaults || {}).fazal_services || {}).intro;
+    $('servicesIntro').textContent = (svc.intro && svc.intro !== svcDef) ? svc.intro : 'Four ways to work together. Every engagement starts with your goals.';
     $('servicesGrid').innerHTML = visible(svc.items).map(function (s) {
       var pts = (s.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
       return '<article class="svc"><div><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p></div>' +
@@ -443,6 +488,9 @@
     }
     function step(d) { if (curMedia.length) { curIdx = (curIdx + d + curMedia.length) % curMedia.length; renderStage(); } }
     grid.addEventListener('click', function (e) { var c = e.target.closest('.ev'); if (c) openLightbox(+c.dataset.gi); });
+    openEventByTitle = function (title) {
+      for (var i = 0; i < gallery.length; i++) if (gallery[i].title === title) { openLightbox(i); return; }
+    };
     $('lbClose').addEventListener('click', closeLightbox);
     $('lbPrev').addEventListener('click', function () { step(-1); });
     $('lbNext').addEventListener('click', function () { step(1); });
@@ -459,8 +507,19 @@
   })();
 
   /* ---------- Affiliates ---------- */
+  function svgFrom(sel) { var el = document.querySelector(sel); return el ? el.innerHTML : ''; }
+  var AFF_MARK = {
+    binance: { bg: '#1E2026', fg: '#F0B90B', html: svgFrom('.lg-binance') },
+    okx: { bg: '#000', fg: '#fff', html: svgFrom('.lg-okx') },
+    bitget: { bg: '#00F0FF', fg: '#000', html: '<img src="assets/logos/bitget.png" alt="">' },
+    bybit: { bg: '#17181E', fg: '#fff', html: '<img src="assets/logos/bybit.png" alt="">' },
+    mexc: { bg: '#fff', fg: '#000', html: '<img src="assets/logos/mexc.png" alt="" style="width:70%;height:70%;object-fit:contain">' },
+    bingx: { bg: '#2A54FF', fg: '#fff', html: '<img src="assets/logos/bingx.png" alt="">' }
+  };
   $('affGrid').innerHTML = visible(Store.get('fazal_affiliates')).map(function (a) {
+    var mark = AFF_MARK[(a.name || '').toLowerCase()];
     var logo = a.logo ? '<span class="aff-logo" style="background:' + esc(a.color) + '"><img src="' + esc(Util.imageUrl(a.logo)) + '" alt=""></span>'
+      : mark ? '<span class="aff-logo" style="background:' + mark.bg + ';color:' + mark.fg + '">' + mark.html + '</span>'
       : '<span class="aff-logo" style="background:' + esc(a.color) + '">' + esc((a.name || '?')[0]) + '</span>';
     var live = liveUrl(a.url);
     return '<div class="aff-card">' + logo + '<h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>' +
@@ -528,6 +587,7 @@
 
   // The contact dock steps aside while the contact section or footer is on screen
   var dock = $('dock');
+  if (dock && !('IntersectionObserver' in window)) dock.classList.remove('away');
   if (dock && 'IntersectionObserver' in window) {
     var onScreen = new Set();
     var dio = new IntersectionObserver(function (ens) {

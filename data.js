@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-07-02-hide-kol';
+  var DATA_VERSION = '2026-11-28b-experience-elyon-syndicate';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -91,6 +91,20 @@
     ],
 
     fazal_experience: [
+      {
+        company: 'Elyon Chain', role: 'Community Manager + KOL Manager, South Asia', status: 'Active',
+        start: 'Sep 2026', end: 'Present', accent: 'gold', url: 'https://x.com/Elyon_Chain',
+        desc: "Running Elyon Chain's community and its KOL program across South Asia.",
+        metrics: [], skills: ['Community Management', 'KOL Management', 'South Asia'],
+        featured: true
+      },
+      {
+        company: 'Syndicate', role: 'Inner Circle Team', status: 'Completed',
+        start: 'Jun 2026', end: 'Aug 2026', accent: 'emerald', url: 'https://x.com/sndcapp',
+        desc: "Three months on Syndicate's Inner Circle team.",
+        metrics: [], skills: [],
+        featured: false
+      },
       {
         company: 'CreatorX', role: 'KOL Manager + Pakistan Regional Lead', status: 'Active',
         start: 'Jun 2025', end: 'Present', accent: 'gold',
