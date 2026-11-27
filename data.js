@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-11-28b-experience-elyon-syndicate';
+  var DATA_VERSION = '2026-11-28c-creator-youtube';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -375,6 +375,7 @@
     fazal_services: {
       intro: "Whether you're launching a token, entering the South Asian market, or scaling a Web3 community — here's how we can work together. Every engagement starts with your goals, not a template.",
       items: [
+        { icon: 'video', title: 'Sponsored Videos for Pakistan', tagline: 'Reach Pakistani crypto users through my YouTube channels and community, in Urdu and English.', points: ['Dedicated or integrated YouTube video', 'Telegram and WhatsApp community push', 'Step-by-step guides that drive real sign-ups'], ideal: 'Exchanges, wallets and projects that want a trusted Pakistani voice.', cta: 'Book a video', visible: true },
         { icon: 'kol', title: 'KOL Campaign Management', tagline: 'End-to-end creator campaigns that convert reach into real, sticky users.', points: ['Creator vetting & deal negotiation', 'Multi-platform briefs & delivery tracking', 'Full analytics & conversion attribution'], ideal: 'Projects launching a token, airdrop, or testnet that need genuine reach — not Sybil farming.', cta: 'Start a Campaign', visible: true },
         { icon: 'growth', title: 'Web3 Growth & GTM Strategy', tagline: 'Go-to-market architecture, tokenomics input, and growth loops built to last.', points: ['Airdrop & incentive mechanics design', 'Community architecture & growth loops', 'GTM roadmap with measurable KPIs'], ideal: 'Early-stage protocols that need a growth strategy grounded in real on-the-ground experience.', cta: 'Build a Growth Plan', visible: true },
         { icon: 'region', title: 'Regional Market Entry — South Asia', tagline: 'Your gateway to Pakistan, India & Bangladesh — localized, not translated.', points: ['Localized community operations', 'Regional KOL & ambassador programs', 'Market-entry strategy across 5 markets'], ideal: 'Global projects that want authentic traction in the high-engagement South Asian Web3 market.', cta: 'Enter the SA Market', visible: true },
@@ -389,8 +390,8 @@
     },
 
     fazal_social: [
-      { platform: 'YouTube (Main)', url: 'https://www.youtube.com/@LearningHubByFazal', handle: '@LearningHubByFazal', color: '#FF0000', count: '[YT_SUBSCRIBERS]', visible: true },
-      { platform: 'YouTube (Lab)', url: 'https://www.youtube.com/@fazalcryptolab', handle: '@fazalcryptolab', color: '#FF0000', count: '[YT_LAB_SUBSCRIBERS]', visible: true },
+      { platform: 'YouTube (Main)', url: 'https://www.youtube.com/@LearningHubByFazal', handle: '@LearningHubByFazal', color: '#FF0000', count: '9.5K subscribers', visible: true },
+      { platform: 'YouTube (Lab)', url: 'https://www.youtube.com/@fazalcryptolab', handle: '@fazalcryptolab', color: '#FF0000', count: '', visible: false } /* hidden: @fazalcryptolab returns 404 (Nov 2026) */,
       { platform: 'Telegram Channel', url: 'https://t.me/cryptowithfazal', handle: '@cryptowithfazal', color: '#2AABEE', count: '[TG_CHANNEL_MEMBERS]', visible: true },
       { platform: 'Telegram Group', url: 'https://t.me/cryptowithfazaldiscussion', handle: '@cryptowithfazaldiscussion', color: '#2AABEE', count: '[TG_GROUP_MEMBERS]', visible: true },
       { platform: 'Twitter / X', url: 'https://x.com/fazalelahi21', handle: '@fazalelahi21', color: '#FFFFFF', count: '', visible: true },
@@ -415,13 +416,13 @@
 
     fazal_content: {
       channels: [
-        { name: 'Learning Hub By Fazal', url: 'https://www.youtube.com/@LearningHubByFazal', desc: 'The main education hub. Step-by-step airdrop guides, testnet tutorials, DeFi walkthroughs, and Web3 opportunities — all for free, no investment required.', subs: '[YT_SUBSCRIBERS]' },
-        { name: 'Fazal Crypto Lab', url: 'https://www.youtube.com/@fazalcryptolab', desc: 'Quick hits, alpha drops, scam alerts, and real-time Web3 updates. Stay ahead of the curve.', subs: '[YT_LAB_SUBSCRIBERS]' }
+        { name: 'Learning Hub By Fazal', url: 'https://www.youtube.com/@LearningHubByFazal', desc: 'The main channel: airdrop and testnet guides, crypto card reviews and project breakdowns for Pakistani viewers. Free, no investment needed.', subs: '9.5K' },
+        { name: 'Fazal Crypto Lab', url: 'https://www.youtube.com/@fazalcryptolab', desc: 'Quick hits, alpha drops, scam alerts, and real-time Web3 updates. Stay ahead of the curve.', subs: '[YT_LAB_SUBSCRIBERS]', visible: false }
       ],
-      videos: ['[YOUTUBE_VIDEO_ID_1]', '[YOUTUBE_VIDEO_ID_2]', '[YOUTUBE_VIDEO_ID_3]'],
+      videos: ['-jiVDItbKKs', 'AoEOZwi4HoI', 'Xr2vICC9sFI'],
       pillars: ['📦 Airdrops','🧪 Testnets','🏦 DeFi','🛡️ Scam Alerts','💱 Exchange Reviews','🌐 Web3 Tools','📊 Market Updates','🎓 Beginner Guides'],
       hashtags: ['#cryptoairdrops','#web3marketing','#testnetairdrops','#cryptocommunity','#LearningHubByFazal','#DeFi','#blockchain','#MarketAnalysis'],
-      frequency: 'Fresh crypto content. Airdrop guides. Testnet tutorials. Scam alerts. Every week.'
+      frequency: '1,400+ videos on airdrops, crypto cards, exchanges and project reviews, made for a Pakistani audience.'
     },
 
     fazal_keywords: [
@@ -528,7 +529,7 @@
        Defaults below hide "Learn With Me" (content), "Reputation"
        (testimonials) per client request 2026-07-01, and "The KOL Network"
        (kol) per client request 2026-07-02 — flip back on in admin. */
-    fazal_sections: { content: false, testimonials: false, kol: false },
+    fazal_sections: { testimonials: false, kol: false },
 
     /* Part-level show/hide (pieces INSIDE a section). Map of block id → boolean.
        false = that piece is hidden on the public site. Managed in admin →

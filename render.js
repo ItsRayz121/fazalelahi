@@ -205,18 +205,30 @@
   $('contentSub').textContent = content.frequency || '';
   $('channels').innerHTML = visible(content.channels).map(function (c) {
     var subs = clean(c.subs);
-    return '<div class="channel-card"><span class="yt">' + ICON.youtube + '</span><h3>' + esc(c.name) + '</h3><p>' + esc(c.desc) + '</p>' +
-      (subs ? '<p class="num">' + esc(subs) + ' subscribers</p>' : '') +
-      '<a class="btn btn-secondary" href="' + esc(c.url) + '" ' + ext + '>Subscribe</a></div>';
+    return '<div class="channel-card"><span class="yt">' + ICON.youtube + '</span><h3>' + esc(c.name) + '</h3>' +
+      (subs ? '<p class="subs num">' + esc(subs) + '<small>subscribers</small></p>' : '') + '<p>' + esc(c.desc) + '</p>' +
+      '<a class="btn btn-secondary" href="' + esc(c.url) + '" ' + ext + '>Watch on YouTube</a></div>';
   }).join('');
-  var liveVideos = (content.videos || []).map(function (v) { return Util.videoEmbed(v); })
-    .filter(function (em) { return em.type === 'iframe' || em.type === 'video'; });
-  if (liveVideos.length) {
-    $('videos').innerHTML = liveVideos.map(function (em, i) {
-      var inner = em.type === 'iframe'
-        ? '<iframe src="' + esc(em.src) + '" title="Video ' + (i + 1) + '" allowfullscreen loading="lazy"></iframe>'
-        : '<video src="' + esc(em.src) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>';
-      return '<div class="video-card"><div class="frame">' + inner + '</div><p class="vt">Latest upload ' + (i + 1) + '</p></div>';
+  $('channels').classList.toggle('single', $('channels').children.length === 1);
+  // Video cards: thumbnail + title, opening on YouTube (no heavy embeds on the page).
+  // Admin can store a plain video ID or any YouTube link.
+  var VIDEO_TITLES = {
+    '-jiVDItbKKs': 'Bitget Wallet Card full guide: setup and ambassador program',
+    'AoEOZwi4HoI': 'Open a USD Visa crypto card for $0 (SpendNet guide)',
+    'Xr2vICC9sFI': 'Mypal crypto card review: spend USDT worldwide'
+  };
+  function ytId(v) {
+    v = String(v || '').trim(); if (!v || /\[/.test(v)) return null;
+    var m = v.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/|live\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(v) ? v : null);
+  }
+  var vids = (content.videos || []).map(ytId).filter(Boolean);
+  if (vids.length) {
+    $('videos').innerHTML = vids.map(function (id) {
+      var t = VIDEO_TITLES[id] || 'Watch on YouTube';
+      return '<a class="video-card" href="https://www.youtube.com/watch?v=' + id + '" ' + ext + ' aria-label="' + esc(t) + ' (opens YouTube)">' +
+        '<span class="frame"><img src="https://i.ytimg.com/vi/' + id + '/hqdefault.jpg" alt="" loading="lazy" decoding="async">' +
+        '<span class="mv-play">' + LI.play + '</span></span><span class="vt">' + esc(t) + '</span></a>';
     }).join('');
   } else $('videos').style.display = 'none';
   $('pillars').innerHTML = shown('pillars', content.pillars).map(function (t) { return '<span class="chip">' + esc(noEmoji(t)) + '</span>'; }).join('');
@@ -356,7 +368,7 @@
   (function () {
     var svc = Store.get('fazal_services'); if (!svc) return;
     var svcDef = ((Store.defaults || {}).fazal_services || {}).intro;
-    $('servicesIntro').textContent = (svc.intro && svc.intro !== svcDef) ? svc.intro : 'Four ways to work together. Every engagement starts with your goals.';
+    $('servicesIntro').textContent = (svc.intro && svc.intro !== svcDef) ? svc.intro : 'Two sides of my work: growing your project, and putting it in front of Pakistani crypto users.';
     $('servicesGrid').innerHTML = visible(svc.items).map(function (s) {
       var pts = (s.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
       return '<article class="svc"><div><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p></div>' +
@@ -371,10 +383,21 @@
   /* ---------- Milestone video player ---------- */
   (function () {
     var host = $('milestoneVideos'); if (!host) return;
-    var vids = visible(Store.get('fazal_gallery')).filter(function (g) { return g.bannerVideo; }).map(function (g) {
+    var allG = visible(Store.get('fazal_gallery'));
+    function firstImg(g) { var m = (g.media || []).filter(function (x) { return x.type !== 'video'; })[0]; return m ? thumbSrc(m.src) : ''; }
+    // Cover = a local photo from this event, or from another event sharing the same video.
+    // The Google Drive thumbnail often fails to load, so it is only a last resort.
+    function localPhotoFor(g, src) {
+      var own = firstImg(g); if (own) return own;
+      for (var i = 0; i < allG.length; i++) {
+        if (allG[i] !== g && (allG[i].media || []).some(function (x) { return x.type === 'video' && x.src === src; })) { var o = firstImg(allG[i]); if (o) return o; }
+      }
+      return '';
+    }
+    var vids = allG.filter(function (g) { return g.bannerVideo; }).map(function (g) {
       var vm = (g.media || []).filter(function (m) { return m.type === 'video'; })[0]; if (!vm) return null;
       var embed = Util.videoEmbed(vm.src); if (embed.type === 'none') return null;
-      return { label: noEmoji(g.bannerLabel || g.title).replace(/\s+—\s+/, ', '), title: g.title, embed: embed, poster: Util.videoPoster(embed) };
+      return { label: noEmoji(g.bannerLabel || g.title).replace(/\s+—\s+/, ', '), title: g.title, embed: embed, poster: localPhotoFor(g, vm.src) || Util.videoPoster(embed) };
     }).filter(Boolean);
     if (!vids.length) { host.style.display = 'none'; return; }
     host.innerHTML = (vids.length > 1 ? '<div class="mv-tabs" role="tablist">' + vids.map(function (v, i) {

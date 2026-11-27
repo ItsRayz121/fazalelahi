@@ -8,7 +8,9 @@
 <title>Fazal Elahi — Crypto Educator, Content Creator & Web3 Growth Specialist | Pakistan</title>
 <meta name="description" content="Fazal Elahi is a Pakistani crypto educator and Web3 growth lead. KOL campaigns, ambassador programs and market entry for projects coming to Pakistan, India and Bangladesh. 460K+ users reached.">
 <link rel="canonical" href="https://fazalelahi.vercel.app/">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Open Graph -->
 <meta property="og:title" content="Fazal Elahi — Web3 growth across South Asia">
@@ -42,7 +44,6 @@
   "address": { "@type": "PostalAddress", "addressCountry": "PK" },
   "sameAs": [
     "https://www.youtube.com/@LearningHubByFazal",
-    "https://www.youtube.com/@fazalcryptolab",
     "https://t.me/cryptowithfazal",
     "https://x.com/fazalelahi21",
     "https://www.linkedin.com/in/fazal-elahi-bb59a8212",
@@ -243,8 +244,8 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .print img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px}
 .print figcaption{font-size:12px;line-height:1;color:#45514A;padding:9px 2px 10px}
 .print figcaption{text-align:right}
-.print-a{width:300px;top:200px;right:-118px;transform:rotate(4deg)}
-.print-b{width:250px;top:470px;right:-104px;transform:rotate(-3deg)}
+.print-a{width:300px;top:250px;right:-118px;transform:rotate(4deg)}
+.print-b{width:250px;top:520px;right:-104px;transform:rotate(-3deg)}
 .print-c{display:none}
 .print{animation:printIn .7s var(--ease) backwards}
 .print-a{animation-delay:.55s}.print-b{animation-delay:.7s}
@@ -253,7 +254,7 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 @media (min-width:1300px) and (max-width:1439px){.print-a{width:270px;right:-64px}.print-b{width:230px;right:-52px}}
 @media (max-width:1299px){.print{display:none}}
 .pass{position:relative;width:min(340px,100%);display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;will-change:transform}
-.pass-strap{width:36px;height:clamp(96px,10vw,132px);background:var(--green);position:relative;overflow:hidden;
+.pass-strap{width:36px;height:clamp(170px,14vw,204px);background:var(--green);position:relative;overflow:hidden;
   border-radius:0 0 4px 4px;box-shadow:inset 6px 0 0 rgba(0,0,0,.12),inset -6px 0 0 rgba(255,255,255,.06)}
 .pass-strap span{position:absolute;left:50%;bottom:8px;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;white-space:nowrap;
   font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.75)}
@@ -341,6 +342,14 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .about-photo figcaption{position:absolute;left:12px;bottom:12px;right:12px;font-size:13px;color:#fff;
   background:rgba(11,34,22,.72);padding:8px 12px;border-radius:8px;width:fit-content}
 .about-text h2{font-size:clamp(34px,4.6vw,60px);letter-spacing:-.03em;margin-bottom:24px}
+.journey{margin:8px 0 8px;position:relative}
+.journey::before{content:'';position:absolute;left:5px;top:10px;bottom:24px;width:2px;background:var(--line)}
+.journey li{position:relative;padding:0 0 20px 32px;display:flex;flex-direction:column;gap:2px}
+.journey li::before{content:'';position:absolute;left:0;top:6px;width:12px;height:12px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 2px var(--line-strong)}
+.journey .j-now::before{background:var(--accent);box-shadow:0 0 0 4px var(--green-tint)}
+.j-k{font-size:14px;color:var(--muted)}
+.journey strong{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:-.01em;line-height:1.25}
+.journey li>span:last-child:not(.j-k){color:var(--ink2);font-size:16px}
 .pullquote{font-family:var(--display);font-weight:400;font-size:clamp(22px,2.4vw,30px);line-height:1.3;letter-spacing:-.015em;
   color:var(--ink);margin-bottom:24px;max-width:26ch}
 .about-text>p{color:var(--ink2);max-width:62ch}
@@ -608,7 +617,16 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 @media (max-width:860px){.comm-grid{grid-template-columns:1fr}}
 
 /* ============================ CONTENT ============================ */
-.channels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:32px}
+.channels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin-bottom:32px}
+.channels.single .channel-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 24px}
+.channels.single .channel-card>p:not(.subs){grid-column:2}
+@media (max-width:700px){.channels.single .channel-card{display:flex;align-items:flex-start}}
+@media (max-width:640px){
+  .videos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-inline:calc(-1 * var(--pad));padding-inline:var(--pad);scroll-padding-inline:var(--pad);scrollbar-width:none}
+  .videos::-webkit-scrollbar{display:none}
+  .video-card{flex:0 0 82%;scroll-snap-align:start}
+  #hashtags{display:none}
+}
 .channel-card{display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:var(--r);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
 .channel-card .yt{width:40px;height:40px;color:#E5484D}
 .channel-card .yt svg{width:32px;height:32px}
@@ -616,7 +634,15 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .channel-card p{color:var(--ink2);font-size:16px}
 .channel-card .btn{align-self:flex-start;margin-top:8px}
 .videos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:32px}
-.video-card .frame{aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
+.video-card{display:block}
+.video-card .frame{position:relative;display:block;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
+.video-card .frame img{width:100%;height:100%;object-fit:cover;transition:opacity .16s var(--ease)}
+.video-card .frame::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--img-ring)}
+.video-card:hover .frame img{opacity:.9}
+.video-card .mv-play{width:56px;height:56px}
+.video-card .vt{display:block;font-weight:500;font-size:16px;color:var(--ink);line-height:1.35;margin-top:10px}
+.channel-card .subs{font-family:var(--display);font-weight:600;font-size:28px;letter-spacing:-.02em;color:var(--ink)}
+.channel-card .subs small{font-family:var(--text);font-weight:400;font-size:15px;color:var(--muted);margin-left:6px}
 .video-card iframe{width:100%;height:100%;border:0}
 .video-card .vt{font-size:15px;color:var(--ink2);margin-top:8px}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -758,10 +784,10 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
     <ul class="nav-links">
       <li><a href="#cases">Results</a></li>
       <li><a href="#services">Services</a></li>
+      <li><a href="#content">Videos</a></li>
       <li><a href="#events">Events</a></li>
       <li><a href="#network-tree">Network</a></li>
       <li><a href="#about">About</a></li>
-      <li><a href="#community">Learn</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
     <div class="nav-end">
@@ -783,6 +809,7 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
   <div class="mnav-links">
     <a href="#cases">Results<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
     <a href="#services">Services<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
+    <a href="#content">Videos<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
     <a href="#events">Events<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
     <a href="#network-tree">Network<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
     <a href="#about">About<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></a>
@@ -807,7 +834,7 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
         <span class="now-l">Leading community and KOLs for Elyon Chain</span><span class="now-s">Community and KOL lead, Elyon Chain</span>
       </a>
       <h1 id="heroHeadline"><span class="line">I grow Web3</span> <span class="line">communities across</span> <span class="line">South Asia</span></h1>
-      <p class="hero-sub" id="heroSub">KOL campaigns, ambassador programs and market entry for Web3 projects launching in Pakistan, India and Bangladesh. Most recently: CreatorX from 10K to 310K users.</p>
+      <p class="hero-sub" id="heroSub">Growth lead and crypto YouTuber from Pakistan. Projects hire me for KOL campaigns and market entry; brands hire me to reach Pakistani crypto users. Most recently: CreatorX from 10K to 310K users.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#contact">Discuss your project</a>
         <a class="btn btn-secondary" href="#cases">See results</a>
@@ -838,17 +865,17 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
         <figcaption>Panel, LUMS</figcaption>
       </figure>
       <div class="pass" id="pass">
-        <div class="pass-strap" aria-hidden="true"><span>Learning Hub</span></div>
+        <div class="pass-strap" aria-hidden="true"><span>Learning Hub by Fazal</span></div>
         <div class="pass-clip" aria-hidden="true"></div>
         <figure class="pass-card">
           <span class="pass-slot" aria-hidden="true"></span>
           <div class="pass-band"><span>Web3 growth lead</span><span>South Asia</span></div>
           <img class="pass-photo" id="heroPhoto" src="fazal-720.jpg" width="720" height="1080" alt="Fazal Elahi in a CreatorX shirt and blazer" fetchpriority="high">
-          <figcaption class="pass-id"><strong>Fazal Elahi</strong><span>KOL manager and Pakistan regional lead, CreatorX</span></figcaption>
+          <figcaption class="pass-id"><strong>Fazal Elahi</strong><span>Growth lead, KOL and crypto YouTuber, Pakistan</span></figcaption>
           <dl class="pass-facts">
             <div><dt>Reached</dt><dd>460K+</dd></div>
             <div><dt>Events</dt><dd>17+</dd></div>
-            <div><dt>Markets</dt><dd>5</dd></div>
+            <div><dt>YouTube</dt><dd>9.5K</dd></div>
           </dl>
         </figure>
       </div>
@@ -891,6 +918,23 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
     <div class="svc-foot">
       <a class="btn btn-primary" href="#contact">Start a conversation</a>
       <p>Taking new projects now.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTENT / YT ============ -->
+<section id="content" style="padding-top:0">
+  <div class="wrap">
+    <div class="head">
+      <h2>On YouTube</h2>
+      <p id="contentSub"></p>
+    </div>
+    <div class="channels" id="channels"></div>
+    <div class="videos" id="videos"></div>
+    <div data-block="content.pillars">
+      <h3 class="pillars-h">What I cover</h3>
+      <div class="chip-row" id="pillars"></div>
+      <div class="chip-row" id="hashtags"></div>
     </div>
   </div>
 </section>
@@ -949,14 +993,20 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
 <section id="about" style="padding-top:0">
   <div class="wrap about-grid">
     <figure class="about-photo">
-      <img id="aboutPhoto" src="assets/events/creatorx-lahore/creatorx-lahore-1-t.jpg" width="720" height="405" alt="Fazal working at a laptop at a full CreatorX event in Lahore" loading="lazy">
-      <figcaption>CreatorX event, Lahore</figcaption>
+      <img id="aboutPhoto" src="assets/events/creatorx-sukkur/creatorx-sukkur-1-t.jpg" width="720" height="1080" alt="Fazal with a guest at the CreatorX event in Sukkur" loading="lazy">
+      <figcaption>CreatorX event, Sukkur</figcaption>
     </figure>
     <div class="about-text">
-      <h2>How I got here</h2>
-      <p class="pullquote">I didn’t learn crypto from a textbook. I learned it hunting airdrops, one project at a time.</p>
-      <p id="bio1"></p>
-      <details class="more"><summary>Read the rest <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary><p id="bio2"></p><p id="bio3"></p></details>
+      <h2>From airdrop hunter to growth lead</h2>
+      <p class="pullquote">I didn’t learn Web3 from textbooks. I learned it building, running and growing communities, one project after another.</p>
+      <ol class="journey">
+        <li><span class="j-k">Where it started</span><strong>Airdrop hunter</strong><span>Learned how token rewards work, and what keeps users around after the hype.</span></li>
+        <li><span class="j-k">Learning Hub by Fazal</span><strong>1,400+ free videos</strong><span>Crypto education on YouTube for Pakistani beginners, no investment needed.</span></li>
+        <li><span class="j-k">Efsane, 2025</span><strong>0 to 150K community in 6 months</strong><span>Designed the airdrop and referral mechanics behind it.</span></li>
+        <li><span class="j-k">CreatorX, 2025</span><strong>10K to 310K users</strong><span>KOL manager and Pakistan regional lead, with events in Lahore, Multan and Sukkur.</span></li>
+        <li class="j-now"><span class="j-k">Elyon Chain, now</span><strong>Community and KOLs across South Asia</strong></li>
+      </ol>
+      <details class="more"><summary>Read the full story <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary><p id="bio1"></p><p id="bio2"></p><p id="bio3"></p></details>
       <dl class="facts" id="aboutCred"></dl>
       <div class="tag-cloud" id="tagCloud" hidden></div>
       <a class="btn btn-secondary" id="cvBtn" target="_blank" rel="noopener noreferrer">Download CV</a>
@@ -1017,23 +1067,6 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
     </div>
     <div class="comm-grid" id="commGrid"></div>
     <div class="feat-strip" id="featStrip"></div>
-  </div>
-</section>
-
-<!-- ============ CONTENT / YT ============ -->
-<section id="content">
-  <div class="wrap">
-    <div class="head">
-      <h2>Learn with me</h2>
-      <p id="contentSub"></p>
-    </div>
-    <div class="channels" id="channels"></div>
-    <div class="videos" id="videos"></div>
-    <div data-block="content.pillars">
-      <h3 class="pillars-h">What I cover</h3>
-      <div class="chip-row" id="pillars"></div>
-      <div class="chip-row" id="hashtags"></div>
-    </div>
   </div>
 </section>
 
