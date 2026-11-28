@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-11-28d-copy-pass';
+  var DATA_VERSION = '2026-11-28e-audit';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -60,7 +60,7 @@
       email: 'fazalelahi5577@gmail.com',
       phone: '+92 309 8336810',
       whatsapp: 'https://wa.me/923098336810',
-      linkedin: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      linkedin: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212',
       location: 'Pakistan (UTC+5)',
       availability: '50–60 hrs/week',
       cvUrl: '[CV_DOWNLOAD_URL]',
@@ -398,7 +398,7 @@
       { platform: 'Facebook', url: 'https://web.facebook.com/profile.php?id=61577253396008', handle: 'Fazal Elahi', color: '#1877F2', count: '', visible: true },
       { platform: 'WhatsApp Channel', url: 'https://whatsapp.com/channel/0029VbBen9b6rsQjOXrL1a18', handle: 'Fazal Crypto Lab', color: '#25D366', count: '[WA_CHANNEL_FOLLOWERS]', visible: true },
       { platform: 'Linktree', url: 'https://linktr.ee/LearningHubByFazal_1', handle: 'LearningHubByFazal_1', color: '#43E55E', count: '', visible: true },
-      { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212?utm_source=share_via&utm_content=profile&utm_medium=member_android', handle: 'fazal-elahi', color: '#0A66C2', count: '', visible: true }
+      { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/fazal-elahi-bb59a8212', handle: 'fazal-elahi', color: '#0A66C2', count: '', visible: true }
     ],
 
     fazal_affiliates: [
@@ -436,8 +436,8 @@
     fazal_inquiries: [],
 
     fazal_settings: {
-      title: 'Fazal Elahi — Crypto Educator, Content Creator & Web3 Growth Specialist | Pakistan',
-      description: 'Fazal Elahi is a Pakistani crypto educator, content creator, and Web3 growth specialist. Learn crypto airdrops and testnets for free. KOL Manager. Pakistan Ambassador. 460K+ users scaled.',
+      title: 'Fazal Elahi: Crypto Educator & Web3 Growth Lead, Pakistan',
+      description: 'Pakistani crypto educator and Web3 growth lead, 460K+ users reached. KOL campaigns, ambassador programs and market entry in Pakistan, India and Bangladesh.',
       footerTagline: 'Crypto education and Web3 growth, from Pakistan.',
       maintenance: false,
       showDisclaimer: true,
