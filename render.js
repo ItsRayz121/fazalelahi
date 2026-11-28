@@ -401,7 +401,8 @@
     // Accessible name must contain the visible short label (WCAG 2.5.3)
     function nameFor(s) {
       var sh = shortOf(s), t = s.title || '';
-      return t.toLowerCase().indexOf(sh.toLowerCase()) > -1 ? t : sh + ': ' + t;
+      function words(x) { return ' ' + x.toLowerCase().replace(/[^a-z0-9&]+/g, ' ').trim() + ' '; }   // whole-word match
+      return words(t).indexOf(words(sh)) > -1 ? t : sh + ': ' + t;
     }
     function shortOf(s) {
       if (s.short) return s.short;
