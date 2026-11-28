@@ -211,7 +211,11 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:48px}
 .hero-partners{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 24px;padding-top:24px;border-top:1px solid var(--line);max-width:640px}
 .hero-partners>span{font-size:14px;color:var(--muted);flex:0 0 100%}
-.hero-partners ul{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px}
+.hero-partners ul{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;width:100%}
+@media (max-width:600px){
+  .hero-partners ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+  .hero-partners li{font-size:16px;min-width:0}
+}
 .hero-partners li{display:inline-flex;align-items:center;gap:8px;height:32px;font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:-.01em;color:var(--ink)}
 .lg{width:26px;height:26px;border-radius:7px;flex:none;display:grid;place-items:center;overflow:hidden}
 .lg svg{width:16px;height:16px}
@@ -241,17 +245,22 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 /* Event prints staged behind the pass: proof that he is in the room */
 .print{position:absolute;z-index:1;margin:0;background:#fff;padding:8px 8px 0;border-radius:6px;
   box-shadow:0 1px 0 rgba(15,26,20,.04),0 18px 40px -14px rgba(15,26,20,.35),0 0 0 1px rgba(15,26,20,.06)}
-.print img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px}
-.print figcaption{font-size:12px;line-height:1;color:#45514A;padding:9px 2px 10px}
-.print figcaption{text-align:right}
-.print-a{width:300px;top:250px;right:-118px;transform:rotate(4deg)}
-.print-b{width:250px;top:520px;right:-104px;transform:rotate(-3deg)}
+.print{display:block;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.print img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px}
+.print-cap{display:block;font-size:12px;line-height:1;color:#45514A;padding:9px 2px 10px;text-align:right}
+.print-a{width:270px;top:250px;right:-124px;transform:rotate(4deg)}
+.print-b{width:230px;top:520px;right:-124px;transform:rotate(-3deg)}
+/* hover or focus brings the photo in front of the pass, straightened */
+.print:hover,.print:focus-visible{z-index:3;transform:rotate(0) translateX(-24px) scale(1.04);
+  box-shadow:0 1px 0 rgba(15,26,20,.04),0 28px 56px -16px rgba(15,26,20,.45),0 0 0 1px rgba(15,26,20,.08)}
+.print:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.print{transition:none}}
 .print-c{display:none}
 .print{animation:printIn .7s var(--ease) backwards}
 .print-a{animation-delay:.55s}.print-b{animation-delay:.7s}
 @keyframes printIn{from{opacity:0;translate:-24px 0}}
 @media (min-width:1300px){.hero-visual{justify-content:flex-start}}
-@media (min-width:1300px) and (max-width:1439px){.print-a{width:270px;right:-64px}.print-b{width:230px;right:-52px}}
+@media (min-width:1300px) and (max-width:1439px){.print-a{width:230px;right:-60px}.print-b{width:200px;right:-60px}}
 @media (max-width:1299px){.print{display:none}}
 .pass{position:relative;width:min(340px,100%);display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;will-change:transform}
 .pass-strap{width:36px;height:clamp(170px,14vw,204px);background:var(--green);position:relative;overflow:hidden;
@@ -856,14 +865,14 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
       </div>
     </div>
     <div class="hero-visual">
-      <figure class="print print-a" aria-hidden="true">
+      <a class="print print-a" href="#events" data-ev="CreatorX First Event — Lahore" aria-label="Photos: CreatorX event, Lahore">
         <img src="assets/events/creatorx-lahore/creatorx-lahore-1-t.jpg" alt="" width="720" height="405" loading="lazy" decoding="async">
-        <figcaption>CreatorX, Lahore</figcaption>
-      </figure>
-      <figure class="print print-b" aria-hidden="true">
+        <span class="print-cap">CreatorX, Lahore</span>
+      </a>
+      <a class="print print-b" href="#events" data-ev="LUMS Event" aria-label="Photos: panel at LUMS">
         <img src="assets/events/lums/lums-1-t.jpg" alt="" width="720" height="540" loading="lazy" decoding="async">
-        <figcaption>Panel, LUMS</figcaption>
-      </figure>
+        <span class="print-cap">Panel, LUMS</span>
+      </a>
       <div class="pass" id="pass">
         <div class="pass-strap" aria-hidden="true"><span>Learning Hub by Fazal</span></div>
         <div class="pass-clip" aria-hidden="true"></div>

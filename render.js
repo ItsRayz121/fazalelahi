@@ -307,6 +307,10 @@
       proofFor(cname) + '</div></article>';
   }).join('');
   $('caseList').addEventListener('click', function (e) { var b = e.target.closest('.proof-ph'); if (b) openEventByTitle(b.getAttribute('data-ev')); });
+  // hero event prints open that event's photos; without JS they just jump to #events
+  document.querySelectorAll('.print[data-ev]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); openEventByTitle(a.getAttribute('data-ev')); });
+  });
 
   /* ---------- KOL ---------- */
   var kol = Store.get('fazal_kol_network') || { services: [], partners: [], markets: [] };
