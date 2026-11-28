@@ -388,7 +388,8 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 /* ============================ CASES ============================ */
 .case{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);padding:clamp(32px,4vw,48px) 0;border-top:1px solid var(--line)}
 .case:last-child{border-bottom:1px solid var(--line)}
-.case-badge{font-size:14px;color:var(--muted);margin-bottom:8px}
+.case-badge{font-size:14px;color:var(--muted);margin-bottom:8px;overflow-wrap:anywhere}
+.case-stat{overflow-wrap:anywhere}
 .case h3{font-size:clamp(26px,2.6vw,34px);letter-spacing:-.02em}
 .case-stat{font-family:var(--display);font-weight:500;font-size:clamp(52px,8vw,112px);line-height:.95;letter-spacing:-.045em;
   color:var(--accent);margin-top:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -409,7 +410,7 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .proof-ph img{width:100%;height:100%;object-fit:cover;transition:opacity .16s var(--ease)}
 .proof-ph::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--img-ring)}
 .proof-ph:hover img{opacity:.85}
-@media (max-width:860px){.case{grid-template-columns:1fr}.case-stat{font-size:clamp(48px,15vw,72px)}}
+@media (max-width:860px){.case{grid-template-columns:minmax(0,1fr)}.case-stat{font-size:clamp(48px,15vw,72px)}}
 
 /* ============================ EXPERIENCE ============================ */
 .exp{display:grid;grid-template-columns:180px minmax(0,1fr) auto;gap:16px clamp(24px,4vw,56px);padding:32px 0;border-top:1px solid var(--line)}
@@ -417,6 +418,7 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .exp-when{font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:6px}
 .exp h3{font-size:clamp(24px,2.4vw,30px)}
 .exp-name{display:flex;align-items:center;gap:12px}
+.exp-name>span{min-width:0;overflow-wrap:anywhere}
 .exp-name a{text-decoration:underline;text-decoration-color:var(--line-strong);text-decoration-thickness:1px;text-underline-offset:5px}
 .exp-name a:hover{text-decoration-color:currentColor}
 .org-logo{width:36px;height:36px;border-radius:9px;flex:none;object-fit:cover;box-shadow:0 0 0 1px var(--line)}
@@ -735,7 +737,7 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 .aff-card .btn{margin-top:auto}
 .disclaimer{margin-top:24px;font-size:14px;color:var(--muted);max-width:70ch}
 @media (max-width:980px){.aff-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:640px){.aff-grid{gap:12px}.aff-card{padding:16px}.aff-card p:not(.aff-offer){display:none}.aff-card h3{font-size:19px}}
+@media (max-width:640px){.aff-grid{gap:12px}.aff-card{padding:16px}.aff-card p:not(.aff-offer){display:none}.aff-card h3{font-size:19px}.aff-card .btn{white-space:normal;text-align:center;padding-inline:12px;line-height:1.2}}
 
 /* ============================ SOCIAL ============================ */
 #social{padding-top:0}
@@ -1071,7 +1073,7 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
     </figure>
     <div class="about-text">
       <h2>From airdrop hunter to growth lead</h2>
-      <p class="pullquote">I didn’t learn Web3 from textbooks. I learned it building, running and growing communities, one project after another.</p>
+      <p class="pullquote">I learned Web3 by building, running and growing communities, one project after another.</p>
       <ol class="journey">
         <li><span class="j-k">Where it started</span><strong>Airdrop hunter</strong><span>Learned how token rewards work, and what keeps users around after the hype.</span></li>
         <li><span class="j-k">Learning Hub by Fazal</span><strong>1,400+ free videos</strong><span>Crypto education on YouTube for Pakistani beginners, no investment needed.</span></li>
@@ -1249,7 +1251,17 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
 <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="data.js?v=20261127"></script>
+<script defer src="data.js?v=20261128d"></script>
 <script defer src="render.js?v=20261128b"></script>
+<!-- Vercel Web Analytics + Speed Insights (cookieless). Production host only, so local/preview runs stay quiet. -->
+<script>
+if (location.hostname === 'fazalelahi.xyz' || location.hostname === 'www.fazalelahi.xyz') {
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js'].forEach(function (src) {
+    var s = document.createElement('script'); s.defer = true; s.src = src; document.body.appendChild(s);
+  });
+}
+</script>
 </body>
 </html>

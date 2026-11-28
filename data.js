@@ -37,7 +37,7 @@
      content changes; on load, a version mismatch re-seeds the cached content
      keys from DEFAULTS so everyone picks up the update. Format: date + note.
      ===================================================================== */
-  var DATA_VERSION = '2026-11-28c-creator-youtube';
+  var DATA_VERSION = '2026-11-28d-copy-pass';
 
   var sb = null, cloudEnabled = false;
   try {
@@ -351,9 +351,9 @@
 
     fazal_community: {
       cards: [
-        { platform: 'telegram', name: 'Crypto With Fazal', url: 'https://t.me/cryptowithfazal', count: '[TG_CHANNEL_MEMBERS]', desc: 'Daily airdrop alerts, testnet drops, Web3 alpha, and scam warnings. The pulse of the community.', cta: 'Join Channel', visible: true },
-        { platform: 'telegram', name: 'Community Discussion Group', url: 'https://t.me/cryptowithfazaldiscussion', count: '[TG_GROUP_MEMBERS]', desc: 'Ask questions, share finds, discuss projects. The most active crypto learning group in Pakistan.', cta: 'Join Discussion', visible: true },
-        { platform: 'whatsapp', name: 'Fazal Crypto Lab', url: 'https://whatsapp.com/channel/0029VbBen9b6rsQjOXrL1a18', count: '[WA_CHANNEL_FOLLOWERS]', desc: 'Safe crypto airdrops, testnets, and scam alerts — delivered to WhatsApp.', cta: 'Follow Channel', visible: true }
+        { platform: 'telegram', name: 'Crypto With Fazal', url: 'https://t.me/cryptowithfazal', count: '[TG_CHANNEL_MEMBERS]', desc: 'Daily airdrop alerts, testnet drops, Web3 alpha and scam warnings.', cta: 'Join Channel', visible: true },
+        { platform: 'telegram', name: 'Community Discussion Group', url: 'https://t.me/cryptowithfazaldiscussion', count: '[TG_GROUP_MEMBERS]', desc: 'Ask questions, share finds and talk through projects with other Pakistani crypto learners.', cta: 'Join Discussion', visible: true },
+        { platform: 'whatsapp', name: 'Fazal Crypto Lab', url: 'https://whatsapp.com/channel/0029VbBen9b6rsQjOXrL1a18', count: '[WA_CHANNEL_FOLLOWERS]', desc: 'Safe crypto airdrops, testnets and scam alerts, sent straight to WhatsApp.', cta: 'Follow Channel', visible: true }
       ],
       features: ['🌍 Active in 5 Countries', '🛡️ Scam Alert System', '📅 Daily Updates', '🤝 Real Engagement Only']
     },
@@ -376,16 +376,16 @@
       intro: "Whether you're launching a token, entering the South Asian market, or scaling a Web3 community — here's how we can work together. Every engagement starts with your goals, not a template.",
       items: [
         { icon: 'video', short: 'Sponsored videos', title: 'Sponsored Videos for Pakistan', tagline: 'Reach Pakistani crypto users through my YouTube channels and community, in Urdu and English.', points: ['Dedicated or integrated YouTube video', 'Telegram and WhatsApp community push', 'Step-by-step guides that drive real sign-ups'], ideal: 'Exchanges, wallets and projects that want a trusted Pakistani voice.', cta: 'Book a video', visible: true },
-        { icon: 'kol', short: 'KOL campaigns', title: 'KOL Campaign Management', tagline: 'End-to-end creator campaigns that convert reach into real, sticky users.', points: ['Creator vetting & deal negotiation', 'Multi-platform briefs & delivery tracking', 'Full analytics & conversion attribution'], ideal: 'Projects launching a token, airdrop, or testnet that need genuine reach — not Sybil farming.', cta: 'Start a Campaign', visible: true },
-        { icon: 'growth', short: 'Growth & GTM', title: 'Web3 Growth & GTM Strategy', tagline: 'Go-to-market architecture, tokenomics input, and growth loops built to last.', points: ['Airdrop & incentive mechanics design', 'Community architecture & growth loops', 'GTM roadmap with measurable KPIs'], ideal: 'Early-stage protocols that need a growth strategy grounded in real on-the-ground experience.', cta: 'Build a Growth Plan', visible: true },
-        { icon: 'region', short: 'South Asia entry', title: 'Regional Market Entry — South Asia', tagline: 'Your gateway to Pakistan, India & Bangladesh — localized, not translated.', points: ['Localized community operations', 'Regional KOL & ambassador programs', 'Market-entry strategy across 5 markets'], ideal: 'Global projects that want authentic traction in the high-engagement South Asian Web3 market.', cta: 'Enter the SA Market', visible: true },
+        { icon: 'kol', short: 'KOL campaigns', title: 'KOL Campaign Management', tagline: 'Creator campaigns run from vetting to reporting, aimed at users who stay after launch.', points: ['Creator vetting & deal negotiation', 'Multi-platform briefs & delivery tracking', 'Full analytics & conversion attribution'], ideal: 'Projects launching a token, airdrop or testnet that need real users and want Sybil farmers filtered out.', cta: 'Start a Campaign', visible: true },
+        { icon: 'growth', short: 'Growth & GTM', title: 'Web3 Growth & GTM Strategy', tagline: 'Go-to-market planning, tokenomics input and growth loops.', points: ['Airdrop & incentive mechanics design', 'Community architecture & growth loops', 'GTM roadmap with measurable KPIs'], ideal: 'Early-stage protocols that want a growth plan from someone who has run airdrops and referral programs.', cta: 'Build a Growth Plan', visible: true },
+        { icon: 'region', short: 'South Asia entry', title: 'Regional Market Entry: South Asia', tagline: 'Launch in Pakistan, India and Bangladesh with campaigns written for each market, in Urdu, Hindi and Bangla.', points: ['Localized community operations', 'Regional KOL & ambassador programs', 'Market-entry strategy across 5 markets'], ideal: 'Global projects that want real users in South Asia, one of the most active crypto regions.', cta: 'Plan a South Asia launch', visible: true },
         { icon: 'ambassador', short: 'Ambassador', title: 'Brand Ambassadorship & Education', tagline: 'A trusted regional face and educator for your protocol or exchange.', points: ['Long-term ambassador partnerships', 'Educational content & YouTube features', 'Event hosting & community AMAs'], ideal: 'Exchanges and protocols that want a credible, long-term voice in the region.', cta: 'Discuss a Partnership', visible: true }
       ],
       steps: [
-        { step: '01', title: 'Discovery Call', desc: 'We map your goals, timeline, and target markets — no generic pitch.' },
-        { step: '02', title: 'Tailored Proposal', desc: 'A clear scope, deliverables, and KPIs built around your launch.' },
-        { step: '03', title: 'Execution', desc: 'Hands-on campaign management with weekly progress visibility.' },
-        { step: '04', title: 'Report & Scale', desc: 'Transparent reporting, then we double down on what works.' }
+        { step: '01', title: 'Discovery Call', desc: 'We go through your goals, timeline and target markets.' },
+        { step: '02', title: 'Tailored Proposal', desc: 'A written scope with deliverables and KPIs for your launch.' },
+        { step: '03', title: 'Execution', desc: 'I manage the campaign and send you a progress update every week.' },
+        { step: '04', title: 'Report & Scale', desc: 'You get a full report, and we put more budget into what worked.' }
       ]
     },
 
@@ -402,10 +402,10 @@
     ],
 
     fazal_affiliates: [
-      { name: 'Binance', logo: '', color: '#F3BA2F', desc: "The world's #1 crypto exchange. Used by 200M+ traders globally.", offer: 'Get up to 20% fee discount with my referral link.', url: '[BINANCE_AFFILIATE_URL]', cta: 'Open Free Account', visible: true },
-      { name: 'OKX', logo: '', color: '#C9C9C9', desc: 'Professional-grade trading for serious crypto users.', offer: 'Exclusive sign-up bonus with my partner link.', url: '[OKX_AFFILIATE_URL]', cta: 'Join OKX', visible: true },
-      { name: 'Bitget', logo: '', color: '#00E5D0', desc: 'Leading copy-trading platform with deep liquidity.', offer: 'Welcome bonus + fee rebate via my link.', url: '[BITGET_AFFILIATE_URL]', cta: 'Join Bitget', visible: true },
-      { name: 'Bybit', logo: '', color: '#F7A600', desc: 'Fast, reliable derivatives & spot trading.', offer: 'Sign-up rewards with my partner link.', url: '[BYBIT_AFFILIATE_URL]', cta: 'Join Bybit', visible: true }
+      { name: 'Binance', logo: '', color: '#F3BA2F', desc: 'Spot, futures and P2P trading.', offer: 'Get up to 20% fee discount with my referral link.', url: '[BINANCE_AFFILIATE_URL]', cta: 'Open Free Account', visible: true },
+      { name: 'OKX', logo: '', color: '#C9C9C9', desc: 'Spot and futures trading, plus the OKX Web3 wallet.', offer: 'Exclusive sign-up bonus with my partner link.', url: '[OKX_AFFILIATE_URL]', cta: 'Join OKX', visible: true },
+      { name: 'Bitget', logo: '', color: '#00E5D0', desc: 'Copy trading: follow experienced traders and mirror their positions.', offer: 'Welcome bonus + fee rebate via my link.', url: '[BITGET_AFFILIATE_URL]', cta: 'Join Bitget', visible: true },
+      { name: 'Bybit', logo: '', color: '#F7A600', desc: 'Spot and derivatives trading.', offer: 'Sign-up rewards with my partner link.', url: '[BYBIT_AFFILIATE_URL]', cta: 'Join Bybit', visible: true }
     ],
 
     fazal_testimonials: [
@@ -438,7 +438,7 @@
     fazal_settings: {
       title: 'Fazal Elahi — Crypto Educator, Content Creator & Web3 Growth Specialist | Pakistan',
       description: 'Fazal Elahi is a Pakistani crypto educator, content creator, and Web3 growth specialist. Learn crypto airdrops and testnets for free. KOL Manager. Pakistan Ambassador. 460K+ users scaled.',
-      footerTagline: 'Educating. Building. Scaling. From Pakistan to the World.',
+      footerTagline: 'Crypto education and Web3 growth, from Pakistan.',
       maintenance: false,
       showDisclaimer: true,
       siteUrl: 'https://fazalelahi.xyz/',

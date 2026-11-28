@@ -13,6 +13,8 @@ A premium, educator-first personal brand site for **Fazal Elahi** (Crypto Educat
 | `classic.html` + `render-classic.js` | Frozen copy of the previous design (not linked; kept as a fallback) |
 | `assets/fonts/` | Self-hosted Bricolage Grotesque + Instrument Sans (latin, OFL) |
 | `og.jpg`, `favicon.svg` | Social share image (1200×630) and site icon |
+| `vercel.json` | Security headers (CSP, nosniff, frame blocking, referrer and permissions policy) and `noindex` for admin/classic pages |
+| `robots.txt`, `sitemap.xml` | Crawler rules (admin and classic pages blocked) and the sitemap for search engines |
 
 All of these are plain static files. **No build step, no server, no dependencies** (GSAP + Flip load from a CDN; the site still works if they fail).
 

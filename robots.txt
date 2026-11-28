@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /classic.html
+
+Sitemap: https://fazalelahi.xyz/sitemap.xml
