@@ -146,7 +146,7 @@
 
   /* ---------- Profile / about ---------- */
   var p = Store.get('fazal_profile') || {};
-  if (p.photo && clean(p.photo) && p.photo !== 'fazal.jpg') $('heroPhoto').src = Util.imageUrl(p.photo);
+  if (p.photo && clean(p.photo) && p.photo !== 'fazal.jpg') { $('heroPhoto').removeAttribute('srcset'); $('heroPhoto').src = Util.imageUrl(p.photo); }
   // Keep the new hero copy unless the sub-tagline was edited in admin.
   var defSub = ((Store.defaults || {}).fazal_profile || {}).subTagline;
   if (clean(p.subTagline) && p.subTagline !== defSub) $('heroSub').textContent = p.subTagline;
@@ -398,6 +398,11 @@
     // Contact-form topic each service pre-selects when its button is used
     var TOPIC = { video: 'Content Collaboration', kol: 'KOL Management', growth: 'Business Development', region: 'Pakistan Regional Partnership', ambassador: 'Ambassador Program' };
     function svg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (SVG[k] || SVG.generic) + '</svg>'; }
+    // Accessible name must contain the visible short label (WCAG 2.5.3)
+    function nameFor(s) {
+      var sh = shortOf(s), t = s.title || '';
+      return t.toLowerCase().indexOf(sh.toLowerCase()) > -1 ? t : sh + ': ' + t;
+    }
     function shortOf(s) {
       if (s.short) return s.short;
       var d = defaults.filter(function (x) { return x.title === s.title && x.short; })[0];
@@ -427,7 +432,7 @@
     var nodes = '';
     for (var k = 0; k < SLOTS; k++) {
       var it = items[k % N];
-      nodes += '<button type="button" class="svc-node" data-slot="' + k + '" aria-label="' + esc(it.title) + '">' +
+      nodes += '<button type="button" class="svc-node" data-slot="' + k + '" aria-label="' + esc(nameFor(it)) + '">' +
         '<svg class="svc-ring" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="34"/></svg>' +
         '<span class="svc-dot">' + svg(it.icon) + '</span><span class="svc-lbl" aria-hidden="true">' + esc(shortOf(it)) + '</span></button>';
     }
@@ -459,6 +464,11 @@
     function dist(slot, top) { return ((slot - top + SLOTS + SLOTS / 2) % SLOTS) - SLOTS / 2; }
     function layout() {
       var vert = phone.matches, w = stage.clientWidth;
+      if (vert !== stage.classList.contains('vert')) {
+        // Orientation flip: apply without the .9s spin, then restore transitions
+        stage.classList.add('snap');
+        requestAnimationFrame(function () { requestAnimationFrame(function () { stage.classList.remove('snap'); }); });
+      }
       stage.classList.toggle('vert', vert);
       dir = vert ? -1 : 1;   // phones roll top to bottom
       var R = vert ? Math.max(118, Math.min(200, w * 0.42)) : Math.max(140, Math.min(250, w / 2 - 64));
@@ -489,23 +499,26 @@
     }
 
     // Autoplay: a requestAnimationFrame timer that also fills the focus ring
-    var DUR = 4800, t = 0, last = null, hover = false, seen = false;
+    var DUR = 4800, t = 0, last = null, hover = false, focused = false, seen = false, raf = 0;
     var stopped = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     function setStopped(v) {
       stopped = v; t = 0;
       host.classList.toggle('paused', v);
       pauseBtn.setAttribute('aria-label', v ? 'Play rotation' : 'Pause rotation');
       live.setAttribute('aria-live', v ? 'polite' : 'off');
+      ring(0); run();
     }
     function ring(p) { var c = wheel.querySelector('.svc-node.on .svc-ring circle'); if (c) c.style.strokeDashoffset = CIRC * (1 - p); }
+    function live_() { return !stopped && !hover && !focused && seen; }
+    // Only keep the loop alive while the wheel is actually counting down
+    function run() { if (!raf && live_()) { last = null; raf = requestAnimationFrame(frame); } }
     function frame(now) {
-      var dt = last === null ? 0 : now - last; last = now;
-      if (!stopped && !hover && seen) {
-        t += dt;
-        if (t >= DUR) { t = 0; pos++; paint(); }
-      }
-      ring(stopped ? 0 : t / DUR);
-      requestAnimationFrame(frame);
+      if (!live_()) { raf = 0; return; }
+      var dt = last === null ? 0 : Math.min(now - last, 100); last = now;   // clamp after a background tab
+      t += dt;
+      if (t >= DUR) { t = 0; pos++; paint(); }
+      ring(t / DUR);
+      raf = requestAnimationFrame(frame);
     }
     function go(steps) { pos += steps; paint(); }
 
@@ -520,18 +533,23 @@
       go(+b.dataset.go); setStopped(true);
     });
     host.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') hover = true; });
-    host.addEventListener('pointerleave', function () { hover = false; });
-    host.addEventListener('focusin', function () { hover = true; });
-    host.addEventListener('focusout', function () { hover = false; });
+    host.addEventListener('pointerleave', function () { hover = false; run(); });
+    // Keyboard focus pauses; focus that comes from a tap or click does not
+    host.addEventListener('focusin', function (e) {
+      var kb = true; try { kb = e.target.matches(':focus-visible'); } catch (x) {}
+      focused = kb;
+    });
+    host.addEventListener('focusout', function (e) { if (!host.contains(e.relatedTarget)) { focused = false; run(); } });
+    // Any deliberate click/Enter is the visitor acting, so it ends the focus pause (lets Play resume)
+    host.addEventListener('click', function () { focused = false; run(); }, true);
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (ens) { seen = ens[0].isIntersecting; }, { threshold: 0.35 }).observe(host);
+      new IntersectionObserver(function (ens) { seen = ens[0].isIntersecting; run(); }, { threshold: 0.35 }).observe(host);
     } else seen = true;
     if (phone.addEventListener) phone.addEventListener('change', layout); else phone.addListener(layout);
     var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(layout, 120); });
 
-    setStopped(stopped);
     layout();
-    requestAnimationFrame(frame);
+    setStopped(stopped);
   }
 
   /* ---------- Milestone video player ---------- */

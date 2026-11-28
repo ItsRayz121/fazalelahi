@@ -623,7 +623,8 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
   .svc-cta{flex:1 0 100%;order:-1;margin-bottom:4px}
   .svc-cta .btn{width:100%}
 }
-@media (prefers-reduced-motion:reduce){.svc-wheel,.svc-node,.svc-dot{transition:none}.svc-panel.in{animation:none}}
+.svc-stage.snap .svc-wheel,.svc-stage.snap .svc-node{transition:none}
+@media (prefers-reduced-motion:reduce){.svc-wheel,.svc-node,.svc-node.far,.svc-dot{transition:none}.svc-panel.in{animation:none}}
 .svc-list{border-top:1px solid var(--line)}
 .svc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:16px clamp(24px,4vw,56px);padding:clamp(28px,3vw,40px) 0;border-bottom:1px solid var(--line);align-items:start}
 .svc h3{font-size:clamp(24px,2.4vw,30px);letter-spacing:-.02em}
@@ -942,7 +943,7 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
         <figure class="pass-card">
           <span class="pass-slot" aria-hidden="true"></span>
           <div class="pass-band"><span>Web3 growth lead</span><span>South Asia</span></div>
-          <img class="pass-photo" id="heroPhoto" src="fazal-720.jpg" width="720" height="1080" alt="Fazal Elahi in a CreatorX shirt and blazer" fetchpriority="high">
+          <img class="pass-photo" id="heroPhoto" src="fazal-720.jpg" srcset="fazal-360.jpg 360w, fazal-720.jpg 720w" sizes="(max-width: 760px) 140px, 320px" width="720" height="1080" alt="Fazal Elahi in a CreatorX shirt and blazer" fetchpriority="high">
           <figcaption class="pass-id"><strong>Fazal Elahi</strong><span>Growth lead, KOL and crypto YouTuber, Pakistan</span></figcaption>
           <dl class="pass-facts">
             <div><dt>Reached</dt><dd>460K+</dd></div>
@@ -1249,6 +1250,6 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
 <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="data.js?v=20261127"></script>
-<script defer src="render.js?v=20261127"></script>
+<script defer src="render.js?v=20261128"></script>
 </body>
 </html>
