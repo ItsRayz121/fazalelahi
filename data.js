@@ -641,20 +641,29 @@
   // local defaults (data.js) instantly; the cloud read is a best-effort cache
   // refresh, capped by a short timeout so a slow/asleep Supabase project can never
   // hang the page (previously caused 20–30s blank loads).
+  // One plain REST request instead of the supabase-js client: the client retries
+  // network errors, so an unreachable project (DNS gone, paused) used to hold the
+  // render for the full timeout on every visit. A plain fetch fails in milliseconds
+  // when the host is gone, and still waits up to the cap for a slow-but-alive one.
   Store.bootstrap = async function () {
     Store.init();
     if (!cloudEnabled) return;
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 2000);
     try {
-      var timeout = new Promise(function (resolve) {
-        setTimeout(function () { resolve({ __timedOut: true }); }, 2000);
+      var r = await fetch(SUPABASE_URL + '/rest/v1/site_content?select=key,value', {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+        signal: ctrl ? ctrl.signal : undefined
       });
-      var res = await Promise.race([sb.from('site_content').select('key,value'), timeout]);
-      if (res.__timedOut) { console.warn('Cloud slow — rendered from local, will refresh next load'); return; }
-      if (res.error) throw res.error;
-      (res.data || []).forEach(function (row) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var rows = await r.json();
+      (Array.isArray(rows) ? rows : []).forEach(function (row) {
         localStorage.setItem(row.key, JSON.stringify(row.value));
       });
-    } catch (e) { console.warn('Cloud read failed — using local cache', e.message || e); }
+    } catch (e) {
+      console.warn(e && e.name === 'AbortError' ? 'Cloud slow — rendered from local, will refresh next load'
+        : 'Cloud read failed — using local cache', (e && e.message) || e);
+    } finally { clearTimeout(timer); }
   };
 
   // Upload every content key to the cloud (used to seed an empty project / manual resync).
