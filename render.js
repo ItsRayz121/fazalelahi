@@ -373,16 +373,166 @@
     var svc = Store.get('fazal_services'); if (!svc) return;
     var svcDef = ((Store.defaults || {}).fazal_services || {}).intro;
     $('servicesIntro').textContent = (svc.intro && svc.intro !== svcDef) ? svc.intro : 'Two sides of my work: growing your project, and putting it in front of Pakistani crypto users.';
-    $('servicesGrid').innerHTML = visible(svc.items).map(function (s) {
-      var pts = (s.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
-      return '<article class="svc"><div><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p></div>' +
-        '<ul class="svc-points">' + pts + '</ul>' +
-        '<a class="btn btn-secondary" href="#contact">' + esc(s.cta || 'Get in touch') + '</a></article>';
-    }).join('');
+    renderServiceWheel($('servicesGrid'), visible(svc.items), ((Store.defaults || {}).fazal_services || {}).items || []);
     $('servicesSteps').innerHTML = (svc.steps || []).map(function (st) {
       return '<li class="svc-step"><span class="svc-step-n">Step ' + esc(String(st.step).replace(/^0/, '')) + '</span><h4>' + esc(st.title) + '</h4><p>' + esc(st.desc) + '</p></li>';
     }).join('');
   })();
+
+  /* ---------- Service wheel ----------
+     Services ride a half circle around a hub; the one in focus shows its details.
+     Desktop/tablet: arc above the hub. Phones: hub on the left edge, services roll
+     top to bottom. Autoplays (pauses on hover/focus, off-screen, after a tap, or
+     with the pause button); no autoplay under reduced motion. Fewer than 3
+     services fall back to a plain list. */
+  function renderServiceWheel(host, items, defaults) {
+    if (!host) return;
+    var SVG = {
+      video: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h10A1.5 1.5 0 0 1 16 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 3 17.5z"/><path d="M16 10l5-3v10l-5-3"/>',
+      kol: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14c2.4.2 4 1.7 4.5 4"/>',
+      growth: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+      region: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/>',
+      ambassador: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
+      generic: '<rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M4 12h16"/>'
+    };
+    // Contact-form topic each service pre-selects when its button is used
+    var TOPIC = { video: 'Content Collaboration', kol: 'KOL Management', growth: 'Business Development', region: 'Pakistan Regional Partnership', ambassador: 'Ambassador Program' };
+    function svg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (SVG[k] || SVG.generic) + '</svg>'; }
+    function shortOf(s) {
+      if (s.short) return s.short;
+      var d = defaults.filter(function (x) { return x.title === s.title && x.short; })[0];
+      if (d) return d.short;
+      return String(s.title || '').split(/\s[—–-]\s|\s&\s|\sfor\s/)[0];
+    }
+    function pad(i) { return (i < 9 ? '0' : '') + (i + 1); }
+    function points(s) { return '<ul class="svc-points">' + (s.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+    function cta(s) { return '<a class="btn btn-primary" href="#contact" data-topic="' + esc(TOPIC[s.icon] || '') + '">' + esc(s.cta || 'Get in touch') + '</a>'; }
+
+    host.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-topic]'); if (!a) return;
+      var sel = $('f-type'), t = a.getAttribute('data-topic');
+      if (sel && t && Array.prototype.some.call(sel.options, function (o) { return o.text === t; })) sel.value = t;
+    });
+
+    var N = items.length;
+    if (N < 3) {
+      host.className = 'svc-list';
+      host.innerHTML = items.map(function (s) {
+        return '<article class="svc"><div><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p></div>' + points(s) + cta(s) + '</article>';
+      }).join('');
+      return;
+    }
+
+    var SLOTS = N * Math.max(1, Math.ceil(10 / N)), STEP = 360 / SLOTS, REACH = Math.min(2, Math.floor((N - 1) / 2));
+    var nodes = '';
+    for (var k = 0; k < SLOTS; k++) {
+      var it = items[k % N];
+      nodes += '<button type="button" class="svc-node" data-slot="' + k + '" aria-label="' + esc(it.title) + '">' +
+        '<svg class="svc-ring" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="34"/></svg>' +
+        '<span class="svc-dot">' + svg(it.icon) + '</span><span class="svc-lbl" aria-hidden="true">' + esc(shortOf(it)) + '</span></button>';
+    }
+    var panels = items.map(function (s, i) {
+      return '<article class="svc-panel"' + (i ? ' hidden' : '') + '><h3>' + esc(s.title) + '</h3><p class="svc-tag">' + esc(s.tagline) + '</p>' + points(s) + '</article>';
+    }).join('');
+    function ic(d) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>'; }
+    host.className = 'svc-orbit';
+    host.setAttribute('role', 'region');
+    host.setAttribute('aria-roledescription', 'carousel');
+    host.setAttribute('aria-label', 'Services');
+    host.innerHTML =
+      '<div class="svc-stage"><div class="svc-arc"></div><div class="svc-arc in"></div><div class="svc-wheel">' + nodes + '</div>' +
+      '<div class="svc-hub" aria-hidden="true"><div><span class="svc-hub-n"></span><span class="svc-hub-t"></span></div></div></div>' +
+      '<div class="svc-detail"><div aria-live="off">' + panels + '</div><div class="svc-ctrl">' +
+      '<button type="button" class="svc-ib" data-go="-1" aria-label="Previous service">' + ic('<path d="M15 6l-6 6 6 6"/>') + '</button>' +
+      '<button type="button" class="svc-ib" data-go="1" aria-label="Next service">' + ic('<path d="M9 6l6 6-6 6"/>') + '</button>' +
+      '<button type="button" class="svc-ib" data-pause aria-label="Pause rotation">' + ic('<path class="pause" d="M9 6v12M15 6v12"/><path class="play" d="M8 5.5v13l10.5-6.5z"/>') + '</button>' +
+      '<span class="sp"></span><span class="svc-cta"></span></div></div>';
+
+    var stage = host.querySelector('.svc-stage'), wheel = host.querySelector('.svc-wheel');
+    var btns = Array.prototype.slice.call(wheel.children), panelEls = host.querySelectorAll('.svc-panel');
+    var hubN = host.querySelector('.svc-hub-n'), hubT = host.querySelector('.svc-hub-t'), ctaBox = host.querySelector('.svc-cta');
+    var pauseBtn = host.querySelector('[data-pause]'), live = host.querySelector('[aria-live]');
+    var phone = window.matchMedia('(max-width: 760px)');
+    var pos = 0, dir = 1, active = -1, CIRC = 213.6;
+
+    function slotOf() { return ((pos % SLOTS) + SLOTS) % SLOTS; }
+    function dist(slot, top) { return ((slot - top + SLOTS + SLOTS / 2) % SLOTS) - SLOTS / 2; }
+    function layout() {
+      var vert = phone.matches, w = stage.clientWidth;
+      stage.classList.toggle('vert', vert);
+      dir = vert ? -1 : 1;   // phones roll top to bottom
+      var R = vert ? Math.max(118, Math.min(200, w * 0.42)) : Math.max(140, Math.min(250, w / 2 - 64));
+      stage.style.setProperty('--R', R + 'px');
+      btns.forEach(function (b) { b.style.setProperty('--a', (+b.dataset.slot * STEP * dir) + 'deg'); });
+      paint();
+    }
+    function paint() {
+      var top = slotOf(), i = top % N;
+      stage.style.setProperty('--rot', (-pos * STEP * dir) + 'deg');
+      btns.forEach(function (b) {
+        var d = dist(+b.dataset.slot, top), far = Math.abs(d) > REACH;
+        b.classList.toggle('on', d === 0);
+        b.classList.toggle('far', far);
+        b.tabIndex = far ? -1 : 0;
+        b.setAttribute('aria-hidden', far ? 'true' : 'false');
+        if (d === 0) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+      });
+      if (i !== active) {
+        if (active > -1) panelEls[active].hidden = true;
+        panelEls[i].hidden = false;
+        panelEls[i].classList.remove('in'); void panelEls[i].offsetWidth; panelEls[i].classList.add('in');
+        active = i;
+        hubN.innerHTML = pad(i) + '<span> of ' + pad(N - 1) + '</span>';
+        hubT.textContent = shortOf(items[i]);
+        ctaBox.innerHTML = cta(items[i]);
+      }
+    }
+
+    // Autoplay: a requestAnimationFrame timer that also fills the focus ring
+    var DUR = 4800, t = 0, last = null, hover = false, seen = false;
+    var stopped = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function setStopped(v) {
+      stopped = v; t = 0;
+      host.classList.toggle('paused', v);
+      pauseBtn.setAttribute('aria-label', v ? 'Play rotation' : 'Pause rotation');
+      live.setAttribute('aria-live', v ? 'polite' : 'off');
+    }
+    function ring(p) { var c = wheel.querySelector('.svc-node.on .svc-ring circle'); if (c) c.style.strokeDashoffset = CIRC * (1 - p); }
+    function frame(now) {
+      var dt = last === null ? 0 : now - last; last = now;
+      if (!stopped && !hover && seen) {
+        t += dt;
+        if (t >= DUR) { t = 0; pos++; paint(); }
+      }
+      ring(stopped ? 0 : t / DUR);
+      requestAnimationFrame(frame);
+    }
+    function go(steps) { pos += steps; paint(); }
+
+    wheel.addEventListener('click', function (e) {
+      var b = e.target.closest('.svc-node'); if (!b) return;
+      var d = dist(+b.dataset.slot, slotOf()); if (d) go(d);
+      setStopped(true);   // the visitor took control
+    });
+    host.querySelector('.svc-ctrl').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.hasAttribute('data-pause')) { setStopped(!stopped); return; }
+      go(+b.dataset.go); setStopped(true);
+    });
+    host.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') hover = true; });
+    host.addEventListener('pointerleave', function () { hover = false; });
+    host.addEventListener('focusin', function () { hover = true; });
+    host.addEventListener('focusout', function () { hover = false; });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (ens) { seen = ens[0].isIntersecting; }, { threshold: 0.35 }).observe(host);
+    } else seen = true;
+    if (phone.addEventListener) phone.addEventListener('change', layout); else phone.addListener(layout);
+    var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(layout, 120); });
+
+    setStopped(stopped);
+    layout();
+    requestAnimationFrame(frame);
+  }
 
   /* ---------- Milestone video player ---------- */
   (function () {

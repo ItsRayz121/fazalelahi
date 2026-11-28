@@ -844,8 +844,8 @@ textarea{min-height:90px;resize:vertical}
   function svcForm(s, i) {
     modal('<h3>' + (i < 0 ? 'Add' : 'Edit') + ' Service</h3>' +
       '<label>Icon</label><select id="sv_icon">' +
-        ['kol','growth','region','ambassador','generic'].map(function (x) { return '<option' + (x === s.icon ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
-      f('Title','sv_title',s.title) + f('Tagline','sv_tag',s.tagline) +
+        ['video','kol','growth','region','ambassador','generic'].map(function (x) { return '<option' + (x === s.icon ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
+      f('Title','sv_title',s.title) + f('Short label on the wheel (2–3 words)','sv_short',s.short || '') + f('Tagline','sv_tag',s.tagline) +
       ta('Key points (one per line)','sv_points',(s.points || []).join('\n')) +
       ta('Ideal for','sv_ideal',s.ideal) + f('Button text','sv_cta',s.cta) +
       '<label><input type="checkbox" id="sv_vis" ' + (s.visible !== false ? 'checked' : '') + ' style="width:auto"> Visible</label>' +
@@ -853,7 +853,7 @@ textarea{min-height:90px;resize:vertical}
     document.getElementById('saveSvc').addEventListener('click', function () {
       var svc = Store.get('fazal_services');
       var pts = val('sv_points').split('\n').map(function (x) { return san(x); }).filter(Boolean);
-      var obj = { icon: val('sv_icon'), title: san(val('sv_title')), tagline: san(val('sv_tag')), points: pts,
+      var obj = { icon: val('sv_icon'), short: san(val('sv_short')), title: san(val('sv_title')), tagline: san(val('sv_tag')), points: pts,
         ideal: san(val('sv_ideal')), cta: san(val('sv_cta')), visible: document.getElementById('sv_vis').checked };
       if (i < 0) svc.items.push(obj); else svc.items[i] = obj;
       save('fazal_services', svc, 'Saved ✓'); closeModal(); renderServices(document.getElementById('content'));

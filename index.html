@@ -557,14 +557,77 @@ footer .brand-avatar{box-shadow:0 0 0 2px var(--deep),0 0 0 3px var(--mint)}
 }
 
 /* ============================ SERVICES ============================ */
-.svc-list{border-top:1px solid var(--line)}
-.svc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:16px clamp(24px,4vw,56px);padding:clamp(28px,3vw,40px) 0;border-bottom:1px solid var(--line);align-items:start}
-.svc h3{font-size:clamp(24px,2.4vw,30px);letter-spacing:-.02em}
-.svc-tag{color:var(--ink2);margin-top:8px;max-width:40ch}
+/* Service wheel: services ride a half circle around a hub and the one in focus
+   shows its details. Desktop/tablet: arc above the hub, focus at the top.
+   Phones (.vert): hub on the left edge, services roll down, focus in the middle. */
+.svc-orbit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:center;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:clamp(28px,3vw,44px) 0}
+.svc-stage{--R:240px;--node:60px;--base:0deg;--rot:0deg;position:relative;width:100%;overflow:hidden;height:calc(var(--R) + var(--node)/2 + 40px)}
+.svc-arc{position:absolute;left:50%;bottom:0;width:calc(var(--R)*2);height:calc(var(--R)*2);transform:translate(-50%,50%);border-radius:50%;border:1px dashed var(--line-strong);pointer-events:none}
+.svc-arc.in{width:calc(var(--R)*1.3);height:calc(var(--R)*1.3);border:1px solid var(--line)}
+.svc-wheel{position:absolute;left:50%;bottom:0;width:0;height:0;transform:rotate(calc(var(--rot) + var(--base)));transition:transform .9s cubic-bezier(.65,0,.25,1)}
+.svc-node{position:absolute;left:0;top:0;width:var(--node);height:var(--node);margin:calc(var(--node)/-2) 0 0 calc(var(--node)/-2);padding:0;border:0;background:none;cursor:pointer;color:var(--ink2);border-radius:50%;
+  transform:rotate(var(--a)) translateY(calc(-1*var(--R))) rotate(calc(-1*var(--a) - var(--rot) - var(--base)));
+  transition:transform .9s cubic-bezier(.65,0,.25,1),opacity .5s}
+.svc-node.far{opacity:0;pointer-events:none;visibility:hidden;transition:transform .9s cubic-bezier(.65,0,.25,1),opacity .5s,visibility 0s .5s}
+.svc-dot{position:absolute;inset:0;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-strong);display:grid;place-items:center;transition:background .4s,color .4s,transform .5s var(--ease),box-shadow .4s}
+.svc-dot svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.svc-node:hover .svc-dot{box-shadow:inset 0 0 0 1px var(--accent)}
+.svc-node.on .svc-dot{background:var(--green);color:#fff;box-shadow:none;transform:scale(1.22)}
+[data-theme="dark"] .svc-node.on .svc-dot{background:var(--accent);color:var(--deep)}
+.svc-lbl{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:600;color:var(--muted);transition:color .4s}
+.svc-node.on .svc-lbl{color:var(--ink);top:calc(100% + 14px)}
+.svc-ring{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);transform:rotate(-90deg);opacity:0;transition:opacity .3s;pointer-events:none}
+.svc-node.on .svc-ring{opacity:1}
+.svc-ring circle{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:213.6;stroke-dashoffset:213.6}
+.svc-hub{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:calc(var(--R)*.92);height:calc(var(--R)*.46);border-radius:999px 999px 0 0;background:var(--deep);color:var(--on-deep);
+  box-shadow:inset 0 1px 0 var(--on-deep-line);display:grid;place-items:end center;padding:0 14px 16px;text-align:center}
+.svc-hub-n{display:block;font-family:var(--display);font-size:13px;color:var(--mint);font-variant-numeric:tabular-nums}
+.svc-hub-t{display:block;font-family:var(--display);font-weight:600;font-size:clamp(17px,1.8vw,23px);line-height:1.15;letter-spacing:-.01em}
+.svc-node:focus-visible{outline:2px solid var(--accent);outline-offset:6px}
+
+.svc-detail{min-width:0}
+.svc-panel{display:grid;gap:16px;align-content:start}
+.svc-panel.in{animation:svcIn .5s var(--ease) both}
+@keyframes svcIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.svc-panel h3{font-size:clamp(24px,2.4vw,30px);letter-spacing:-.02em}
+.svc-tag{color:var(--ink2);max-width:46ch}
 .svc-points li{position:relative;padding-left:24px;color:var(--ink2);font-size:16px}
 .svc-points li+li{margin-top:8px}
 .svc-points li::before{content:'';position:absolute;left:2px;top:.55em;width:12px;height:6px;border-left:1.5px solid var(--accent);border-bottom:1.5px solid var(--accent);transform:rotate(-45deg)}
-.svc-ideal{display:none}
+.svc-ctrl{display:flex;align-items:center;gap:8px;margin-top:24px;flex-wrap:wrap}
+.svc-ctrl .sp{flex:1}
+.svc-ib{width:48px;height:48px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);border:0;cursor:pointer}
+.svc-ib:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.svc-ib:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.svc-ib svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.svc-ib .play{display:none}
+.svc-orbit.paused .svc-ib .play{display:block}.svc-orbit.paused .svc-ib .pause{display:none}
+.svc-orbit.paused .svc-ring{opacity:0}
+
+@media (max-width:1020px){.svc-orbit{grid-template-columns:1fr}.svc-stage{max-width:640px;justify-self:center}}
+@media (max-width:760px){
+  .svc-orbit{gap:20px;padding-top:12px}
+  .svc-stage{--node:48px}
+  .svc-stage.vert{--base:90deg;height:calc(var(--R)*2 + var(--node) + 28px);max-width:none}
+  .svc-stage.vert .svc-arc,.svc-stage.vert .svc-wheel{left:0;top:50%;bottom:auto}
+  .svc-stage.vert .svc-arc{transform:translate(-50%,-50%)}
+  .svc-stage.vert .svc-hub{left:0;top:50%;bottom:auto;transform:translateY(-50%);width:calc(var(--R)*.55);height:calc(var(--R)*1.1);border-radius:0 999px 999px 0;place-items:center;padding:0 6px 0 0;box-shadow:inset -1px 0 0 var(--on-deep-line)}
+  .svc-stage.vert .svc-hub-t{display:none}
+  .svc-stage.vert .svc-hub-n{font-size:22px;line-height:1.1}
+  .svc-stage.vert .svc-hub-n span{display:block;font-family:var(--text);font-size:11px;color:var(--on-deep-2)}
+  .svc-stage.vert .svc-lbl{top:50%;left:calc(100% + 12px);transform:translateY(-50%);white-space:normal;width:max-content;max-width:124px;text-align:left;line-height:1.25}
+  .svc-stage.vert .svc-node.on .svc-lbl{top:50%;left:calc(100% + 18px);font-size:15px}
+  .svc-dot svg{width:20px;height:20px}
+  .svc-ctrl .sp{display:none}
+  .svc-cta{flex:1 0 100%;order:-1;margin-bottom:4px}
+  .svc-cta .btn{width:100%}
+}
+@media (prefers-reduced-motion:reduce){.svc-wheel,.svc-node,.svc-dot{transition:none}.svc-panel.in{animation:none}}
+.svc-list{border-top:1px solid var(--line)}
+.svc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:16px clamp(24px,4vw,56px);padding:clamp(28px,3vw,40px) 0;border-bottom:1px solid var(--line);align-items:start}
+.svc h3{font-size:clamp(24px,2.4vw,30px);letter-spacing:-.02em}
+.svc .svc-tag{margin-top:8px}
 @media (max-width:900px){.svc{grid-template-columns:1fr}.svc .btn{justify-self:start}}
 
 .steps-head{font-size:clamp(22px,2vw,26px);margin:clamp(48px,6vw,80px) 0 24px}
@@ -921,7 +984,7 @@ footer{background:var(--deep);color:var(--on-deep-2);border-top:1px solid var(--
       <h2>Work with me</h2>
       <p id="servicesIntro"></p>
     </div>
-    <div class="svc-list" id="servicesGrid"></div>
+    <div id="servicesGrid"></div>
     <h3 class="steps-head">How a project runs</h3>
     <ol class="svc-steps" id="servicesSteps"></ol>
     <div class="svc-foot">
