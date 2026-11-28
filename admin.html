@@ -210,7 +210,15 @@ textarea{min-height:90px;resize:vertical}
       errEl.textContent = 'Signing in…';
       var res = await Store.signIn(email, pw);
       if (res.ok) { sessionStorage.setItem(SESSION_KEY, 'true'); logAttempt(true); await showApp(); }
-      else { logAttempt(false); errEl.textContent = '❌ ' + (res.msg || 'Login failed'); document.getElementById('pw').value = ''; }
+      else {
+        logAttempt(false);
+        // A network failure means the Supabase project itself is unreachable (paused or deleted), not a wrong password.
+        var offline = /failed to fetch|networkerror|load failed|fetch failed/i.test(res.msg || '');
+        errEl.textContent = offline
+          ? '❌ Cannot reach the content server (Supabase). The project may be paused or deleted; restore it in the Supabase dashboard, then try again.'
+          : '❌ ' + (res.msg || 'Login failed');
+        document.getElementById('pw').value = '';
+      }
       return;
     }
     var hash = await Util.sha256(pw);
